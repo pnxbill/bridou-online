@@ -1,0 +1,629 @@
+
+====================
+
+Round 1 started!
+1 cards
+trunfo A-♣️ 
+
+[CARDS]
+Q-♥️
+4-♥️
+2-♦️
+10-♣️
+[BETS]
+Pedro Costa bet 0
+Lucas Oliveira bet 0
+Bill Marques bet 0
+Filipe Matosinhos bet 1
+
+[1/1]
+Pedro Costa played: Q-♥️
+Lucas Oliveira played: 4-♥️
+Bill Marques played: 2-♦️
+Filipe Matosinhos played: 10-♣️
+>>> Filipe Matosinhos made with: 10-♣️ <<< 
+
+Bailou:  
+Round ended!
+====================
+
+
+====================
+
+Round 2 started!
+2 cards
+trunfo J-♥️ 
+
+[CARDS]
+2-♠️, K-♥️
+Q-♦️, K-♠️
+4-♦️, 4-♥️
+7-♠️, 9-♠️
+[BETS]
+Lucas Oliveira bet 1
+Bill Marques bet 0
+Filipe Matosinhos bet 0
+Pedro Costa bet 0
+
+[1/2]
+Lucas Oliveira played: 2-♠️
+Bill Marques played: K-♠️
+Filipe Matosinhos played: 4-♦️
+Pedro Costa played: 9-♠️
+>>> Bill Marques made with: K-♠️ <<< 
+
+[2/2]
+Bill Marques played: Q-♦️
+Filipe Matosinhos played: 4-♥️
+Pedro Costa played: 7-♠️
+Lucas Oliveira played: K-♥️
+>>> Lucas Oliveira made with: K-♥️ <<< 
+
+Bailou:  Bill Marques
+Round ended!
+====================
+
+
+====================
+
+Round 3 started!
+3 cards
+trunfo 8-♠️ 
+
+[CARDS]
+A-♣️, 7-♥️, A-♥️
+10-♠️, A-♦️, 2-♣️
+K-♠️, 3-♦️, 4-♠️
+A-♠️, 9-♥️, 2-♦️
+[BETS]
+Bill Marques bet 1
+Filipe Matosinhos bet 1
+Pedro Costa bet 1
+Lucas Oliveira bet 1
+
+[1/3]
+Bill Marques played: 7-♥️
+Filipe Matosinhos played: 10-♠️
+Pedro Costa played: K-♠️
+Lucas Oliveira played: 9-♥️
+>>> Pedro Costa made with: K-♠️ <<< 
+
+[2/3]
+Pedro Costa played: 4-♠️
+Lucas Oliveira played: A-♠️
+Bill Marques played: A-♥️
+Filipe Matosinhos played: 2-♣️
+>>> Lucas Oliveira made with: A-♠️ <<< 
+
+[3/3]
+Lucas Oliveira played: 2-♦️
+Bill Marques played: A-♣️
+Filipe Matosinhos played: A-♦️
+Pedro Costa played: 3-♦️
+>>> Filipe Matosinhos made with: A-♦️ <<< 
+
+Bailou:  Bill Marques
+Round ended!
+====================
+
+
+====================
+
+Round 4 started!
+4 cards
+trunfo K-♠️ 
+
+[CARDS]
+J-♣️, 9-♥️, 8-♠️, J-♠️
+2-♣️, 10-♠️, K-♦️, K-♥️
+7-♦️, 5-♦️, 8-♣️, 10-♥️
+5-♣️, J-♥️, K-♣️, 3-♣️
+[BETS]
+Filipe Matosinhos bet 2
+Pedro Costa bet 1
+Lucas Oliveira bet 0
+Bill Marques bet 0
+
+[1/4]
+Filipe Matosinhos played: 9-♥️
+Pedro Costa played: K-♥️
+Lucas Oliveira played: 10-♥️
+Bill Marques played: J-♥️
+>>> Pedro Costa made with: K-♥️ <<< 
+
+[2/4]
+Pedro Costa played: 2-♣️
+Lucas Oliveira played: 8-♣️
+Bill Marques played: 5-♣️
+Filipe Matosinhos played: J-♣️
+>>> Filipe Matosinhos made with: J-♣️ <<< 
+
+[3/4]
+Filipe Matosinhos played: 8-♠️
+Pedro Costa played: 10-♠️
+Lucas Oliveira played: 7-♦️
+Bill Marques played: K-♣️
+>>> Pedro Costa made with: 10-♠️ <<< 
+
+[4/4]
+Pedro Costa played: K-♦️
+Lucas Oliveira played: 5-♦️
+Bill Marques played: 3-♣️
+Filipe Matosinhos played: J-♠️
+>>> Filipe Matosinhos made with: J-♠️ <<< 
+
+Bailou:  Pedro Costa
+Round ended!
+====================
+
+
+====================
+
+Round 5 started!
+5 cards
+trunfo 3-♣️ 
+
+[CARDS]
+10-♣️, 9-♣️, 3-♦️, 7-♠️, K-♠️
+Q-♣️, 10-♦️, 5-♦️, 5-♥️, 10-♥️
+6-♥️, 7-♦️, 3-♠️, K-♣️, 2-♣️
+4-♦️, 9-♦️, J-♣️, 2-♥️, A-♠️
+[BETS]
+Pedro Costa bet 2
+Lucas Oliveira bet 1
+Bill Marques bet 1
+Filipe Matosinhos bet 2
+
+[1/5]
+Pedro Costa played: K-♠️
+Lucas Oliveira played: Q-♣️
+Bill Marques played: 3-♠️
+Filipe Matosinhos played: A-♠️
+>>> Lucas Oliveira made with: Q-♣️ <<< 
+
+[2/5]
+Lucas Oliveira played: 5-♥️
+Bill Marques played: 6-♥️
+Filipe Matosinhos played: 2-♥️
+Pedro Costa played: 9-♣️
+>>> Pedro Costa made with: 9-♣️ <<< 
+
+[3/5]
+Pedro Costa played: 3-♦️
+Lucas Oliveira played: 5-♦️
+Bill Marques played: 7-♦️
+Filipe Matosinhos played: 9-♦️
+>>> Filipe Matosinhos made with: 9-♦️ <<< 
+
+[4/5]
+Filipe Matosinhos played: J-♣️
+Pedro Costa played: 10-♣️
+Lucas Oliveira played: 10-♥️
+Bill Marques played: K-♣️
+>>> Bill Marques made with: K-♣️ <<< 
+
+[5/5]
+Bill Marques played: 2-♣️
+Filipe Matosinhos played: 4-♦️
+Pedro Costa played: 7-♠️
+Lucas Oliveira played: 10-♦️
+>>> Bill Marques made with: 2-♣️ <<< 
+
+Bailou:  Pedro Costa,Bill Marques,Filipe Matosinhos
+Round ended!
+====================
+
+
+====================
+
+Round 6 started!
+6 cards
+trunfo 3-♥️ 
+
+[CARDS]
+3-♦️, 9-♠️, 5-♣️, 9-♥️, A-♥️, 5-♥️
+4-♦️, 5-♠️, 8-♣️, Q-♠️, 6-♥️, 4-♥️
+2-♦️, A-♦️, Q-♣️, 4-♠️, 7-♦️, 6-♦️
+A-♠️, 6-♣️, J-♣️, J-♦️, Q-♦️, J-♥️
+[BETS]
+Lucas Oliveira bet 2
+Bill Marques bet 0
+Filipe Matosinhos bet 1
+Pedro Costa bet 1
+
+[1/6]
+Lucas Oliveira played: 5-♥️
+Bill Marques played: 6-♥️
+Filipe Matosinhos played: 4-♠️
+Pedro Costa played: J-♥️
+>>> Pedro Costa made with: J-♥️ <<< 
+
+[2/6]
+Pedro Costa played: 6-♣️
+Lucas Oliveira played: 5-♣️
+Bill Marques played: 8-♣️
+Filipe Matosinhos played: Q-♣️
+>>> Filipe Matosinhos made with: Q-♣️ <<< 
+
+[3/6]
+Filipe Matosinhos played: 2-♦️
+Pedro Costa played: J-♦️
+Lucas Oliveira played: 3-♦️
+Bill Marques played: 4-♦️
+>>> Pedro Costa made with: J-♦️ <<< 
+
+[4/6]
+Pedro Costa played: Q-♦️
+Lucas Oliveira played: 9-♠️
+Bill Marques played: Q-♠️
+Filipe Matosinhos played: 6-♦️
+>>> Pedro Costa made with: Q-♦️ <<< 
+
+[5/6]
+Pedro Costa played: A-♠️
+Lucas Oliveira played: 9-♥️
+Bill Marques played: 5-♠️
+Filipe Matosinhos played: A-♦️
+>>> Lucas Oliveira made with: 9-♥️ <<< 
+
+[6/6]
+Lucas Oliveira played: A-♥️
+Bill Marques played: 4-♥️
+Filipe Matosinhos played: 7-♦️
+Pedro Costa played: J-♣️
+>>> Lucas Oliveira made with: A-♥️ <<< 
+
+Bailou:  Pedro Costa
+Round ended!
+====================
+
+
+====================
+
+Round 7 started!
+7 cards
+trunfo 5-♦️ 
+
+[CARDS]
+3-♦️, 6-♣️, 7-♠️, 6-♦️, 10-♥️, 4-♠️, 10-♠️
+10-♦️, J-♦️, 8-♣️, K-♥️, 4-♥️, A-♦️, 4-♦️
+8-♦️, 3-♣️, 9-♠️, 2-♠️, Q-♠️, 2-♥️, 6-♥️
+5-♠️, 2-♦️, 9-♥️, 8-♠️, J-♠️, 7-♦️, K-♦️
+[BETS]
+Bill Marques bet 1
+Filipe Matosinhos bet 4
+Pedro Costa bet 0
+Lucas Oliveira bet 1
+
+[1/7]
+Bill Marques played: 3-♦️
+Filipe Matosinhos played: A-♦️
+Pedro Costa played: 8-♦️
+Lucas Oliveira played: 2-♦️
+>>> Filipe Matosinhos made with: A-♦️ <<< 
+
+[2/7]
+Filipe Matosinhos played: 8-♣️
+Pedro Costa played: 3-♣️
+Lucas Oliveira played: K-♦️
+Bill Marques played: 6-♣️
+>>> Lucas Oliveira made with: K-♦️ <<< 
+
+[3/7]
+Lucas Oliveira played: 7-♦️
+Bill Marques played: 6-♦️
+Filipe Matosinhos played: 10-♦️
+Pedro Costa played: Q-♠️
+>>> Filipe Matosinhos made with: 10-♦️ <<< 
+
+[4/7]
+Filipe Matosinhos played: 4-♦️
+Pedro Costa played: 9-♠️
+Lucas Oliveira played: J-♠️
+Bill Marques played: 10-♥️
+>>> Filipe Matosinhos made with: 4-♦️ <<< 
+
+[5/7]
+Filipe Matosinhos played: 4-♥️
+Pedro Costa played: 2-♥️
+Lucas Oliveira played: 9-♥️
+Bill Marques played: 10-♠️
+>>> Lucas Oliveira made with: 9-♥️ <<< 
+
+[6/7]
+Lucas Oliveira played: 8-♠️
+Bill Marques played: 7-♠️
+Filipe Matosinhos played: K-♥️
+Pedro Costa played: 2-♠️
+>>> Lucas Oliveira made with: 8-♠️ <<< 
+
+[7/7]
+Lucas Oliveira played: 5-♠️
+Bill Marques played: 4-♠️
+Filipe Matosinhos played: J-♦️
+Pedro Costa played: 6-♥️
+>>> Filipe Matosinhos made with: J-♦️ <<< 
+
+Bailou:  Bill Marques,Lucas Oliveira
+Round ended!
+====================
+
+
+====================
+
+Round 8 started!
+6 cards
+trunfo 10-♠️ 
+
+[CARDS]
+6-♦️, 9-♥️, 2-♣️, Q-♣️, 7-♦️, 10-♣️
+5-♦️, A-♣️, 6-♥️, J-♠️, 3-♠️, K-♠️
+2-♠️, 8-♦️, Q-♥️, 2-♥️, 7-♠️, 4-♥️
+A-♥️, 5-♥️, 4-♠️, 5-♣️, 6-♣️, 9-♦️
+[BETS]
+Filipe Matosinhos bet 0
+Pedro Costa bet 3
+Lucas Oliveira bet 1
+Bill Marques bet 0
+
+[1/6]
+Filipe Matosinhos played: 7-♦️
+Pedro Costa played: 5-♦️
+Lucas Oliveira played: 8-♦️
+Bill Marques played: 9-♦️
+>>> Bill Marques made with: 9-♦️ <<< 
+
+[2/6]
+Bill Marques played: A-♥️
+Filipe Matosinhos played: 9-♥️
+Pedro Costa played: 6-♥️
+Lucas Oliveira played: Q-♥️
+>>> Bill Marques made with: A-♥️ <<< 
+
+[3/6]
+Bill Marques played: 5-♥️
+Filipe Matosinhos played: 6-♦️
+Pedro Costa played: J-♠️
+Lucas Oliveira played: 4-♥️
+>>> Pedro Costa made with: J-♠️ <<< 
+
+[4/6]
+Pedro Costa played: 3-♠️
+Lucas Oliveira played: 7-♠️
+Bill Marques played: 4-♠️
+Filipe Matosinhos played: Q-♣️
+>>> Lucas Oliveira made with: 7-♠️ <<< 
+
+[5/6]
+Lucas Oliveira played: 2-♠️
+Bill Marques played: 6-♣️
+Filipe Matosinhos played: 10-♣️
+Pedro Costa played: K-♠️
+>>> Pedro Costa made with: K-♠️ <<< 
+
+[6/6]
+Pedro Costa played: A-♣️
+Lucas Oliveira played: 2-♥️
+Bill Marques played: 5-♣️
+Filipe Matosinhos played: 2-♣️
+>>> Pedro Costa made with: A-♣️ <<< 
+
+Bailou:  Bill Marques
+Round ended!
+====================
+
+
+====================
+
+Round 9 started!
+5 cards
+trunfo 8-♥️ 
+
+[CARDS]
+A-♥️, K-♣️, Q-♦️, 4-♥️, 6-♥️
+9-♠️, 5-♦️, 7-♠️, 10-♦️, J-♠️
+8-♦️, 2-♣️, 10-♠️, 7-♥️, A-♠️
+A-♣️, J-♦️, K-♦️, 10-♥️, 8-♠️
+[BETS]
+Pedro Costa bet 2
+Lucas Oliveira bet 0
+Bill Marques bet 1
+Filipe Matosinhos bet 3
+
+[1/5]
+Pedro Costa played: 4-♥️
+Lucas Oliveira played: J-♠️
+Bill Marques played: 7-♥️
+Filipe Matosinhos played: 10-♥️
+>>> Filipe Matosinhos made with: 10-♥️ <<< 
+
+[2/5]
+Filipe Matosinhos played: 8-♠️
+Pedro Costa played: 6-♥️
+Lucas Oliveira played: 9-♠️
+Bill Marques played: 10-♠️
+>>> Pedro Costa made with: 6-♥️ <<< 
+
+[3/5]
+Pedro Costa played: Q-♦️
+Lucas Oliveira played: 10-♦️
+Bill Marques played: 8-♦️
+Filipe Matosinhos played: J-♦️
+>>> Pedro Costa made with: Q-♦️ <<< 
+
+[4/5]
+Pedro Costa played: A-♥️
+Lucas Oliveira played: 7-♠️
+Bill Marques played: 2-♣️
+Filipe Matosinhos played: A-♣️
+>>> Pedro Costa made with: A-♥️ <<< 
+
+[5/5]
+Pedro Costa played: K-♣️
+Lucas Oliveira played: 5-♦️
+Bill Marques played: A-♠️
+Filipe Matosinhos played: K-♦️
+>>> Pedro Costa made with: K-♣️ <<< 
+
+Bailou:  Pedro Costa,Bill Marques,Filipe Matosinhos
+Round ended!
+====================
+
+
+====================
+
+Round 10 started!
+4 cards
+trunfo K-♥️ 
+
+[CARDS]
+9-♦️, A-♥️, 4-♦️, Q-♠️
+2-♦️, 5-♥️, 4-♣️, 6-♦️
+3-♦️, 8-♣️, 7-♥️, 8-♠️
+6-♠️, J-♣️, 7-♦️, 7-♠️
+[BETS]
+Lucas Oliveira bet 2
+Bill Marques bet 0
+Filipe Matosinhos bet 1
+Pedro Costa bet 0
+
+[1/4]
+Lucas Oliveira played: Q-♠️
+Bill Marques played: 6-♦️
+Filipe Matosinhos played: 8-♠️
+Pedro Costa played: 7-♠️
+>>> Lucas Oliveira made with: Q-♠️ <<< 
+
+[2/4]
+Lucas Oliveira played: 4-♦️
+Bill Marques played: 2-♦️
+Filipe Matosinhos played: 3-♦️
+Pedro Costa played: 7-♦️
+>>> Pedro Costa made with: 7-♦️ <<< 
+
+[3/4]
+Pedro Costa played: 6-♠️
+Lucas Oliveira played: 9-♦️
+Bill Marques played: 4-♣️
+Filipe Matosinhos played: 7-♥️
+>>> Filipe Matosinhos made with: 7-♥️ <<< 
+
+[4/4]
+Filipe Matosinhos played: 8-♣️
+Pedro Costa played: J-♣️
+Lucas Oliveira played: A-♥️
+Bill Marques played: 5-♥️
+>>> Lucas Oliveira made with: A-♥️ <<< 
+
+Bailou:  Pedro Costa
+Round ended!
+====================
+
+
+====================
+
+Round 11 started!
+3 cards
+trunfo 4-♣️ 
+
+[CARDS]
+9-♦️, 2-♣️, 5-♥️
+2-♠️, J-♣️, 3-♦️
+10-♣️, J-♦️, Q-♠️
+6-♦️, 5-♠️, J-♠️
+[BETS]
+Bill Marques bet 0
+Filipe Matosinhos bet 1
+Pedro Costa bet 1
+Lucas Oliveira bet 0
+
+[1/3]
+Bill Marques played: 9-♦️
+Filipe Matosinhos played: 3-♦️
+Pedro Costa played: J-♦️
+Lucas Oliveira played: 6-♦️
+>>> Pedro Costa made with: J-♦️ <<< 
+
+[2/3]
+Pedro Costa played: 10-♣️
+Lucas Oliveira played: J-♠️
+Bill Marques played: 2-♣️
+Filipe Matosinhos played: J-♣️
+>>> Filipe Matosinhos made with: J-♣️ <<< 
+
+[3/3]
+Filipe Matosinhos played: 2-♠️
+Pedro Costa played: Q-♠️
+Lucas Oliveira played: 5-♠️
+Bill Marques played: 5-♥️
+>>> Pedro Costa made with: Q-♠️ <<< 
+
+Bailou:  Pedro Costa
+Round ended!
+====================
+
+
+====================
+
+Round 12 started!
+2 cards
+trunfo A-♦️ 
+
+[CARDS]
+2-♦️, J-♦️
+2-♣️, K-♦️
+Q-♥️, 4-♦️
+6-♣️, 4-♠️
+[BETS]
+Filipe Matosinhos bet 1
+Pedro Costa bet 1
+Lucas Oliveira bet 0
+Bill Marques bet 1
+
+[1/2]
+Filipe Matosinhos played: 2-♦️
+Pedro Costa played: K-♦️
+Lucas Oliveira played: 4-♦️
+Bill Marques played: 4-♠️
+>>> Pedro Costa made with: K-♦️ <<< 
+
+[2/2]
+Pedro Costa played: 2-♣️
+Lucas Oliveira played: Q-♥️
+Bill Marques played: 6-♣️
+Filipe Matosinhos played: J-♦️
+>>> Filipe Matosinhos made with: J-♦️ <<< 
+
+Bailou:  Bill Marques
+Round ended!
+====================
+
+
+====================
+
+Round 13 started!
+1 cards
+trunfo 10-♠️ 
+
+[CARDS]
+J-♣️
+10-♥️
+A-♦️
+3-♣️
+[BETS]
+Pedro Costa bet 0
+Lucas Oliveira bet 0
+Bill Marques bet 0
+Filipe Matosinhos bet 0
+
+[1/1]
+Pedro Costa played: J-♣️
+Lucas Oliveira played: 10-♥️
+Bill Marques played: A-♦️
+Filipe Matosinhos played: 3-♣️
+>>> Pedro Costa made with: J-♣️ <<< 
+
+Bailou:  Pedro Costa
+
+Game ended!  Winner: Lucas Oliveira with 127
+results 13
