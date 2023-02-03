@@ -1,11 +1,13 @@
-import { component$, useContext, $ } from '@builder.io/qwik';
+import { component$, useContext, $, useStylesScoped$ } from '@builder.io/qwik';
 import type { DocumentHead} from '@builder.io/qwik-city';
 import { useNavigate } from '@builder.io/qwik-city';
 import axios from 'axios';
 import type { User } from '~/context';
 import { UserContext } from '~/context';
+import styles from './styles.css?inline';
 
 export default component$(() => {
+  useStylesScoped$(styles);
   const nav = useNavigate()
   const { name, id, loading } = useContext<User>(UserContext)
 
@@ -33,11 +35,10 @@ export default component$(() => {
   // eslint-disable-next-line qwik/single-jsx-root
   if (!id) return <h1>Favor logar acima</h1>
 
-
   return (
-    <div>
+    <div class="container">
       {name} conectado.
-      <button onClick$={enterQueue}>Entrar na fila</button>
+      <button class="btn btn-enter-queue" onClick$={enterQueue}>Entrar na fila</button>
     </div>
   );
 });
