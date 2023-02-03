@@ -1,0 +1,554 @@
+
+====================
+
+Round 1 started!
+1 cards
+trunfo 8-♦️ 
+
+[CARDS]
+4-♣️
+A-♦️
+K-♦️
+[BETS]
+Bill Marques bet 0
+Filipe Matosinhos bet 1
+Arthur Castelani Cordeiro bet 1
+
+[1/1]
+Bill Marques played: 4-♣️
+Filipe Matosinhos played: A-♦️
+Arthur Castelani Cordeiro played: K-♦️
+>>> Filipe Matosinhos made with: A-♦️ <<< 
+
+Bailou:  Arthur Castelani Cordeiro
+Round ended!
+====================
+
+
+====================
+
+Round 2 started!
+2 cards
+trunfo 2-♣️ 
+
+[CARDS]
+2-♦️, 8-♦️
+5-♠️, 10-♣️
+6-♦️, 8-♣️
+[BETS]
+Filipe Matosinhos bet 0
+Arthur Castelani Cordeiro bet 1
+Bill Marques bet 0
+
+[1/2]
+Filipe Matosinhos played: 2-♦️
+Arthur Castelani Cordeiro played: 5-♠️
+Bill Marques played: 6-♦️
+>>> Bill Marques made with: 6-♦️ <<< 
+
+[2/2]
+Bill Marques played: 8-♣️
+Filipe Matosinhos played: 8-♦️
+Arthur Castelani Cordeiro played: 10-♣️
+>>> Arthur Castelani Cordeiro made with: 10-♣️ <<< 
+
+Bailou:  Bill Marques
+Round ended!
+====================
+
+
+====================
+
+Round 3 started!
+3 cards
+trunfo J-♣️ 
+
+[CARDS]
+4-♦️, A-♥️, K-♠️
+8-♦️, 9-♥️, 7-♠️
+J-♠️, 2-♥️, K-♦️
+[BETS]
+Arthur Castelani Cordeiro bet 1
+Bill Marques bet 0
+Filipe Matosinhos bet 1
+
+[1/3]
+Arthur Castelani Cordeiro played: A-♥️
+Bill Marques played: 9-♥️
+Filipe Matosinhos played: 2-♥️
+>>> Arthur Castelani Cordeiro made with: A-♥️ <<< 
+
+[2/3]
+Arthur Castelani Cordeiro played: 4-♦️
+Bill Marques played: 8-♦️
+Filipe Matosinhos played: K-♦️
+>>> Filipe Matosinhos made with: K-♦️ <<< 
+
+[3/3]
+Filipe Matosinhos played: J-♠️
+Arthur Castelani Cordeiro played: K-♠️
+Bill Marques played: 7-♠️
+>>> Arthur Castelani Cordeiro made with: K-♠️ <<< 
+
+Bailou:  Arthur Castelani Cordeiro
+Round ended!
+====================
+
+
+====================
+
+Round 4 started!
+4 cards
+trunfo 3-♠️ 
+
+[CARDS]
+4-♥️, 2-♦️, 9-♦️, 4-♣️
+2-♥️, 8-♥️, 5-♦️, 8-♣️
+6-♣️, 9-♣️, 8-♦️, 2-♣️
+[BETS]
+Bill Marques bet 0
+Filipe Matosinhos bet 1
+Arthur Castelani Cordeiro bet 0
+
+[1/4]
+Bill Marques played: 2-♦️
+Filipe Matosinhos played: 5-♦️
+Arthur Castelani Cordeiro played: 8-♦️
+>>> Arthur Castelani Cordeiro made with: 8-♦️ <<< 
+
+[2/4]
+Arthur Castelani Cordeiro played: 2-♣️
+Bill Marques played: 4-♣️
+Filipe Matosinhos played: 8-♣️
+>>> Filipe Matosinhos made with: 8-♣️ <<< 
+
+[3/4]
+Filipe Matosinhos played: 2-♥️
+Arthur Castelani Cordeiro played: 9-♣️
+Bill Marques played: 4-♥️
+>>> Bill Marques made with: 4-♥️ <<< 
+
+[4/4]
+Bill Marques played: 9-♦️
+Filipe Matosinhos played: 8-♥️
+Arthur Castelani Cordeiro played: 6-♣️
+>>> Bill Marques made with: 9-♦️ <<< 
+
+Bailou:  Bill Marques,Arthur Castelani Cordeiro
+Round ended!
+====================
+
+
+====================
+
+Round 5 started!
+5 cards
+trunfo 8-♦️ 
+
+[CARDS]
+K-♠️, 10-♥️, J-♦️, 6-♠️, 2-♦️
+8-♠️, 3-♣️, A-♦️, 3-♦️, 6-♥️
+J-♣️, 3-♠️, 4-♦️, 5-♣️, K-♣️
+[BETS]
+Filipe Matosinhos bet 3
+Arthur Castelani Cordeiro bet 1
+Bill Marques bet 0
+
+[1/5]
+Filipe Matosinhos played: 10-♥️
+Arthur Castelani Cordeiro played: 6-♥️
+Bill Marques played: K-♣️
+>>> Filipe Matosinhos made with: 10-♥️ <<< 
+
+[2/5]
+Filipe Matosinhos played: K-♠️
+Arthur Castelani Cordeiro played: 8-♠️
+Bill Marques played: 3-♠️
+>>> Filipe Matosinhos made with: K-♠️ <<< 
+
+[3/5]
+Filipe Matosinhos played: 2-♦️
+Arthur Castelani Cordeiro played: A-♦️
+Bill Marques played: 4-♦️
+>>> Arthur Castelani Cordeiro made with: A-♦️ <<< 
+
+[4/5]
+Arthur Castelani Cordeiro played: 3-♦️
+Bill Marques played: J-♣️
+Filipe Matosinhos played: J-♦️
+>>> Filipe Matosinhos made with: J-♦️ <<< 
+
+[5/5]
+Filipe Matosinhos played: 6-♠️
+Arthur Castelani Cordeiro played: 3-♣️
+Bill Marques played: 5-♣️
+>>> Filipe Matosinhos made with: 6-♠️ <<< 
+
+Bailou:  Filipe Matosinhos
+Round ended!
+====================
+
+
+====================
+
+Round 6 started!
+6 cards
+trunfo 2-♥️ 
+
+[CARDS]
+9-♠️, J-♦️, 9-♣️, 3-♣️, A-♠️, J-♥️
+8-♦️, 2-♦️, 10-♦️, Q-♥️, K-♦️, Q-♠️
+K-♣️, 7-♣️, 7-♠️, 3-♦️, 5-♠️, 8-♣️
+[BETS]
+Arthur Castelani Cordeiro bet 3
+Bill Marques bet 2
+Filipe Matosinhos bet 2
+
+[1/6]
+Arthur Castelani Cordeiro played: 9-♣️
+Bill Marques played: 10-♦️
+Filipe Matosinhos played: K-♣️
+>>> Filipe Matosinhos made with: K-♣️ <<< 
+
+[2/6]
+Filipe Matosinhos played: 5-♠️
+Arthur Castelani Cordeiro played: A-♠️
+Bill Marques played: Q-♠️
+>>> Arthur Castelani Cordeiro made with: A-♠️ <<< 
+
+[3/6]
+Arthur Castelani Cordeiro played: 9-♠️
+Bill Marques played: Q-♥️
+Filipe Matosinhos played: 7-♠️
+>>> Bill Marques made with: Q-♥️ <<< 
+
+[4/6]
+Bill Marques played: K-♦️
+Filipe Matosinhos played: 3-♦️
+Arthur Castelani Cordeiro played: J-♦️
+>>> Bill Marques made with: K-♦️ <<< 
+
+[5/6]
+Bill Marques played: 2-♦️
+Filipe Matosinhos played: 8-♣️
+Arthur Castelani Cordeiro played: J-♥️
+>>> Arthur Castelani Cordeiro made with: J-♥️ <<< 
+
+[6/6]
+Arthur Castelani Cordeiro played: 3-♣️
+Bill Marques played: 8-♦️
+Filipe Matosinhos played: 7-♣️
+>>> Filipe Matosinhos made with: 7-♣️ <<< 
+
+Bailou:  Arthur Castelani Cordeiro
+Round ended!
+====================
+
+
+====================
+
+Round 7 started!
+7 cards
+trunfo 6-♦️ 
+
+[CARDS]
+9-♣️, 9-♥️, 5-♦️, 2-♣️, 4-♠️, 2-♦️, 8-♣️
+7-♠️, 5-♣️, 4-♥️, 8-♦️, 3-♥️, J-♣️, 4-♣️
+K-♠️, K-♦️, Q-♠️, K-♣️, 8-♥️, J-♠️, 7-♦️
+[BETS]
+Bill Marques bet 1
+Filipe Matosinhos bet 1
+Arthur Castelani Cordeiro bet 4
+
+[1/7]
+Bill Marques played: 4-♠️
+Filipe Matosinhos played: 7-♠️
+Arthur Castelani Cordeiro played: K-♠️
+>>> Arthur Castelani Cordeiro made with: K-♠️ <<< 
+
+[2/7]
+Arthur Castelani Cordeiro played: K-♣️
+Bill Marques played: 9-♣️
+Filipe Matosinhos played: 4-♣️
+>>> Arthur Castelani Cordeiro made with: K-♣️ <<< 
+
+[3/7]
+Arthur Castelani Cordeiro played: Q-♠️
+Bill Marques played: 2-♦️
+Filipe Matosinhos played: 8-♦️
+>>> Filipe Matosinhos made with: 8-♦️ <<< 
+
+[4/7]
+Filipe Matosinhos played: 4-♥️
+Arthur Castelani Cordeiro played: 8-♥️
+Bill Marques played: 9-♥️
+>>> Bill Marques made with: 9-♥️ <<< 
+
+[5/7]
+Bill Marques played: 5-♦️
+Filipe Matosinhos played: J-♣️
+Arthur Castelani Cordeiro played: K-♦️
+>>> Arthur Castelani Cordeiro made with: K-♦️ <<< 
+
+[6/7]
+Arthur Castelani Cordeiro played: J-♠️
+Bill Marques played: 2-♣️
+Filipe Matosinhos played: 5-♣️
+>>> Arthur Castelani Cordeiro made with: J-♠️ <<< 
+
+[7/7]
+Arthur Castelani Cordeiro played: 7-♦️
+Bill Marques played: 8-♣️
+Filipe Matosinhos played: 3-♥️
+>>> Arthur Castelani Cordeiro made with: 7-♦️ <<< 
+
+Bailou:  Arthur Castelani Cordeiro
+Round ended!
+====================
+
+
+====================
+
+Round 8 started!
+6 cards
+trunfo J-♠️ 
+
+[CARDS]
+4-♣️, 4-♠️, K-♦️, A-♦️, 10-♠️, A-♠️
+A-♣️, 6-♦️, 6-♠️, 5-♠️, J-♦️, 10-♣️
+5-♦️, A-♥️, 10-♥️, 2-♠️, 8-♣️, 3-♥️
+[BETS]
+Filipe Matosinhos bet 4
+Arthur Castelani Cordeiro bet 2
+Bill Marques bet 1
+
+[1/6]
+Filipe Matosinhos played: A-♦️
+Arthur Castelani Cordeiro played: J-♦️
+Bill Marques played: 5-♦️
+>>> Filipe Matosinhos made with: A-♦️ <<< 
+
+[2/6]
+Filipe Matosinhos played: K-♦️
+Arthur Castelani Cordeiro played: 6-♦️
+Bill Marques played: A-♥️
+>>> Filipe Matosinhos made with: K-♦️ <<< 
+
+[3/6]
+Filipe Matosinhos played: 4-♣️
+Arthur Castelani Cordeiro played: A-♣️
+Bill Marques played: 8-♣️
+>>> Arthur Castelani Cordeiro made with: A-♣️ <<< 
+
+[4/6]
+Arthur Castelani Cordeiro played: 10-♣️
+Bill Marques played: 10-♥️
+Filipe Matosinhos played: 10-♠️
+>>> Filipe Matosinhos made with: 10-♠️ <<< 
+
+[5/6]
+Filipe Matosinhos played: 4-♠️
+Arthur Castelani Cordeiro played: 5-♠️
+Bill Marques played: 2-♠️
+>>> Arthur Castelani Cordeiro made with: 5-♠️ <<< 
+
+[6/6]
+Arthur Castelani Cordeiro played: 6-♠️
+Bill Marques played: 3-♥️
+Filipe Matosinhos played: A-♠️
+>>> Filipe Matosinhos made with: A-♠️ <<< 
+
+Bailou:  Bill Marques
+Round ended!
+====================
+
+
+====================
+
+Round 9 started!
+5 cards
+trunfo 6-♦️ 
+
+[CARDS]
+J-♣️, 10-♦️, Q-♠️, 3-♦️, 2-♥️
+K-♠️, 4-♣️, J-♥️, 9-♦️, 5-♦️
+Q-♣️, 3-♥️, 4-♠️, J-♠️, 8-♦️
+[BETS]
+Arthur Castelani Cordeiro bet 3
+Bill Marques bet 1
+Filipe Matosinhos bet 2
+
+[1/5]
+Arthur Castelani Cordeiro played: Q-♠️
+Bill Marques played: K-♠️
+Filipe Matosinhos played: 4-♠️
+>>> Bill Marques made with: K-♠️ <<< 
+
+[2/5]
+Bill Marques played: 5-♦️
+Filipe Matosinhos played: 8-♦️
+Arthur Castelani Cordeiro played: 10-♦️
+>>> Arthur Castelani Cordeiro made with: 10-♦️ <<< 
+
+[3/5]
+Arthur Castelani Cordeiro played: J-♣️
+Bill Marques played: 4-♣️
+Filipe Matosinhos played: Q-♣️
+>>> Filipe Matosinhos made with: Q-♣️ <<< 
+
+[4/5]
+Filipe Matosinhos played: 3-♥️
+Arthur Castelani Cordeiro played: 2-♥️
+Bill Marques played: J-♥️
+>>> Bill Marques made with: J-♥️ <<< 
+
+[5/5]
+Bill Marques played: 9-♦️
+Filipe Matosinhos played: J-♠️
+Arthur Castelani Cordeiro played: 3-♦️
+>>> Bill Marques made with: 9-♦️ <<< 
+
+Bailou:  Arthur Castelani Cordeiro,Bill Marques,Filipe Matosinhos
+Round ended!
+====================
+
+
+====================
+
+Round 10 started!
+4 cards
+trunfo 6-♠️ 
+
+[CARDS]
+A-♠️, 7-♣️, J-♣️, 3-♣️
+Q-♦️, 3-♠️, 5-♦️, 7-♦️
+8-♥️, 4-♥️, 10-♦️, 8-♦️
+[BETS]
+Bill Marques bet 1
+Filipe Matosinhos bet 0
+Arthur Castelani Cordeiro bet 0
+
+[1/4]
+Bill Marques played: 3-♣️
+Filipe Matosinhos played: Q-♦️
+Arthur Castelani Cordeiro played: 10-♦️
+>>> Bill Marques made with: 3-♣️ <<< 
+
+[2/4]
+Bill Marques played: 7-♣️
+Filipe Matosinhos played: 7-♦️
+Arthur Castelani Cordeiro played: 8-♦️
+>>> Bill Marques made with: 7-♣️ <<< 
+
+[3/4]
+Bill Marques played: A-♠️
+Filipe Matosinhos played: 3-♠️
+Arthur Castelani Cordeiro played: 8-♥️
+>>> Bill Marques made with: A-♠️ <<< 
+
+[4/4]
+Bill Marques played: J-♣️
+Filipe Matosinhos played: 5-♦️
+Arthur Castelani Cordeiro played: 4-♥️
+>>> Bill Marques made with: J-♣️ <<< 
+
+Bailou:  Bill Marques
+Round ended!
+====================
+
+
+====================
+
+Round 11 started!
+3 cards
+trunfo 3-♠️ 
+
+[CARDS]
+5-♥️, 4-♦️, Q-♥️
+5-♠️, Q-♣️, A-♥️
+9-♣️, 4-♠️, J-♣️
+[BETS]
+Filipe Matosinhos bet 0
+Arthur Castelani Cordeiro bet 2
+Bill Marques bet 0
+
+[1/3]
+Filipe Matosinhos played: 4-♦️
+Arthur Castelani Cordeiro played: 5-♠️
+Bill Marques played: 4-♠️
+>>> Arthur Castelani Cordeiro made with: 5-♠️ <<< 
+
+[2/3]
+Arthur Castelani Cordeiro played: Q-♣️
+Bill Marques played: J-♣️
+Filipe Matosinhos played: Q-♥️
+>>> Arthur Castelani Cordeiro made with: Q-♣️ <<< 
+
+[3/3]
+Arthur Castelani Cordeiro played: A-♥️
+Bill Marques played: 9-♣️
+Filipe Matosinhos played: 5-♥️
+>>> Arthur Castelani Cordeiro made with: A-♥️ <<< 
+
+Bailou:  Arthur Castelani Cordeiro
+Round ended!
+====================
+
+
+====================
+
+Round 12 started!
+2 cards
+trunfo A-♣️ 
+
+[CARDS]
+8-♠️, A-♦️
+7-♦️, 9-♥️
+2-♦️, 4-♣️
+[BETS]
+Arthur Castelani Cordeiro bet 2
+Bill Marques bet 0
+Filipe Matosinhos bet 1
+
+[1/2]
+Arthur Castelani Cordeiro played: A-♦️
+Bill Marques played: 7-♦️
+Filipe Matosinhos played: 2-♦️
+>>> Arthur Castelani Cordeiro made with: A-♦️ <<< 
+
+[2/2]
+Arthur Castelani Cordeiro played: 8-♠️
+Bill Marques played: 9-♥️
+Filipe Matosinhos played: 4-♣️
+>>> Filipe Matosinhos made with: 4-♣️ <<< 
+
+Bailou:  Arthur Castelani Cordeiro
+Round ended!
+====================
+
+
+====================
+
+Round 13 started!
+1 cards
+trunfo 8-♣️ 
+
+[CARDS]
+6-♣️
+A-♥️
+2-♣️
+[BETS]
+Bill Marques bet 1
+Filipe Matosinhos bet 0
+Arthur Castelani Cordeiro bet 0
+
+[1/1]
+Bill Marques played: 6-♣️
+Filipe Matosinhos played: A-♥️
+Arthur Castelani Cordeiro played: 2-♣️
+>>> Bill Marques made with: 6-♣️ <<< 
+
+Bailou:  
+
+Game ended!  Winner: Filipe Matosinhos with 119
+results 13
