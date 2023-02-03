@@ -89,8 +89,8 @@ export default component$(() => {
               <div id="game-stats">
                 <h1>Jogadores na fila:</h1>
                 <PlayerList players={game.queue} />
+                {canStartGame && <button class="btn" style={{ margin: 'auto'}} onClick$={handleStart}>START</button>} 
               </div>
-            {canStartGame && <button onClick$={handleStart}>START</button>} 
           </>
         )}}
         onRejected={err => <h1>{err}</h1>}

@@ -133,6 +133,14 @@ export default component$(() => {
                   {round.trunfo && <img class='card' src={`/cards/${round.trunfo}.svg`} />}
                 </span>
               </div>
+              <div class="bet-container">
+                {betAvailable.value.length > 0 && 
+                  betAvailable.value.map(b => {
+                    return <button class="btn bet-btn" onClick$={() => playBet(b)}>{b}</button>
+                  })
+                }
+              </div>
+
               <div id="game-stats">
                 <h1>Round: {game.currentRoundNumber}</h1>
                 <h1>N. de cartas: {game.currentRound.cardsForEachPlayer}</h1>
@@ -142,13 +150,6 @@ export default component$(() => {
                 
                 
               </div>
-              {betAvailable.value.length > 0 && 
-                <div style={{ display: 'flex '}}>
-                  {betAvailable.value.map(b => {
-                    return <button class="bet-btn" onClick$={() => playBet(b)}>{b}</button>
-                  })}
-                </div>
-              }
               <Hand cards={cards.value} onClick={playCard} />
           </>
         )}}
