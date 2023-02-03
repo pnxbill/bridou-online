@@ -1,0 +1,133 @@
+
+====================
+
+Round 1 started!
+1 cards
+trunfo 4-♠️ 
+
+[CARDS]
+2-♣️
+7-♠️
+[BETS]
+Bill Marques bet 1
+Bill Marques bet 0
+
+[1/1]
+Bill Marques played: 2-♣️
+Bill Marques played: 7-♠️
+>>> Bill Marques made with: 7-♠️ <<< 
+
+Bailou:  Bill Marques,Bill Marques
+Round ended!
+====================
+
+
+====================
+
+Round 2 started!
+2 cards
+trunfo 8-♥️ 
+
+[CARDS]
+5-♠️, 2-♥️
+Q-♥️, 5-♣️
+[BETS]
+Bill Marques bet 1
+Bill Marques bet 0
+
+[1/2]
+Bill Marques played: 2-♥️
+Bill Marques played: Q-♥️
+>>> Bill Marques made with: Q-♥️ <<< 
+
+[2/2]
+Bill Marques played: 5-♣️
+Bill Marques played: 5-♠️
+>>> Bill Marques made with: 5-♣️ <<< 
+
+Bailou:  Bill Marques,Bill Marques
+Round ended!
+====================
+
+
+====================
+
+Round 3 started!
+3 cards
+trunfo 9-♣️ 
+
+[CARDS]
+Q-♥️, A-♦️, K-♦️
+6-♣️, 2-♦️, K-♣️
+[BETS]
+Bill Marques bet 1
+Bill Marques bet 1
+
+[1/3]
+Bill Marques played: Q-♥️
+Bill Marques played: 2-♦️
+>>> Bill Marques made with: Q-♥️ <<< 
+
+[2/3]
+Bill Marques played: A-♦️
+Bill Marques played: K-♣️
+>>> Bill Marques made with: K-♣️ <<< 
+
+[3/3]
+Bill Marques played: 6-♣️
+Bill Marques played: K-♦️
+>>> Bill Marques made with: 6-♣️ <<< 
+
+Bailou:  Bill Marques
+Round ended!
+====================
+
+
+====================
+
+Round 4 started!
+4 cards
+trunfo 3-♥️ 
+
+[CARDS]
+Q-♦️, 4-♠️, 10-♠️, 4-♥️
+7-♦️, A-♥️, 8-♠️, 2-♥️
+[BETS]
+Bill Marques bet 3
+Bill Marques bet 3
+
+[1/4]
+Bill Marques played: 10-♠️
+Bill Marques played: 8-♠️
+>>> Bill Marques made with: 10-♠️ <<< 
+
+[2/4]
+Bill Marques played: 4-♥️
+Bill Marques played: A-♥️
+>>> Bill Marques made with: A-♥️ <<< 
+
+[3/4]
+Bill Marques played: 2-♥️
+Bill Marques played: 4-♠️
+>>> Bill Marques made with: 2-♥️ <<< 
+
+[4/4]
+Bill Marques played: 7-♦️
+Bill Marques played: Q-♦️
+>>> Bill Marques made with: Q-♦️ <<< 
+
+Bailou:  Bill Marques,Bill Marques
+Round ended!
+====================
+
+
+====================
+
+Round 5 started!
+5 cards
+trunfo A-♠️ 
+
+[CARDS]
+4-♦️, 7-♣️, A-♥️, 3-♥️, 10-♦️
+A-♣️, 3-♠️, 4-♥️, 6-♥️, 7-♥️
+[BETS]

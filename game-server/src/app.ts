@@ -14,9 +14,17 @@ class App {
   public constructor () {
     this.express = express()
     this.middlewares()
+    this.routes()
+
+    this.server = http.createServer(this.express)
+    this.io = new Server(this.server, {
+      cors: {
+        origin: '*'
+      }
+    })
+
     this.socket()
     // this.database()
-    this.routes()
   }
 
   private middlewares () {
@@ -25,18 +33,22 @@ class App {
   }
 
   private socket () {
-    this.server = http.createServer(this.express)
-    this.io = new Server(this.server, {
-      cors: {
-        origin: '*'
-      }
-    })
     this.io.on('connection', socket => {
       const { gameId, playerId } = socket.handshake.auth
       console.log('A user connected: ', playerId)
       const game = GameController.games[gameId]
       const queue = GameController.queue
       socket.join(gameId)
+
+      socket.on("disconnecting", (reason) => {
+        console.log('socket disconnected, reason: ', reason)
+        console.log(socket.rooms)
+      })
+
+      socket.conn.on("close", (reason) => {
+        console.log('socket close, reason: ', reason)
+        // called when the underlying connection is closed
+      });
 
       if (game) {
         const playerIndex = game.players.findIndex(p => p.id === playerId)

@@ -45,11 +45,7 @@ export interface TAuth {
 export const UserContext = createContext('user-context');
 export const AuthContext = createContext('auth-context');
 
-// export const instance = axios.create({
-//   baseURL: 'https://api.example.com'
-// });
-
-export const BASE_URL = ''
+export const BASE_URL = 'http://localhost:3000'
 axios.defaults.baseURL = BASE_URL
 
 export const Context = component$(() => {
