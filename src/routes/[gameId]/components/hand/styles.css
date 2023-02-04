@@ -1,0 +1,33 @@
+#status-bar {
+  background: #713fc2a3;
+  font-weight: 500;
+  font-size: 150%;
+  display: flex;
+  color: #fff;
+  justify-content: space-between;
+  padding: 2px;
+  border-bottom: 2px solid var(--qwik-dark-purple);
+}
+
+#status-bar span {
+  display: flex;
+}
+
+#status-bar img {
+  width: 40px;
+}
+
+.bet-container {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.bet-btn {
+  /* margin-right: 0.5rem; */
+  justify-self: flex-start;
+  margin-bottom: 0.3rem;
+}
+
+.bet-btn:last-child {
+  margin-right: 0;
+}
