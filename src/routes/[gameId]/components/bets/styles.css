@@ -1,0 +1,13 @@
+.bets-container {
+  width: 100%;
+}
+
+.bets-container ul {
+  width: 100%;
+}
+
+.bets-container ul li {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
