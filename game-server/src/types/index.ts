@@ -12,6 +12,7 @@ export interface TPlayer {
   made?: TNumOfBet
   totalPoints?: number
   socket: string
+  photoURL?: string
 }
 export interface TRound {
   players: TPlayer[]
