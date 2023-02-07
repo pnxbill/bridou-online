@@ -1,4 +1,4 @@
-import { TNumOfPlayers, TPlayer } from '../types'
+import { TNumOfPlayers, TPlayer, TRound } from '../types'
 import Round from './round'
 import Utils from '../utils'
 import fs from 'fs'
@@ -9,8 +9,8 @@ class Game {
   id: string
   players: TPlayer[]
   numOfPlayers: TNumOfPlayers
-  currentRound: Round
-  rounds: Round[]
+  currentRound: TRound
+  rounds: TRound[]
   currentRoundNumber: Round['currentRoundNumber']
 
   constructor({ players, id }: { players: TPlayer[], id: string}) {
@@ -18,7 +18,7 @@ class Game {
     this.players = players
     this.numOfPlayers = players.length as TNumOfPlayers
     this.currentRoundNumber = 1
-    this.rounds = []
+    this.rounds = [] as Round[]
     this.currentRound = {} as Round
   }
 
@@ -30,7 +30,7 @@ class Game {
 
   private end() {
     this.players.forEach(player => {
-      player.totalPoints = this.rounds.reduce((acc, cur) => acc + cur.players.find(p => p.id === player.id).points, 0)
+      player.totalPoints = this.rounds.reduce((acc, cur) => acc + (cur.players.find(p => p.id === player.id) as TPlayer).points, 0)
     })
 
     this.players = Utils.sortPlayers(this.players)
@@ -71,7 +71,7 @@ class Game {
   }
 
   private rotatePlayers() {
-    this.players.push(this.players.shift())
+    this.players.push(this.players.shift() as TPlayer)
   }
 }
 

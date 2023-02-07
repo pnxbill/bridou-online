@@ -6,9 +6,9 @@ export type TCards = string[]
 export interface TPlayer {
   id: string
   name: string
-  cards?: TCards
-  points?: number
-  bet?: TNumOfBet
+  cards: TCards
+  points: number
+  bet: TNumOfBet
   made?: TNumOfBet
   totalPoints?: number
   socket: string
@@ -21,8 +21,8 @@ export interface TRound {
   trunfo: string
   cards: TCards
   numOfCards: number
-  playedCards: any[][]
   currentRoundNumber: TNumOfRounds
+  bailadores: TPlayer[]
 }
 
 export interface TTurn {

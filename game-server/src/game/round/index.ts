@@ -32,7 +32,6 @@ class Round implements TRound {
     this.cardsForEachPlayer = (currentRoundNumber < FIRST_ROUND_DESCENDING ? currentRoundNumber : (MAX_CARDS - (currentRoundNumber - MAX_CARDS))) as TNumOfCards
     this.numOfCards = this.cardsForEachPlayer * this.numOfPlayers
     this.currentPlayerIndex = 0
-    this.playedCards = Array.from({ length: this.numOfPlayers }, () => [])
     this.whoMade = []
     this.bailadores = []
     this.cards = []
@@ -57,7 +56,7 @@ class Round implements TRound {
   }
 
   private dealCards(): TCards[] {
-    const playersCards = Array.from({ length: this.numOfPlayers }, () => [])
+    const playersCards: string[][] = Array.from({ length: this.numOfPlayers }, () => [])
 
     let player = 1
     for (let card = 1; card <= this.numOfCards; card++) {
@@ -128,17 +127,8 @@ class Round implements TRound {
     return this.whoMade.at(-1) || this.players[0]
   }
 
-  get roundCards() {
-    if (this.betting) return
-    return this.playedCards.map(c => c.at(-1))
-  }
-
   get currentPlayer() {
     return this.players[this.currentPlayerIndex]
-  }
-
-  get hasAllCardsBeenPlayed() {
-    return this.playedCards.reduce((acc, current) => acc + current.length, 0) === this.numOfCards
   }
 
   private distributePoints() {
@@ -164,7 +154,7 @@ class Round implements TRound {
     if (!turnPlayers.length) return
 
     while (turnPlayers[0].id !== this.firstToPlay.id) {
-      turnPlayers.unshift(turnPlayers.pop())
+      turnPlayers.unshift(turnPlayers.pop() as TPlayer)
     }
     this.currentTurn = new Turn({ gameId: this.gameId, players: turnPlayers, trunfo: this.trunfo })
   }

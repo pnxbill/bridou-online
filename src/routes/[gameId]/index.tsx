@@ -18,7 +18,7 @@ import type { TNumOfBet, TTurn } from '../../../game-server/src/types';
 import Table from './components/table';
 
 // This code runs in the Server
-export const onGet: RequestHandler<number> = async ({ params: { gameId }, cookie, response }) => {
+export const onGet: RequestHandler<TGame> = async ({ params: { gameId }, cookie, response }) => {
   const playerId = cookie.get('uid')?.value
   if (!playerId) throw response.redirect('/')
 
@@ -50,7 +50,7 @@ interface TRound {
 export default component$(() => {
   useStylesScoped$(styles);
   const { id, loading } = useContext<User>(UserContext)
-  const data = useEndpoint<TGame>()
+  const data = useEndpoint<typeof onGet>()
   const loaded = useSignal(false)
   const loc = useLocation()
   const cards = useSignal<TCard[]>([])
@@ -108,11 +108,11 @@ export default component$(() => {
       round.playedCards = res
     })
 
-    socket.on('turn-ended', (res: TGame['currentRound']['currentTurn']) => {
+    socket.on('turn-ended', (res: TTurn) => {
       round.currentTurn = res
     })
 
-    socket.on('turn-started', (res: TGame['currentRound']['currentTurn']) => {
+    socket.on('turn-started', (res: TTurn) => {
       round.currentTurn = res
     })
 

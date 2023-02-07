@@ -7,7 +7,9 @@ function log(...args: any[]) {
   // Append a new line with all the arguments to the `game.txt` file
   fs.appendFileSync('game.txt', args.join(' ') + '\n')
 
-  return (receiver) => app.io.to(receiver).emit('log', [...args].join(' '))
+  return (receiver: string) => {
+    app.io.to(receiver).emit('log', [...args].join(' '))
+  }
 }
 
 // Add the custom log function to the global object

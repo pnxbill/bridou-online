@@ -5,7 +5,7 @@ import Game from '../game'
 
 class _GameController {
   games: Record<string, Game>
-  queue: Partial<TPlayer>[]
+  queue: TPlayer[]
   queueId: string
 
   constructor() {
@@ -14,7 +14,7 @@ class _GameController {
     this.queueId = uuidv4()
   }
 
-  addPlayerToQueue(player: Partial<TPlayer>) {
+  addPlayerToQueue(player: TPlayer) {
     const queuedPlayersIds = this.queue.map(q => q.id)
     if (queuedPlayersIds.includes(player.id)) throw new Error('Already on the queue')
     this.queue.push(player)
