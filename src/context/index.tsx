@@ -45,7 +45,9 @@ export interface TAuth {
 export const UserContext = createContext('user-context');
 export const AuthContext = createContext('auth-context');
 
-export const BASE_URL = 'http://192.168.2.106:3001'
+export const isDevelopment = import.meta.env.DEV
+
+export const BASE_URL =  isDevelopment ? 'http://192.168.2.106:3001' : ''
 axios.defaults.baseURL = BASE_URL
 
 export const Context = component$(() => {
