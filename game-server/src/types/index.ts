@@ -23,6 +23,9 @@ export interface TRound {
   numOfCards: number
   currentRoundNumber: TNumOfRounds
   bailadores: TPlayer[]
+  whoMade?: TPlayer[]
+  currentTurn?: TTurn
+  turns: TTurn[]
 }
 
 export interface TTurn {
