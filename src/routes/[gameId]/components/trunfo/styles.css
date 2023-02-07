@@ -1,3 +1,10 @@
 .trunfo-container {
-  
+  padding: 0.5rem;
+  width: 30%;
+  margin: auto;
+  text-align: center;
+}
+
+.trunfo-container img.trunfo {
+  transform: rotate(190deg);  
 }
