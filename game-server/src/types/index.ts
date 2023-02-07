@@ -24,3 +24,11 @@ export interface TRound {
   playedCards: any[][]
   currentRoundNumber: TNumOfRounds
 }
+
+export interface TTurn {
+  gameId: string
+  players: TPlayer[]
+  suit: string
+  playedCards: string[]
+  trunfo: string
+}

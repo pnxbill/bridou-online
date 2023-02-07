@@ -14,7 +14,7 @@ import { getCookie } from '~/utils/cookie';
 import styles from './styles.css?inline';
 import Bets from './components/bets';
 import Trunfo from './components/trunfo';
-import { TNumOfBet, TNumOfCards } from '../../../game-server/src/types';
+import type { TNumOfBet, TTurn } from '../../../game-server/src/types';
 import Table from './components/table';
 
 // This code runs in the Server
@@ -42,8 +42,8 @@ interface TRound {
   playedCards: string[]
   numOfCards: TGame['currentRound']['cardsForEachPlayer']
   whoMade?: TGame['currentRound']['whoMade']
-  turns: TGame['currentRound']['turns']
-  currentTurn?: TGame['currentRound']['currentTurn']
+  turns: TTurn[]
+  currentTurn?: TTurn
 }
 
 
