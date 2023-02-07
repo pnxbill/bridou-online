@@ -4,6 +4,7 @@
 /lib-types
 /server
 *.txt
+game.txt
 
 # Development
 node_modules
