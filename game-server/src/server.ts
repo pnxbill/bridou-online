@@ -13,6 +13,6 @@ function log(...args: any[]) {
 // Add the custom log function to the global object
 global.log = log
 
-const PORT = 3000
+const PORT = 3001
 app.server.listen(PORT)
 console.log(`Server listening on port: ${PORT}`)
