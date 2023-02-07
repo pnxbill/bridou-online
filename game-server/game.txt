@@ -3,6 +3,7 @@
 
 Round 1 started!
 1 cards
+<<<<<<< HEAD
 trunfo 4-♣️ 
 
 [CARDS]
@@ -12,6 +13,17 @@ trunfo 4-♣️
 Bill Marques bet 1
 Bill Marques bet 0
 >>> Bill Marques made with: 6-♦️ <<< 
+=======
+trunfo 8-♥️ 
+
+[CARDS]
+8-♦️
+2-♠️
+[BETS]
+Bill Marques bet 1
+Bill Marques bet 0
+>>> Bill Marques made with: 8-♦️ <<< 
+>>>>>>> feature/game-screen-style
 
 Bailou:  
 Round ended!
@@ -20,6 +32,7 @@ Round ended!
 
 Round 2 started!
 2 cards
+<<<<<<< HEAD
 trunfo 8-♠️ 
 
 [CARDS]
@@ -31,14 +44,28 @@ Bill Marques bet 2
 >>> Bill Marques made with: J-♥️ <<< 
 
 >>> Bill Marques made with: Q-♠️ <<< 
+=======
+trunfo 4-♠️ 
 
-Bailou:  Bill Marques,Bill Marques
+[CARDS]
+A-♥️, 7-♥️
+8-♦️, Q-♣️
+[BETS]
+Bill Marques bet 1
+Bill Marques bet 0
+>>> Bill Marques made with: A-♥️ <<< 
+
+>>> Bill Marques made with: 7-♥️ <<< 
+>>>>>>> feature/game-screen-style
+
+Bailou:  Bill Marques
 Round ended!
 
 ====================
 
 Round 3 started!
 3 cards
+<<<<<<< HEAD
 trunfo 2-♥️ 
 
 [CARDS]
@@ -228,3 +255,13 @@ Bill Marques bet 1
 
 >>> Bill Marques made with: 10-♥️ <<< 
 
+=======
+trunfo 7-♣️ 
+
+[CARDS]
+4-♣️, K-♥️, 2-♦️
+8-♠️, Q-♦️, 9-♥️
+[BETS]
+Bill Marques bet 1
+Bill Marques bet 1
+>>>>>>> feature/game-screen-style

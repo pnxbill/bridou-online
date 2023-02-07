@@ -1,8 +1,7 @@
-import { QRL, useSignal, useStylesScoped$ } from '@builder.io/qwik';
+import { useStylesScoped$ } from '@builder.io/qwik';
 import { component$ } from '@builder.io/qwik';
-import Game from '../../../../../game-server/src/game';
-import Turn from '../../../../../game-server/src/game/turn';
-import { TPlayer } from '../../../../../game-server/src/types';
+import type Game from '../../../../../game-server/src/game';
+import type { TPlayer } from '../../../../../game-server/src/types';
 import styles from './styles.css?inline'
 
 export interface TCard {

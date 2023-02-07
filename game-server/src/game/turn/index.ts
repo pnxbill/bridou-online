@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { TNumOfPlayers, TPlayer } from '../../types'
+=======
+import { TNumOfPlayers, TPlayer, TTurn } from '../../types'
+>>>>>>> feature/game-screen-style
 import Round from './../round'
 import Utils from '../../utils'
 import fs from 'fs'
@@ -6,7 +10,11 @@ import fs from 'fs'
 import app from '../../app'
 import GameController from '../../controllers/GameController'
 
+<<<<<<< HEAD
 class Turn {
+=======
+class Turn implements TTurn {
+>>>>>>> feature/game-screen-style
   gameId: string
   players: TPlayer[]
   suit: string
