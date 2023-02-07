@@ -68,13 +68,38 @@ export default component$(() => {
   // eslint-disable-next-line qwik/single-jsx-root
   if (!id) return <h1>Favor logar acima</h1>
 
-  
+  const setState = $((game: TGame) => {
+    if (!game) return
+    cards.value = game.playableCards
+    round.trunfo = game.currentRound.trunfo
+    round.players = game.currentRound.players
+    round.numOfCards = game.currentRound.cardsForEachPlayer
+    round.whoMade = game.currentRound.whoMade
+    round.playedCards =  game.currentRound.currentTurn?.playedCards || []
+    round.currentTurn = game.currentRound.currentTurn
+    round.turns = game.currentRound.turns
+    if ((game.players[0].id === getCookie('uid')) && (game.currentRoundNumber === 1)) betAvailable.value = [0, 1]
+  })
 
   useClientEffect$(() => {
     const socket = io(BASE_URL, {
       auth: {
         gameId: loc.params.gameId,
         playerId: id
+      }
+    });
+
+    socket.on("disconnect", async (reason) => {
+      try {
+        const res = await axios.post('/api/enter-game', {
+          gameId: loc.params.gameId,
+          playerId: id
+        })
+        setState(res.data.game)
+      } catch(err: unknown) {
+        if (axios.isAxiosError(err) && err.response) {
+          console.error(err.response.data.message)
+        }
       }
     });
 
@@ -155,14 +180,7 @@ export default component$(() => {
   data.value.then(d => {
     if (loaded.value) return
     loaded.value = true
-    cards.value = d.playableCards
-    round.trunfo = d.currentRound.trunfo
-    round.players = d.currentRound.players
-    round.numOfCards = d.currentRound.cardsForEachPlayer
-    round.whoMade = d.currentRound.whoMade
-    round.playedCards =  d.currentRound.currentTurn?.playedCards || []
-    round.currentTurn = d.currentRound.currentTurn
-    round.turns = d.currentRound.turns 
+    setState(d)
     
     if ((d.players[0].id === getCookie('uid')) && (d.currentRoundNumber === 1)) betAvailable.value = [0, 1]
   })
