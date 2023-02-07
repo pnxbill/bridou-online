@@ -19,6 +19,7 @@ class Game {
     this.numOfPlayers = players.length as TNumOfPlayers
     this.currentRoundNumber = 1
     this.rounds = []
+    this.currentRound = {} as Round
   }
 
   start() {
@@ -45,6 +46,7 @@ class Game {
     global.log(this.currentRound.cardsForEachPlayer, 'cards')(this.id)
     global.log('trunfo', this.currentRound.trunfo, '\n')(this.id)
     global.log('[CARDS]')(this.id)
+    app.io.to(this.id).emit('round-started', this.currentRound)
     this.currentRound.players.forEach(player => {
       if (player.socket) {
         app.io.to(player.socket).emit('cards', player.cards)
@@ -64,7 +66,7 @@ class Game {
     this.currentRoundNumber++
     this.rotatePlayers()
     global.log('Round ended!')(this.id)
-    global.log('====================\n')(this.id)
+    app.io.to(this.id).emit('round-ended', this.currentRound.bailadores)
     this.startRound()
   }
 

@@ -3,189 +3,47 @@
 
 Round 1 started!
 1 cards
-trunfo 5-♥️ 
+trunfo 8-♥️ 
 
 [CARDS]
-7-♣️
-7-♦️
+8-♦️
+2-♠️
 [BETS]
+Bill Marques bet 1
 Bill Marques bet 0
-Bill Marques bet 0
+>>> Bill Marques made with: 8-♦️ <<< 
 
-[1/1]
-Bill Marques played: 7-♣️
-Bill Marques played: 7-♦️
->>> Bill Marques made with: 7-♣️ <<< 
-
-Bailou:  Bill Marques
+Bailou:  
 Round ended!
-====================
-
 
 ====================
 
 Round 2 started!
 2 cards
-trunfo K-♣️ 
+trunfo 4-♠️ 
 
 [CARDS]
-K-♦️, A-♣️
-J-♦️, 6-♣️
+A-♥️, 7-♥️
+8-♦️, Q-♣️
 [BETS]
 Bill Marques bet 1
-Bill Marques bet 2
+Bill Marques bet 0
+>>> Bill Marques made with: A-♥️ <<< 
 
-[1/2]
-Bill Marques played: A-♣️
-Bill Marques played: 6-♣️
->>> Bill Marques made with: A-♣️ <<< 
+>>> Bill Marques made with: 7-♥️ <<< 
 
-[2/2]
-Bill Marques played: K-♦️
-Bill Marques played: J-♦️
->>> Bill Marques made with: K-♦️ <<< 
-
-Bailou:  Bill Marques,Bill Marques
+Bailou:  Bill Marques
 Round ended!
-====================
-
 
 ====================
 
 Round 3 started!
 3 cards
-trunfo 2-♠️ 
+trunfo 7-♣️ 
 
 [CARDS]
-10-♣️, 9-♦️, 3-♠️
-K-♦️, 9-♣️, 3-♦️
+4-♣️, K-♥️, 2-♦️
+8-♠️, Q-♦️, 9-♥️
 [BETS]
-Bill Marques bet 2
-Bill Marques bet 2
-
-[1/3]
-Bill Marques played: 3-♠️
-Bill Marques played: 3-♦️
->>> Bill Marques made with: 3-♠️ <<< 
-
-[2/3]
-Bill Marques played: 9-♦️
-Bill Marques played: K-♦️
->>> Bill Marques made with: K-♦️ <<< 
-
-[3/3]
-Bill Marques played: 9-♣️
-Bill Marques played: 10-♣️
->>> Bill Marques made with: 10-♣️ <<< 
-
-Bailou:  Bill Marques
-Round ended!
-====================
-
-
-====================
-
-Round 4 started!
-4 cards
-trunfo 5-♥️ 
-
-[CARDS]
-8-♠️, 7-♥️, 7-♠️, Q-♠️
-5-♣️, A-♠️, Q-♥️, 7-♣️
-[BETS]
-Bill Marques bet 2
 Bill Marques bet 1
-
-[1/4]
-Bill Marques played: Q-♠️
-Bill Marques played: A-♠️
->>> Bill Marques made with: A-♠️ <<< 
-
-[2/4]
-Bill Marques played: 7-♣️
-Bill Marques played: 7-♠️
->>> Bill Marques made with: 7-♣️ <<< 
-
-[3/4]
-Bill Marques played: Q-♥️
-Bill Marques played: 7-♥️
->>> Bill Marques made with: Q-♥️ <<< 
-
-[4/4]
-Bill Marques played: 5-♣️
-Bill Marques played: 8-♠️
->>> Bill Marques made with: 5-♣️ <<< 
-
-Bailou:  Bill Marques,Bill Marques
-Round ended!
-====================
-
-
-====================
-
-Round 5 started!
-5 cards
-trunfo 4-♦️ 
-
-[CARDS]
-Q-♣️, 3-♣️, 5-♦️, 9-♥️, 10-♣️
-8-♣️, 3-♥️, 4-♠️, 3-♠️, 3-♦️
-[BETS]
-Bill Marques bet 4
-Bill Marques bet 4
-
-[1/5]
-Bill Marques played: 10-♣️
-Bill Marques played: 8-♣️
->>> Bill Marques made with: 10-♣️ <<< 
-
-[2/5]
-Bill Marques played: 9-♥️
-Bill Marques played: 3-♥️
->>> Bill Marques made with: 9-♥️ <<< 
-
-[3/5]
-Bill Marques played: 5-♦️
-Bill Marques played: 3-♦️
->>> Bill Marques made with: 5-♦️ <<< 
-
-[4/5]
-Bill Marques played: 3-♣️
-Bill Marques played: 3-♠️
->>> Bill Marques made with: 3-♣️ <<< 
-
-[5/5]
-Bill Marques played: Q-♣️
-Bill Marques played: 4-♠️
->>> Bill Marques made with: Q-♣️ <<< 
-
-Bailou:  Bill Marques,Bill Marques
-Round ended!
-====================
-
-
-====================
-
-Round 6 started!
-6 cards
-trunfo 9-♣️ 
-
-[CARDS]
-3-♣️, Q-♣️, A-♥️, 6-♥️, 8-♦️, Q-♦️
-A-♠️, 5-♦️, 7-♦️, K-♦️, 2-♠️, 10-♠️
-[BETS]
-Bill Marques bet 2
-Bill Marques bet 2
-
-[1/6]
-Bill Marques played: Q-♦️
-Bill Marques played: K-♦️
->>> Bill Marques made with: K-♦️ <<< 
-
-[2/6]
-Bill Marques played: 10-♠️
-Bill Marques played: 8-♦️
->>> Bill Marques made with: 10-♠️ <<< 
-
-[3/6]
-Bill Marques played: 7-♦️
+Bill Marques bet 1

@@ -9,14 +9,15 @@ import styles from './styles.css?inline';
 export default component$(() => {
   useStylesScoped$(styles);
   const nav = useNavigate()
-  const { name, id, loading } = useContext<User>(UserContext)
+  const { name, id, loading, photoURL } = useContext<User>(UserContext)
 
   const enterQueue = $(async () => {
     try {
       const res = await axios.post('/api/enter-queue', {
         user: {
           id,
-          name
+          name,
+          photoURL
         }
       })
       console.log('enter queue success', res.data)

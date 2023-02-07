@@ -90,7 +90,7 @@ routes.post('/api/play-card', (req, res) => {
   const game = GameController.games[gameId]
 
   try {
-    game.currentRound.playCard(playerId, card)
+    game.currentRound.currentTurn?.playCard(playerId, card)
     res.json({
       message: 'ok'
     }).status(200)

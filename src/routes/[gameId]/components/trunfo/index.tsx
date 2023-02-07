@@ -1,5 +1,7 @@
-import type { QRL } from '@builder.io/qwik';
+import { useStylesScoped$ } from '@builder.io/qwik';
 import { component$ } from '@builder.io/qwik';
+import styles from './styles.css?inline'
+
 
 export interface TCard {
   value: string
@@ -11,11 +13,12 @@ interface Props {
 }
 
 export default component$(({ value }: Props) => {
-  
+  useStylesScoped$(styles);
+
 
   return (
     <div class="trunfo-container">
-       <img class='card' src={`/cards/${value}.svg`} />
+       <img class='card trunfo' src={`/cards/${value}.svg`} />
     </div>
   );
 });

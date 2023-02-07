@@ -1,5 +1,6 @@
-import type { QRL } from '@builder.io/qwik';
+import { QRL, useStylesScoped$ } from '@builder.io/qwik';
 import { component$ } from '@builder.io/qwik';
+import styles from './styles.css?inline'
 
 export interface TCard {
   value: string
@@ -12,11 +13,12 @@ interface Props {
 }
 
 export default component$(({ cards, onClick }: Props) => {
+  useStylesScoped$(styles)
   if (!cards?.length) return null
   
 
   return (
-    <div class="hand hhand-compact">
+    <div class="hand hhand-compact livre">
       {cards.sort((a, b) => {
           if (a.disabled && b.disabled) return 1
           if (a.disabled && !b.disabled) return -1

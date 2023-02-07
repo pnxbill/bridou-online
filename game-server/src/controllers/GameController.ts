@@ -26,7 +26,6 @@ class _GameController {
 
     const newGame = new Game({ players: [...this.queue], id: this.queueId })
     this.games[this.queueId] = newGame
-    // setTimeout(newGame.start, 4000)
 
     newGame.start()
     this.cleanUpQueue()

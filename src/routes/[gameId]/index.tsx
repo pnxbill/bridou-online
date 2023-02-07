@@ -8,10 +8,14 @@ import { BASE_URL} from '~/context';
 import { UserContext } from '~/context';
 import type { TGame } from '../../../types'
 import type { TCard } from '~/components/hand';
-import Hand from '~/components/hand';
+import Hand from './components/hand';
 import { io } from "socket.io-client";
 import { getCookie } from '~/utils/cookie';
 import styles from './styles.css?inline';
+import Bets from './components/bets';
+import Trunfo from './components/trunfo';
+import type { TNumOfBet, TTurn } from '../../../game-server/src/types';
+import Table from './components/table';
 
 // This code runs in the Server
 export const onGet: RequestHandler<number> = async ({ params: { gameId }, cookie, response }) => {
@@ -31,6 +35,18 @@ export const onGet: RequestHandler<number> = async ({ params: { gameId }, cookie
   }
 };
 
+interface TRound {
+  trunfo: string
+  players: TGame['currentRound']['players']
+  bailadores?: TGame['currentRound']['bailadores']
+  playedCards: string[]
+  numOfCards: TGame['currentRound']['cardsForEachPlayer']
+  whoMade?: TGame['currentRound']['whoMade']
+  turns: TTurn[]
+  currentTurn?: TTurn
+}
+
+
 export default component$(() => {
   useStylesScoped$(styles);
   const { id, loading } = useContext<User>(UserContext)
@@ -39,8 +55,12 @@ export default component$(() => {
   const loc = useLocation()
   const cards = useSignal<TCard[]>([])
   const betAvailable = useSignal<number[]>([])
-  const round = useStore({
-    trunfo: ''
+  const round = useStore<TRound>({
+    trunfo: '',
+    players: [],
+    playedCards: [],
+    turns: [],
+    numOfCards: 0 as TGame['currentRound']['cardsForEachPlayer']
   })
 
   // eslint-disable-next-line qwik/single-jsx-root
@@ -75,12 +95,39 @@ export default component$(() => {
       cards.value = res
     })
 
-    socket.on('bet-time', (res: number[]) => {      
+    socket.on('bet-time', (res: number[]) => {     
+      console.log('receveid bet-time', res) 
       betAvailable.value = res
+    })
+
+    socket.on('player-bet', (res: {id: string, bet: TNumOfBet}) => {
+      round.players = round.players.map(p => p.id === res.id ? ({...p, bet: res.bet }) : p)
+    })
+
+    socket.on('player-play', (res: string[]) => {
+      round.playedCards = res
+    })
+
+    socket.on('turn-ended', (res: TGame['currentRound']['currentTurn']) => {
+      round.currentTurn = res
+    })
+
+    socket.on('turn-started', (res: TGame['currentRound']['currentTurn']) => {
+      round.currentTurn = res
     })
 
     socket.on('set-trunfo', (res: string) => {
       round.trunfo = res
+    })
+
+    socket.on('round-ended', (res: TGame['currentRound']['bailadores']) => {
+      round.bailadores = res
+      round.playedCards = []
+    })
+
+    socket.on('round-started', (res: TGame['currentRound']) => {
+      round.trunfo = res.trunfo
+      round.players = res.players
     })
   })
 
@@ -110,13 +157,18 @@ export default component$(() => {
     loaded.value = true
     cards.value = d.playableCards
     round.trunfo = d.currentRound.trunfo
-    
+    round.players = d.currentRound.players
+    round.numOfCards = d.currentRound.cardsForEachPlayer
+    round.whoMade = d.currentRound.whoMade
+    round.playedCards =  d.currentRound.currentTurn?.playedCards || []
+    round.currentTurn = d.currentRound.currentTurn
+    round.turns = d.currentRound.turns 
     
     if ((d.players[0].id === getCookie('uid')) && (d.currentRoundNumber === 1)) betAvailable.value = [0, 1]
   })
  
   return (
-    <div>
+    <div class="game-page">
       <Resource
         value={data}
         onResolved={(game) => {
@@ -126,12 +178,14 @@ export default component$(() => {
           return (
             <>
               <div id="status-bar">
-                <span>
+                <Bets players={round.players} />
+                <Trunfo value={round.trunfo} />
+                {/* <span>
                   #{game.currentRoundNumber}
                 </span>
                 <span>
                   {round.trunfo && <img class='card' src={`/cards/${round.trunfo}.svg`} />}
-                </span>
+                </span> */}
               </div>
               <div class="bet-container">
                 {betAvailable.value.length > 0 && 
@@ -140,8 +194,9 @@ export default component$(() => {
                   })
                 }
               </div>
-
-              <div id="game-stats">
+              {!!round.currentTurn && 
+                <Table playedCards={round.playedCards} currentTurn={round.turns.length + 1} maxTurns={round.numOfCards} players={round.currentTurn?.players}/>}
+              {/* <div id="game-stats">
                 <h1>Round: {game.currentRoundNumber}</h1>
                 <h1>N. de cartas: {game.currentRound.cardsForEachPlayer}</h1>
                 <ul>
@@ -149,7 +204,7 @@ export default component$(() => {
                 </ul>
                 
                 
-              </div>
+              </div> */}
               <Hand cards={cards.value} onClick={playCard} />
           </>
         )}}
