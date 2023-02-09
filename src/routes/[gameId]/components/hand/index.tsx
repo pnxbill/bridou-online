@@ -15,9 +15,7 @@ interface Props {
 
 export default component$(({ cards, onClick }: Props) => {
   useStylesScoped$(styles)
-  if (!cards?.length) return null
-  console.warn('arrive cards', cards)
-  
+  if (!cards?.length) return null  
 
   return (
     <div class="hand hhand-compact livre">
