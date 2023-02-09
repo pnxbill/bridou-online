@@ -95,6 +95,7 @@ export default component$(() => {
     });
 
     socket.on("disconnect", async (reason) => {
+      console.log(`disconnect reason: ${reason}`)
       try {
         const res = await axios.post('/api/enter-game', {
           gameId: loc.params.gameId,

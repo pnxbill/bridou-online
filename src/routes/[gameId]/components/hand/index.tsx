@@ -1,4 +1,5 @@
-import { QRL, useStylesScoped$ } from '@builder.io/qwik';
+import { useStylesScoped$ } from '@builder.io/qwik';
+import type { QRL } from '@builder.io/qwik'
 import { component$ } from '@builder.io/qwik';
 import styles from './styles.css?inline'
 
