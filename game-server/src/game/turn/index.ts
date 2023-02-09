@@ -55,7 +55,7 @@ class Turn implements TTurn {
   }
 
   private checkIfPlayerHasCard(playerId: TPlayer['id'], card: string) {
-    const player = this.players.find(player => player.id === playerId)
+    const player = this.players.find(player => player.id === playerId) as TPlayer
     if (!player.cards.includes(card)) throw new Error(`Player ${player.name} doesn't have the card: ${card}`)
   }
 
@@ -70,7 +70,7 @@ class Turn implements TTurn {
     // If card is the same suit as current suit, we let it pass
     if (cardSuit === this.suit) return
 
-    const playerCards = this.players.find(p => p.id === playerId).cards.map((c: string) => c.split('-')[1])
+    const playerCards = (this.players.find(p => p.id === playerId) as TPlayer).cards.map((c: string) => c.split('-')[1])
     if (playerCards.includes(this.suit)) throw new Error('If you have a card with the current suit, you must play it')
   }
 

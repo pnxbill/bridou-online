@@ -32,7 +32,7 @@ export default component$(({ cards, onClick }: Props) => {
             <img class='card' src={`/cards/${card.value}.svg`} onClick$={() => onClick(card)}/>
           </button>
         )
-        ))}
+      ))}
     </div>
   );
 });

@@ -32,6 +32,8 @@ export interface TRound {
   getPlayableCards: (playerId?: TPlayer['id']) => void
   addBetToPlayer: (playerId: TPlayer['id'], bet: TPlayer['bet']) => void
   getAvailableBets: () => number[]
+  startTurn: () => void
+  endTurn: () => void
 }
 
 export interface TTurn {
@@ -40,4 +42,5 @@ export interface TTurn {
   suit: string
   playedCards: string[]
   trunfo: string
+  playCard: (playerId: TPlayer['id'], card: string) => void
 }
