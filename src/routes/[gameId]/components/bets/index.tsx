@@ -1,5 +1,5 @@
 import { component$, useStylesScoped$ } from '@builder.io/qwik';
-import { TGame } from '../../../../../types';
+import type { TGame } from '../../../../../types';
 import styles from './styles.css?inline'
 
 export interface TCard {
@@ -18,7 +18,6 @@ export default component$(({ players }: Props) => {
   return (
     <div class="bets-container">
       <ul>
-        {/* {players.concat(players).concat(players).concat(players[0]).map(player => { */}
         {players.map(player => {
           return (
             <li>

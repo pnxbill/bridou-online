@@ -43,8 +43,8 @@ interface TRound {
   playedCards: string[]
   numOfCards: TGame['currentRound']['cardsForEachPlayer']
   whoMade?: TGame['currentRound']['whoMade']
-  turns: TTurn[]
-  currentTurn?: TTurn
+  turns: Omit<TTurn, "playCard">[]
+  currentTurn?: Omit<TTurn, "playCard">
   cards: TCard[]
 }
 

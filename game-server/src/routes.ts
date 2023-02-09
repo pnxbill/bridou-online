@@ -16,9 +16,10 @@ routes.post('/api/enter-queue', (req, res) => {
       leaderId: queue[0].id
     }).status(200)
   } catch (err) {
-    res.status(401).json({
-      message: err.message
-    })
+    if (err instanceof Error)
+      res.status(401).json({
+        message: err.message
+      })
   }
 })
 
@@ -31,10 +32,10 @@ routes.get('/api/start-game', (req, res) => {
       gameId: game.id
     }).status(200)
   } catch (err) {
-    console.log('err', err.message)
-    res.status(401).json({
-      message: err.message
-    })
+    if (err instanceof Error)
+      res.status(401).json({
+        message: err.message
+      })
   }
 })
 
@@ -79,10 +80,10 @@ routes.post('/api/bet', (req, res) => {
       message: 'ok'
     }).status(200)
   } catch (err) {
-    res.status(401).json({
-      message: err.message
-    })
-    console.log(err.message)
+    if (err instanceof Error)
+      res.status(401).json({
+        message: err.message
+      })
   }
 })
 
@@ -97,10 +98,10 @@ routes.post('/api/play-card', (req, res) => {
       message: 'ok'
     }).status(200)
   } catch (err) {
-    res.status(401).json({
-      message: err.message
-    })
-    console.log(err.message)
+    if (err instanceof Error)
+      res.status(401).json({
+        message: err.message
+      })
   }
 })
 
