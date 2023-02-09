@@ -227,12 +227,18 @@ export default component$(() => {
                 }
               </div>
               {!!round.currentTurn && 
-                <Table playedCards={round.playedCards} currentTurn={round.turns.length + 1} maxTurns={round.numOfCards} players={round.currentTurn?.players}/>}
+                <Table 
+                  playedCards={round.playedCards} 
+                  currentTurn={round.turns.length + 1} 
+                  maxTurns={round.numOfCards} 
+                  players={round.currentTurn?.players}
+                />
+              }
+              <Hand cards={round.cards} onClick={playCard} />
           </>
         )}}
         onRejected={err => <h1>{err}</h1>}
       />
-      <Hand cards={round.cards} onClick={playCard} />
     </div>
   );
 });
