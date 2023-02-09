@@ -228,9 +228,9 @@ export default component$(() => {
               </div>
               {!!round.currentTurn && 
                 <Table 
-                  playedCards={round.playedCards} 
-                  currentTurn={round.turns.length + 1} 
-                  maxTurns={round.numOfCards} 
+                  playedCards={round.playedCards}
+                  currentTurn={round.turns.length + 1}
+                  maxTurns={round.numOfCards}
                   players={round.currentTurn?.players}
                 />
               }
