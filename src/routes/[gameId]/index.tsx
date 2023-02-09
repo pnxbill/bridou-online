@@ -14,8 +14,9 @@ import { getCookie } from '~/utils/cookie';
 import styles from './styles.css?inline';
 import Bets from './components/bets';
 import Trunfo from './components/trunfo';
-import type { TNumOfBet, TTurn } from '../../../game-server/src/types';
+import type { TNumOfBet, TPlayer, TTurn } from '../../../game-server/src/types';
 import Table from './components/table';
+import Score from './components/score';
 
 // This code runs in the Server
 export const onGet: RequestHandler<TGame> = async ({ params: { gameId }, cookie, response }) => {
@@ -49,12 +50,13 @@ interface TRound {
 
 export default component$(() => {
   useStylesScoped$(styles);
-  const { id, loading } = useContext<User>(UserContext)
+  const { id, loading, isGM } = useContext<User>(UserContext)
   const data = useEndpoint<typeof onGet>()
   const loaded = useSignal(false)
   const loc = useLocation()
   const cards = useSignal<TCard[]>([])
   const betAvailable = useSignal<number[]>([])
+  const score = useSignal<TPlayer[] | null>(null)
   const round = useStore<TRound>({
     trunfo: '',
     players: [],
@@ -71,6 +73,7 @@ export default component$(() => {
   const setState = $((game: TGame) => {
     if (!game) return
     cards.value = game.playableCards
+    score.value = game.scoreboardShowing ? game.scoreboard : null
     round.trunfo = game.currentRound.trunfo
     round.players = game.currentRound.players
     round.numOfCards = game.currentRound.cardsForEachPlayer
@@ -78,7 +81,9 @@ export default component$(() => {
     round.playedCards =  game.currentRound.currentTurn?.playedCards || []
     round.currentTurn = game.currentRound.currentTurn
     round.turns = game.currentRound.turns
+    
     if ((game.players[0].id === getCookie('uid')) && (game.currentRoundNumber === 1)) betAvailable.value = [0, 1]
+    else betAvailable.value = game.availableBets
   })
 
   useClientEffect$(() => {
@@ -118,6 +123,7 @@ export default component$(() => {
 
     socket.on('play-time', (res: TCard[]) => {
       cards.value = res
+      console.log('received playtime', res)
     })
 
     socket.on('bet-time', (res: number[]) => {     
@@ -154,6 +160,14 @@ export default component$(() => {
       round.trunfo = res.trunfo
       round.players = res.players
     })
+
+    socket.on('scoreboard', (res: TPlayer[]) => {
+      score.value = res
+    })
+
+    socket.on('close-scoreboard', () => {
+      if (score.value) score.value = null
+    })
   })
 
   const playCard = $((card: TCard) => {
@@ -177,12 +191,15 @@ export default component$(() => {
     })
   })
 
+  const closeScoreboard = $(() => {
+    axios.get(`/api/close-score?gameId=${loc.params.gameId}`)
+    score.value = null
+  })
+
   data.value.then(d => {
     if (loaded.value) return
     loaded.value = true
-    setState(d)
-    
-    if ((d.players[0].id === getCookie('uid')) && (d.currentRoundNumber === 1)) betAvailable.value = [0, 1]
+    setState(d)    
   })
  
   return (
@@ -193,17 +210,18 @@ export default component$(() => {
           // eslint-disable-next-line qwik/single-jsx-root
           if (typeof game === 'string') return <h1>{game}</h1>
 
+          if (score.value) return (
+            <Score
+              players={score.value}
+              onClick={(isGM || game.leaderId === id) ? closeScoreboard : undefined}
+            />
+          )
+
           return (
             <>
               <div id="status-bar">
                 <Bets players={round.players} />
                 <Trunfo value={round.trunfo} />
-                {/* <span>
-                  #{game.currentRoundNumber}
-                </span>
-                <span>
-                  {round.trunfo && <img class='card' src={`/cards/${round.trunfo}.svg`} />}
-                </span> */}
               </div>
               <div class="bet-container">
                 {betAvailable.value.length > 0 && 
@@ -214,15 +232,6 @@ export default component$(() => {
               </div>
               {!!round.currentTurn && 
                 <Table playedCards={round.playedCards} currentTurn={round.turns.length + 1} maxTurns={round.numOfCards} players={round.currentTurn?.players}/>}
-              {/* <div id="game-stats">
-                <h1>Round: {game.currentRoundNumber}</h1>
-                <h1>N. de cartas: {game.currentRound.cardsForEachPlayer}</h1>
-                <ul>
-                  {game.players.map(player => (<li>{player.name}</li>))}
-                </ul>
-                
-                
-              </div> */}
               <Hand cards={cards.value} onClick={playCard} />
           </>
         )}}

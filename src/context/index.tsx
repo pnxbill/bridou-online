@@ -34,6 +34,7 @@ export interface User {
   id?: string
   photoURL?: string | null
   loading?: boolean
+  isGM?: boolean
 }
 
 export interface TAuth {
@@ -68,6 +69,7 @@ export const Context = component$(() => {
       user.id = firebaseUser?.uid
       user.photoURL = firebaseUser?.photoURL
       user.name = firebaseUser?.displayName
+      user.isGM = firebaseUser?.uid === 'nIrszj4f3Actvh5YmQSev5CQvHz2'
       if (firebaseUser) setCookie('uid', firebaseUser.uid, 1)
     })
   })

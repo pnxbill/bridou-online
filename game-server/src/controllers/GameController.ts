@@ -24,7 +24,7 @@ class _GameController {
   startNewGame() {
     if (this.queue.length < 2) throw new Error('Required at least 2 players')
 
-    const newGame = new Game({ players: [...this.queue], id: this.queueId })
+    const newGame = new Game({ players: [...this.queue], id: this.queueId, leaderId: this.queue[0].id })
     this.games[this.queueId] = newGame
 
     newGame.start()

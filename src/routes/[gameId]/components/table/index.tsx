@@ -12,7 +12,7 @@ export interface TCard {
 interface Props {
   playedCards: string[]
   currentTurn: number
-  players?: TPlayer[]
+  players: TPlayer[]
   maxTurns: Game['currentRound']['cardsForEachPlayer']
 }
 
@@ -20,7 +20,8 @@ export default component$(({ playedCards, currentTurn, maxTurns, players }: Prop
   useStylesScoped$(styles)
   // const 
   // const turnIndex = useSignal(currentTurn)
-  
+  const hasTurnFinished = playedCards.length === players.length
+  const nextPlayerIndex = hasTurnFinished ? 0 : playedCards.length
 
   return (
     <div class="table-container">
@@ -35,10 +36,14 @@ export default component$(({ playedCards, currentTurn, maxTurns, players }: Prop
               </>
             )
           })}
+          {!hasTurnFinished && (
+            <img
+              class='player-pic current'
+              style={{marginLeft: `calc(30px + ${46 * playedCards.length}px)`}}
+              src={players[nextPlayerIndex].photoURL}
+            />
+          )}
         </div>
-        {/* <div class="who-made-list">
-          {players && }
-        </div> */}
       </div>
     </div>
   );

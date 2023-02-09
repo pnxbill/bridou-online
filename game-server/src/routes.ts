@@ -1,7 +1,6 @@
 import { Router } from 'express'
 import GameController from './controllers/GameController'
 import app from './app'
-import Utils from './utils'
 
 const routes = Router()
 
@@ -22,6 +21,7 @@ routes.post('/api/enter-queue', (req, res) => {
     })
   }
 })
+
 routes.get('/api/start-game', (req, res) => {
   try {
     const game = GameController.startNewGame()
@@ -37,6 +37,7 @@ routes.get('/api/start-game', (req, res) => {
     })
   }
 })
+
 routes.post('/api/enter-game', (req, res) => {
   const { gameId, playerId } = req.body
   if (!gameId || !playerId) return
@@ -51,15 +52,14 @@ routes.post('/api/enter-game', (req, res) => {
       return
     }
 
-    const isCurrentPlayer = game.currentRound.currentPlayer.id === playerId
-    const isBetTime = game.currentRound.betting
-
-    if (isCurrentPlayer && isBetTime) setTimeout(game.currentRound.sendBetSocket.bind(game.currentRound), 1500)
-
-    if (player.socket) { setTimeout(() => Utils.processLineByLine(app.io, player.socket || '', playerId, gameId), 1000) }
     res.json({
       message: 'ok',
-      game: { ...game, playableCards: game.currentRound.getPlayableCards.bind(game.currentRound, playerId)() }
+      game: { 
+        ...game,
+        scoreboard: game.scoreboard,
+        playableCards: game.currentRound.getPlayableCards.bind(game.currentRound, playerId)(),
+        availableBets: game.currentRound.getAvailableBets.bind(game.currentRound, playerId)()
+      }
     }).status(200)
   } else {
     res.status(404).json({
@@ -67,6 +67,7 @@ routes.post('/api/enter-game', (req, res) => {
     })
   }
 })
+
 routes.post('/api/bet', (req, res) => {
   const { gameId, playerId, bet } = req.body
   if (!gameId || !playerId || isNaN(bet)) return
@@ -84,6 +85,7 @@ routes.post('/api/bet', (req, res) => {
     console.log(err.message)
   }
 })
+
 routes.post('/api/play-card', (req, res) => {
   const { gameId, playerId, card } = req.body
   if (!gameId || !playerId || !card) return
@@ -101,6 +103,7 @@ routes.post('/api/play-card', (req, res) => {
     console.log(err.message)
   }
 })
+
 routes.get('/api/queue', (req, res) => {
   const { queue, queueId } = GameController
   res.status(200).json({
@@ -108,6 +111,20 @@ routes.get('/api/queue', (req, res) => {
     leaderId: queue[0]?.id,
     queueId,
     queue
+  })
+})
+
+routes.get('/api/close-score', (req, res) => {
+  let { gameId } = req.query
+  if (!gameId) return
+  gameId = String(gameId)
+  const { games } = GameController
+  if (!games[gameId]) return
+
+  app.io.to(String(gameId)).emit('close-scoreboard')
+  games[gameId].scoreboardShowing = false
+  res.status(200).json({
+    message: 'ok',
   })
 })
 

@@ -37,7 +37,7 @@ interface TResponse {
 
 export default component$(() => {
   const nav = useNavigate()
-  const { id } = useContext<User>(UserContext)
+  const { id, isGM } = useContext<User>(UserContext)
   const data = useEndpoint<typeof onGet>()
   const game = useStore<{id: TResponse['queueId'], queue: TResponse['queue']}>({
     queue: [],
@@ -82,7 +82,7 @@ export default component$(() => {
           // eslint-disable-next-line qwik/single-jsx-root
           if (typeof res === 'string') return <h1>{res}</h1>
 
-          const canStartGame = (id === 'nIrszj4f3Actvh5YmQSev5CQvHz2') || (res?.leaderId === id)
+          const canStartGame = isGM || (res?.leaderId === id)
           
           return (
             <>

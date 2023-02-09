@@ -11,8 +11,8 @@ class Utils {
     A: 14
   } as const
 
-  static sortPlayers(players: TPlayer[]) {
-    players.sort((a, b) => {
+  static sortPlayersByPoint(players: TPlayer[]) {
+    return players.slice().sort((a, b) => {
       if (a.totalPoints > b.totalPoints) {
         return -1
       }
@@ -21,7 +21,6 @@ class Utils {
       }
       return 0
     })
-    return players
   }
 
   static getCardValue(card) {

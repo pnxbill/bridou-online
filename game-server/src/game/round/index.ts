@@ -77,7 +77,9 @@ class Round implements TRound {
     return this.currentTurn.getPlayableCards()
   }
 
-  sendBetSocket() {
+  getAvailableBets(playerId?: TPlayer['id']) {
+    if (!this.betting || (playerId && (this.currentPlayer.id !== playerId))) return []
+
     const isLastPlayer = this.players.at(-1)?.id === this.currentPlayer.id
     const availableBets = []
     const totalBets = this.players.slice(0, -1).reduce((acc, current) => acc + (current.bet || 0), 0)
@@ -87,7 +89,11 @@ class Round implements TRound {
       availableBets.push(i)
     }
 
-    app.io.to(this.currentPlayer.socket).emit('bet-time', availableBets)
+    return availableBets
+  }
+
+  sendBetSocket() {
+    app.io.to(this.currentPlayer.socket).emit('bet-time', this.getAvailableBets())
   }
 
   addBetToPlayer(playerId: TPlayer['id'], bet: TNumOfBet) {

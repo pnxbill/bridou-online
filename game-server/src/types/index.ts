@@ -26,6 +26,12 @@ export interface TRound {
   whoMade?: TPlayer[]
   currentTurn?: TTurn
   turns: TTurn[]
+  betting: boolean
+  currentPlayer: TPlayer
+  sendBetSocket: () => void
+  getPlayableCards: (playerId?: TPlayer['id']) => void
+  addBetToPlayer: (playerId: TPlayer['id'], bet: TPlayer['bet']) => void
+  getAvailableBets: () => number[]
 }
 
 export interface TTurn {

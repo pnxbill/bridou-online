@@ -38,3 +38,13 @@ img.player-pic {
   position: absolute;
   bottom: -15;
 }
+
+.current {
+  animation: blinker 1700ms linear infinite;
+}
+
+@keyframes blinker {
+  50% {
+    opacity: 0;
+  }
+}

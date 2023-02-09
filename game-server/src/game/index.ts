@@ -7,19 +7,23 @@ import app from '../app'
 
 class Game {
   id: string
+  leaderId: string
   players: TPlayer[]
   numOfPlayers: TNumOfPlayers
   currentRound: TRound
   rounds: TRound[]
   currentRoundNumber: Round['currentRoundNumber']
+  scoreboardShowing: boolean
 
-  constructor({ players, id }: { players: TPlayer[], id: string}) {
+  constructor({ players, id, leaderId }: { players: TPlayer[], id: string, leaderId: string }) {
     this.id = id
+    this.leaderId = leaderId
     this.players = players
     this.numOfPlayers = players.length as TNumOfPlayers
     this.currentRoundNumber = 1
     this.rounds = [] as Round[]
     this.currentRound = {} as Round
+    this.scoreboardShowing = false
   }
 
   start() {
@@ -29,14 +33,10 @@ class Game {
   }
 
   private end() {
-    this.players.forEach(player => {
-      player.totalPoints = this.rounds.reduce((acc, cur) => acc + (cur.players.find(p => p.id === player.id) as TPlayer).points, 0)
-    })
-
-    this.players = Utils.sortPlayers(this.players)
-
-    global.log('\nGame ended!', ` Winner: ${this.players[0].name} with ${this.players[0].totalPoints}`)(this.id)
-    global.log('results', JSON.stringify(this.rounds.length))(this.id)
+    this.players = this.scoreboard
+    this.sendScoreboardSocket()
+    console.log('\nGame ended!', ` Winner: ${this.players[0].name} with ${this.players[0].totalPoints}`)
+    console.log('results', JSON.stringify(this.rounds.length))
   }
 
   private startRound() {
@@ -63,11 +63,27 @@ class Game {
       this.end()
       return
     }
+    if (this.currentRoundNumber === 7) {
+      this.scoreboardShowing = true
+      this.sendScoreboardSocket()
+    }
     this.currentRoundNumber++
     this.rotatePlayers()
     global.log('Round ended!')(this.id)
     app.io.to(this.id).emit('round-ended', this.currentRound.bailadores)
     this.startRound()
+  }
+
+  get scoreboard() {
+    this.players.forEach(player => {
+      player.totalPoints = this.rounds.reduce((acc, cur) => acc + (cur.players.find(p => p.id === player.id) as TPlayer).points, 0)
+    })
+
+    return Utils.sortPlayersByPoint(this.players)
+  }
+
+  private sendScoreboardSocket() {
+    app.io.to(this.id).emit('scoreboard', this.scoreboard)
   }
 
   private rotatePlayers() {
