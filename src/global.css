@@ -251,7 +251,7 @@ button.card-btn:first-child {
   margin-left: 0;
 }
 
-button.card-btn.disabled {
+button.card-btn:disabled {
   filter: contrast(0.5)
 }
 

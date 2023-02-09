@@ -45,6 +45,7 @@ interface TRound {
   whoMade?: TGame['currentRound']['whoMade']
   turns: TTurn[]
   currentTurn?: TTurn
+  cards: TCard[]
 }
 
 
@@ -54,7 +55,6 @@ export default component$(() => {
   const data = useEndpoint<typeof onGet>()
   const loaded = useSignal(false)
   const loc = useLocation()
-  const cards = useSignal<TCard[]>([])
   const betAvailable = useSignal<number[]>([])
   const score = useSignal<TPlayer[] | null>(null)
   const round = useStore<TRound>({
@@ -62,7 +62,8 @@ export default component$(() => {
     players: [],
     playedCards: [],
     turns: [],
-    numOfCards: 0 as TGame['currentRound']['cardsForEachPlayer']
+    numOfCards: 0 as TGame['currentRound']['cardsForEachPlayer'],
+    cards: []
   })
 
   // eslint-disable-next-line qwik/single-jsx-root
@@ -72,7 +73,7 @@ export default component$(() => {
 
   const setState = $((game: TGame) => {
     if (!game) return
-    cards.value = game.playableCards
+    round.cards = game.playableCards
     score.value = game.scoreboardShowing ? game.scoreboard : null
     round.trunfo = game.currentRound.trunfo
     round.players = game.currentRound.players
@@ -109,26 +110,15 @@ export default component$(() => {
       }
     });
 
-    socket.on('log', res => {
-      const el = document.createElement('p')
-      el.innerText = res
-      const container = document.getElementById('game-stats')
-      if (!container) return
-      container.appendChild(el)
-      container.scrollTop = container.scrollHeight
-    })
-
     socket.on('cards', (res: TCard['value'][]) => {
-      cards.value = res.map(r => ({ value: r, disabled: true}))
+      round.cards = res.map(r => ({ value: r, disabled: true}))
     })
 
     socket.on('play-time', (res: TCard[]) => {
-      cards.value = res
-      console.log('received playtime', res)
+      round.cards = res
     })
 
     socket.on('bet-time', (res: number[]) => {     
-      console.log('receveid bet-time', res) 
       betAvailable.value = res
     })
 
@@ -173,22 +163,27 @@ export default component$(() => {
 
   const playCard = $((card: TCard) => {
     if (card.disabled) return
+    const cardsCopy = [...round.cards]
+    round.cards = round.cards.filter((c: TCard) => c.value !== card.value).map(c => ({...c, disabled: true }))
+
     axios.post('/api/play-card', {
       gameId: loc.params.gameId,
       playerId: id,
       card: card.value
-    }).then(() => {
-      cards.value = cards.value.filter((c: TCard) => c.value !== card.value).map(c => ({...c, disabled: true}))
+    }).catch(() => {
+      round.cards = cardsCopy
     })
   })
 
   const playBet = $((bet: number) => {
+    const betAvailableCopy = [...betAvailable.value]
+    betAvailable.value = []
     axios.post('/api/bet', {
       gameId: loc.params.gameId,
       playerId: id,
       bet,
-    }).then(() => {
-      betAvailable.value = []
+    }).catch(() => {
+      betAvailable.value = betAvailableCopy
     })
   })
 
@@ -233,11 +228,11 @@ export default component$(() => {
               </div>
               {!!round.currentTurn && 
                 <Table playedCards={round.playedCards} currentTurn={round.turns.length + 1} maxTurns={round.numOfCards} players={round.currentTurn?.players}/>}
-              <Hand cards={cards.value} onClick={playCard} />
           </>
         )}}
         onRejected={err => <h1>{err}</h1>}
       />
+      <Hand cards={round.cards} onClick={playCard} />
     </div>
   );
 });

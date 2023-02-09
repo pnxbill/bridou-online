@@ -38,7 +38,6 @@ class Turn implements TTurn {
     this.players[this.playedCards.length].cards.splice(cardIndex, 1)
     // Add card to table
     this.playedCards.push(card)
-    console.log('playedCards', this.playedCards)
     app.io.to(this.gameId).emit('player-play', this.playedCards)
 
     if (this.playedCards.length === this.players.length) {

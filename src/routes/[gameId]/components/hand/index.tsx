@@ -16,6 +16,7 @@ interface Props {
 export default component$(({ cards, onClick }: Props) => {
   useStylesScoped$(styles)
   if (!cards?.length) return null
+  console.warn('arrive cards', cards)
   
 
   return (
@@ -26,8 +27,9 @@ export default component$(({ cards, onClick }: Props) => {
           return 1
         }).map(((card, i) => (
           <button 
-            class={`card-btn${card.disabled ? ' disabled': ''}`}
+            class="card-btn"
             style={{ zIndex: i }}
+            disabled={card.disabled}
           >
             <img class='card' src={`/cards/${card.value}.svg`} onClick$={() => onClick(card)}/>
           </button>
