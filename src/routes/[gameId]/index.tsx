@@ -109,7 +109,7 @@ export default component$(() => {
       }
     });
 
-    setGameListeners(socket, round) 
+    setGameListeners(socket, round)
 
     socket.on('scoreboard', (res: TPlayer[]) => {
       score.value = res
@@ -180,7 +180,7 @@ export default component$(() => {
                 <Trunfo value={round.trunfo} />
               </div>
               <div class="table-container">
-                  {round.betAvailable.length > 0 ? 
+                  {round.betAvailable.length > 0 ?
                     <div class="bet-container">
                       {round.betAvailable.map(b => {
                         return <button class="btn bet-btn" onClick$={() => playBet(b)}>{b}</button>
