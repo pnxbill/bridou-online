@@ -12,7 +12,6 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/
 import { initializeApp } from "firebase/app";
 import { setCookie } from '~/utils/cookie';
 import axios from 'axios';
-import { networkInterfaces } from 'os';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAx_aEjr3dRD8T2DmfULuNBK3zYOTMGekE",
@@ -47,11 +46,7 @@ export interface TAuth {
 export const UserContext = createContext('user-context');
 export const AuthContext = createContext('auth-context');
 
-const isDevelopment = import.meta.env.DEV
-const interfaces = networkInterfaces()
-const networkIp = interfaces['en0']?.[1]?.address
-
-export const BASE_URL =  (isDevelopment && networkIp) ? `http://${networkIp}:3001` : import.meta.env.VITE_APP_SERVER_IP
+export const BASE_URL = import.meta.env.VITE_APP_SERVER_IP
 axios.defaults.baseURL = BASE_URL
 
 export const Context = component$(() => {
