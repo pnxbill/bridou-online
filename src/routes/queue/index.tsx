@@ -45,9 +45,7 @@ export default component$(() => {
   })
 
   const handleStart = $(() => {
-    axios.get('/api/start-game').then(() => {
-      console.log('GAME CREATED',)
-    })
+    axios.get('/api/start-game')
   })
 
   data.value.then(res => {

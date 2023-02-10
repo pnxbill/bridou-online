@@ -42,7 +42,6 @@ class App {
 
       socket.on("disconnecting", (reason) => {
         console.log('socket disconnected, reason: ', reason)
-        console.log(socket.rooms)
       })
 
       socket.conn.on("close", (reason) => {

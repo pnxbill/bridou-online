@@ -10,13 +10,13 @@ import type { TGame } from '../../../types'
 import type { TCard } from '~/components/hand';
 import Hand from './components/hand';
 import { io } from "socket.io-client";
-import { getCookie } from '~/utils/cookie';
 import styles from './styles.css?inline';
 import Bets from './components/bets';
 import Trunfo from './components/trunfo';
-import type { TNumOfBet, TPlayer, TTurn } from '../../../game-server/src/types';
+import type { TPlayer, TTurn } from '../../../game-server/src/types';
 import Table from './components/table';
 import Score from './components/score';
+import setGameListeners from './connection/setGameListeners';
 
 // This code runs in the Server
 export const onGet: RequestHandler<TGame> = async ({ params: { gameId }, cookie, response }) => {
@@ -36,7 +36,7 @@ export const onGet: RequestHandler<TGame> = async ({ params: { gameId }, cookie,
   }
 };
 
-interface TRound {
+export interface TRound {
   trunfo: string
   players: TGame['currentRound']['players']
   bailadores?: TGame['currentRound']['bailadores']
@@ -46,6 +46,7 @@ interface TRound {
   turns: Omit<TTurn, "playCard">[]
   currentTurn?: Omit<TTurn, "playCard">
   cards: TCard[]
+  betAvailable: number[]
 }
 
 
@@ -55,7 +56,6 @@ export default component$(() => {
   const data = useEndpoint<typeof onGet>()
   const loaded = useSignal(false)
   const loc = useLocation()
-  const betAvailable = useSignal<number[]>([])
   const score = useSignal<TPlayer[] | null>(null)
   const round = useStore<TRound>({
     trunfo: '',
@@ -63,7 +63,8 @@ export default component$(() => {
     playedCards: [],
     turns: [],
     numOfCards: 0 as TGame['currentRound']['cardsForEachPlayer'],
-    cards: []
+    cards: [],
+    betAvailable: []
   })
 
   // eslint-disable-next-line qwik/single-jsx-root
@@ -82,7 +83,7 @@ export default component$(() => {
     round.playedCards =  game.currentRound.currentTurn?.playedCards || []
     round.currentTurn = game.currentRound.currentTurn
     round.turns = game.currentRound.turns
-    betAvailable.value = game.availableBets
+    round.betAvailable = game.availableBets
   })
 
   useClientEffect$(() => {
@@ -108,51 +109,7 @@ export default component$(() => {
       }
     });
 
-    socket.on('cards', (res: TCard['value'][]) => {
-      round.cards = res.map(r => ({ value: r, disabled: true}))
-    })
-
-    socket.on('play-time', (res: TCard[]) => {
-      round.cards = res
-    })
-
-    socket.on('bet-time', (res: number[]) => {     
-      betAvailable.value = res
-    })
-
-    socket.on('player-bet', (res: {id: string, bet: TNumOfBet}) => {
-      round.players = round.players.map(p => p.id === res.id ? ({...p, bet: res.bet }) : p)
-    })
-
-    socket.on('player-play', (res: string[]) => {
-      round.playedCards = res
-    })
-
-    socket.on('turn-ended', (res: TTurn) => {
-      round.currentTurn = res
-      round.turns = [...round.turns, res]
-    })
-
-    socket.on('turn-started', (res: TTurn) => {
-      round.currentTurn = res
-    })
-
-    socket.on('set-trunfo', (res: string) => {
-      round.trunfo = res
-    })
-
-    socket.on('round-ended', (res: TGame['currentRound']['bailadores']) => {
-      round.bailadores = res
-      round.playedCards = []
-      round.turns = []
-    })
-
-    socket.on('round-started', (res: TGame['currentRound']) => {
-      round.trunfo = res.trunfo
-      round.players = res.players
-      round.turns = res.turns
-      round.numOfCards = res.cardsForEachPlayer
-    })
+    setGameListeners(socket, round) 
 
     socket.on('scoreboard', (res: TPlayer[]) => {
       score.value = res
@@ -178,14 +135,14 @@ export default component$(() => {
   })
 
   const playBet = $((bet: number) => {
-    const betAvailableCopy = [...betAvailable.value]
-    betAvailable.value = []
+    const betAvailableCopy = [...round.betAvailable]
+    round.betAvailable = []
     axios.post('/api/bet', {
       gameId: loc.params.gameId,
       playerId: id,
       bet,
     }).catch(() => {
-      betAvailable.value = betAvailableCopy
+      round.betAvailable = betAvailableCopy
     })
   })
 
@@ -223,9 +180,9 @@ export default component$(() => {
                 <Trunfo value={round.trunfo} />
               </div>
               <div class="table-container">
-                  {betAvailable.value.length > 0 ? 
+                  {round.betAvailable.length > 0 ? 
                     <div class="bet-container">
-                      {betAvailable.value.map(b => {
+                      {round.betAvailable.map(b => {
                         return <button class="btn bet-btn" onClick$={() => playBet(b)}>{b}</button>
                       })}
                     </div> : currentBettingPlayer ?

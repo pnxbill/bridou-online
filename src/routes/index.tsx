@@ -20,7 +20,6 @@ export default component$(() => {
           photoURL
         }
       })
-      console.log('enter queue success', res.data)
       nav.path = '/queue'
     } catch(err: unknown) {
       if (axios.isAxiosError(err) && err.response) {
