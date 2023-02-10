@@ -18,13 +18,11 @@ interface Props {
 
 export default component$(({ playedCards, currentTurn, maxTurns, players }: Props) => {
   useStylesScoped$(styles)
-  // const 
-  // const turnIndex = useSignal(currentTurn)
   const hasTurnFinished = playedCards.length === players.length
   const nextPlayerIndex = hasTurnFinished ? 0 : playedCards.length
 
   return (
-    <div class="table-container">
+    <>
       <div class="turn">{currentTurn}/{maxTurns}</div>
       <div class="table">
         <div class="hhand-compact">
@@ -45,7 +43,7 @@ export default component$(({ playedCards, currentTurn, maxTurns, players }: Prop
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 });
 

@@ -82,9 +82,7 @@ export default component$(() => {
     round.playedCards =  game.currentRound.currentTurn?.playedCards || []
     round.currentTurn = game.currentRound.currentTurn
     round.turns = game.currentRound.turns
-    
-    if ((game.players[0].id === getCookie('uid')) && (game.currentRoundNumber === 1)) betAvailable.value = [0, 1]
-    else betAvailable.value = game.availableBets
+    betAvailable.value = game.availableBets
   })
 
   useClientEffect$(() => {
@@ -192,10 +190,10 @@ export default component$(() => {
     score.value = null
   })
 
-  data.value.then(d => {
+  data.value.then(game => {
     if (loaded.value) return
     loaded.value = true
-    setState(d)    
+    setState(game)
   })
  
   return (
@@ -212,6 +210,7 @@ export default component$(() => {
               onClick={(isGM || game.leaderId === id) ? closeScoreboard : undefined}
             />
           )
+          const currentBettingPlayer = round.players.find(p => (p.bet === null) || p.bet === undefined)
 
           return (
             <>
@@ -219,21 +218,24 @@ export default component$(() => {
                 <Bets players={round.players} />
                 <Trunfo value={round.trunfo} />
               </div>
-              <div class="bet-container">
-                {betAvailable.value.length > 0 && 
-                  betAvailable.value.map(b => {
-                    return <button class="btn bet-btn" onClick$={() => playBet(b)}>{b}</button>
-                  })
-                }
+              <div class="table-container">
+                
+                  {betAvailable.value.length > 0 ? 
+                    <div class="bet-container">
+                      {betAvailable.value.map(b => {
+                        return <button class="btn bet-btn" onClick$={() => playBet(b)}>{b}</button>
+                      })}
+                    </div> : currentBettingPlayer ?
+                    <div class="current-betting"><span>{currentBettingPlayer?.name}</span>&nbsp; pedindo</div> : null
+                  }
+                  <Table 
+                    playedCards={round.playedCards}
+                    currentTurn={round.turns.length + 1}
+                    maxTurns={round.numOfCards}
+                    players={round.currentTurn?.players || []}
+                  />
               </div>
-              {!!round.currentTurn && 
-                <Table 
-                  playedCards={round.playedCards}
-                  currentTurn={round.turns.length + 1}
-                  maxTurns={round.numOfCards}
-                  players={round.currentTurn?.players}
-                />
-              }
+              
               <Hand cards={round.cards} onClick={playCard} />
           </>
         )}}
