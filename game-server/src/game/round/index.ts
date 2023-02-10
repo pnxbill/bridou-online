@@ -169,6 +169,7 @@ class Round implements TRound {
     if (!this.currentTurn) throw new Error('No turn to end')
     this.turns.push(this.currentTurn)
     this.whoMade.push(this.currentTurn.winner)
+    app.io.to(this.gameId).emit('turn-ended', this.currentTurn)
 
     const isLastTurn = this.turns.length === this.cardsForEachPlayer
     if (isLastTurn) {

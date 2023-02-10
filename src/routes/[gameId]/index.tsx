@@ -130,6 +130,7 @@ export default component$(() => {
 
     socket.on('turn-ended', (res: TTurn) => {
       round.currentTurn = res
+      round.turns = [...round.turns, res]
     })
 
     socket.on('turn-started', (res: TTurn) => {
@@ -143,11 +144,14 @@ export default component$(() => {
     socket.on('round-ended', (res: TGame['currentRound']['bailadores']) => {
       round.bailadores = res
       round.playedCards = []
+      round.turns = []
     })
 
     socket.on('round-started', (res: TGame['currentRound']) => {
       round.trunfo = res.trunfo
       round.players = res.players
+      round.turns = res.turns
+      round.numOfCards = res.cardsForEachPlayer
     })
 
     socket.on('scoreboard', (res: TPlayer[]) => {
@@ -219,7 +223,6 @@ export default component$(() => {
                 <Trunfo value={round.trunfo} />
               </div>
               <div class="table-container">
-                
                   {betAvailable.value.length > 0 ? 
                     <div class="bet-container">
                       {betAvailable.value.map(b => {

@@ -30,7 +30,7 @@ export default component$(({ playedCards, currentTurn, maxTurns, players }: Prop
             return (
               <>
                 <img class='card' src={`/cards/${card}.svg`} />
-                {players && <img class='player-pic' style={{marginLeft: `calc(30px + ${46 * i}px)`}} src={players[i].photoURL} />}
+                {players && <img class='player-pic' style={{marginLeft: `calc(30px + ${46 * i}px)`}} src={players[i]?.photoURL} />}
               </>
             )
           })}
@@ -38,7 +38,7 @@ export default component$(({ playedCards, currentTurn, maxTurns, players }: Prop
             <img
               class='player-pic current'
               style={{marginLeft: `calc(30px + ${46 * playedCards.length}px)`}}
-              src={players[nextPlayerIndex].photoURL}
+              src={players[nextPlayerIndex]?.photoURL}
             />
           )}
         </div>
