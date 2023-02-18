@@ -13,7 +13,7 @@ export default component$(() => {
 
   const enterQueue = $(async () => {
     try {
-      const res = await axios.post('/api/enter-queue', {
+      await axios.post('/api/enter-queue', {
         user: {
           id,
           name,
