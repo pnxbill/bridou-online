@@ -17,6 +17,7 @@ import type { TPlayer, TTurn } from '../../../game-server/src/types';
 import Table from './components/table';
 import Score from './components/score';
 import setGameListeners from './connection/setGameListeners';
+import { TRound } from './models';
 
 // This code runs in the Server
 export const onGet: RequestHandler<TGame> = async ({ params: { gameId }, cookie, response }) => {
@@ -35,20 +36,6 @@ export const onGet: RequestHandler<TGame> = async ({ params: { gameId }, cookie,
     }
   }
 };
-
-export interface TRound {
-  trunfo: string
-  players: TGame['currentRound']['players']
-  bailadores?: TGame['currentRound']['bailadores']
-  playedCards: string[]
-  numOfCards: TGame['currentRound']['cardsForEachPlayer']
-  whoMade?: TGame['currentRound']['whoMade']
-  turns: Omit<TTurn, "playCard">[]
-  currentTurn?: Omit<TTurn, "playCard">
-  cards: TCard[]
-  betAvailable: number[]
-}
-
 
 export default component$(() => {
   useStylesScoped$(styles);

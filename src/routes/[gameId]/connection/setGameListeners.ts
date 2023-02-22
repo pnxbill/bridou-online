@@ -1,5 +1,5 @@
 import type { TCard } from '~/components/hand';
-import type { TRound } from '..';
+import type { TRound } from '../models';
 import type { TNumOfBet, TTurn } from '../../../../game-server/src/types';
 import type { TGame } from '../../../../types'
 
