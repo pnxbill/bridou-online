@@ -30,21 +30,29 @@ class Turn implements TTurn {
   }
 
   playCard(playerId: TPlayer['id'], card: string) {
+    // Run checks to see if player has the right to play. If any of these checks throws
+    // an error, the play will be halted.
     this.checkIfPlayerTurn(playerId)
     this.checkIfPlayerHasCard(playerId, card)
     this.checkIfCorrectSuit(playerId, card)
+
     // Remove card from players hand
     const cardIndex = this.players[this.playedCards.length].cards.indexOf(card)
     this.players[this.playedCards.length].cards.splice(cardIndex, 1)
+
     // Add card to table
     this.playedCards.push(card)
+
+    // Inform the clients about the play
     app.io.to(this.gameId).emit('player-play', this.playedCards)
 
-    if (this.playedCards.length === this.players.length) {
-      GameController.games[this.gameId].currentRound.endTurn()
-    } else {
-      this.sendPlayCardSocket()
-    }
+    const lastTurn = this.playedCards.length === this.players.length
+    if (lastTurn) this.currentRound.endTurn()
+    else this.sendPlayCardSocket()
+  }
+
+  get currentRound() {
+    return GameController.games[this.gameId].currentRound
   }
 
   private checkIfPlayerTurn(playerId: TPlayer['id']) {
