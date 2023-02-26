@@ -46,8 +46,8 @@ class Turn implements TTurn {
     // Inform the clients about the play
     app.io.to(this.gameId).emit('player-play', this.playedCards)
 
-    const lastTurn = this.playedCards.length === this.players.length
-    if (lastTurn) this.currentRound.endTurn()
+    const lastToPlay = this.playedCards.length === this.players.length
+    if (lastToPlay) this.currentRound.endTurn()
     else this.sendPlayCardSocket()
   }
 
