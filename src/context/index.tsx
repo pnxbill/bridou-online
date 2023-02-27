@@ -85,8 +85,8 @@ export const Context = component$(() => {
   useBrowserVisibleTask$(() => {
     axios.defaults.baseURL = config.IP
     auth.onAuthStateChanged((firebaseUser) => {
-      if (!firebaseUser) return
       user.loading = false
+      if (!firebaseUser) return
       user.email = firebaseUser.email
       user.id = firebaseUser.uid
       user.photoURL = firebaseUser.photoURL
