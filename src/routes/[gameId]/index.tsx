@@ -144,7 +144,6 @@ export default component$(() => {
       <Resource
         value={data}
         onResolved={(game) => {
-          // eslint-disable-next-line qwik/single-jsx-root
           if (typeof game === 'string') return <h1>{game}</h1>
 
           if (score.value) return (
