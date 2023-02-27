@@ -142,7 +142,6 @@ export default component$(() => {
                 <Trunfo value={round.trunfo} />
               </div>
               <div class="table-container">
-                <button onClick$={$(getGameData)}>xx</button>
                   {round.betAvailable.length > 0 ?
                     <div class="bet-container">
                       {round.betAvailable.map(b => {

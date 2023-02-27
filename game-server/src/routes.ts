@@ -128,7 +128,7 @@ routes.get('/api/close-score', (req, res) => {
   const { games } = GameController
   if (!games[gameId]) return
 
-  app.io.to(String(gameId)).emit('close-scoreboard')
+  app.io.to(gameId).emit('close-scoreboard')
   games[gameId].scoreboardShowing = false
   res.status(200).json({
     message: 'ok',
