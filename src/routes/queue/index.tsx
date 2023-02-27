@@ -1,17 +1,16 @@
-import { $, component$, Resource, useClientEffect$, useContext, useStore } from '@builder.io/qwik';
-import type { DocumentHead, RequestHandler} from '@builder.io/qwik-city';
-import { useEndpoint } from '@builder.io/qwik-city';
+import { $, component$, Resource, useBrowserVisibleTask$, useContext, useStore } from '@builder.io/qwik';
+import { loader$ } from '@builder.io/qwik-city';
+import type { DocumentHead } from '@builder.io/qwik-city';
 import axios from 'axios';
 import { io } from 'socket.io-client';
-import type { User} from '~/context';
-import { BASE_URL} from '~/context';
-import { UserContext } from '~/context';
+import { ConfigContext, UserContext } from '~/context';
+import type { TConfig, User } from '~/context';
 import { getCookie } from '~/utils/cookie';
 import PlayerList from '../../components/playerList'
 import { useNavigate } from '@builder.io/qwik-city';
 
-// This code runs in the Server
-export const onGet: RequestHandler<TResponse> = async () => {
+
+export const getQueueData = loader$(async () => {
   try {
     const res = await axios.get('/api/queue')
     return res.data
@@ -21,7 +20,7 @@ export const onGet: RequestHandler<TResponse> = async () => {
       return err.response.data.message
     }
   }
-};
+})
 
 interface TQueuePlayer {
   name: string
@@ -38,24 +37,20 @@ interface TResponse {
 export default component$(() => {
   const nav = useNavigate()
   const { id, isGM } = useContext<User>(UserContext)
-  const data = useEndpoint<typeof onGet>()
+  const { IP = '' } = useContext<TConfig>(ConfigContext)
+  const data = getQueueData()
   const game = useStore<{id: TResponse['queueId'], queue: TResponse['queue']}>({
-    queue: [],
-    id: ''
+    queue: data.value?.queue,
+    id: data.value.queueId
   })
 
   const handleStart = $(() => {
     axios.get('/api/start-game')
   })
 
-  data.value.then(res => {
-    game.id = res?.queueId
-    if (game?.queue?.length === 0) game.queue = res?.queue
-  })
-
-  useClientEffect$(() => {
+  useBrowserVisibleTask$(() => {
      if (game.id) {
-      const socket = io(BASE_URL, {
+      const socket = io(IP, {
         auth: {
           gameId: game.id,
           playerId: getCookie('uid')
@@ -66,7 +61,7 @@ export default component$(() => {
         game.queue = [...game.queue, res]
       })
       socket.on('game-started', () => {
-        nav.path = `/${game.id}`
+        nav(`/${game.id}`)
       })
     }
   })

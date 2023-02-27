@@ -1,4 +1,4 @@
-import { TNumOfPlayers, TPlayer, TRound } from '../types'
+import { TNumOfPlayers, TPlayer, TRound, WithRequired } from '../types'
 import Round from './round'
 import Utils from '../utils'
 import fs from 'fs'
@@ -79,7 +79,7 @@ class Game {
       player.totalPoints = this.rounds.reduce((acc, cur) => acc + (cur.players.find(p => p.id === player.id) as TPlayer).points, 0)
     })
 
-    return Utils.sortPlayersByPoint(this.players)
+    return Utils.sortPlayersByPoint(this.players as WithRequired<TPlayer, 'totalPoints'>[])
   }
 
   private sendScoreboardSocket() {

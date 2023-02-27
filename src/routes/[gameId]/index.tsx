@@ -1,11 +1,10 @@
-import { $, component$, Resource, useClientEffect$, useContext, useSignal, useStore, useStylesScoped$ } from '@builder.io/qwik';
-import type { DocumentHead, RequestHandler} from '@builder.io/qwik-city';
-import { useLocation} from '@builder.io/qwik-city';
-import { useEndpoint } from '@builder.io/qwik-city';
+import { $, component$, Resource, useBrowserVisibleTask$, useContext, useSignal, useStore, useStylesScoped$ } from '@builder.io/qwik';
+import { loader$ } from '@builder.io/qwik-city';
+import type { DocumentHead } from "@builder.io/qwik-city" 
+import { useLocation } from '@builder.io/qwik-city';
 import axios from 'axios';
-import type { User} from '~/context';
-import { BASE_URL} from '~/context';
-import { UserContext } from '~/context';
+import { ConfigContext, UserContext  } from '~/context';
+import type { TConfig, User } from '~/context';
 import type { TGame } from '../../../types'
 import type { TCard } from '~/components/hand';
 import Hand from './components/hand';
@@ -17,16 +16,15 @@ import type { TPlayer } from '../../../game-server/src/types';
 import Table from './components/table';
 import Score from './components/score';
 import setGameListeners from './connection/setGameListeners';
-import { TRound } from './models';
+import type { TRound } from './models';
 
 // This code runs in the Server
-export const onGet: RequestHandler<TGame> = async ({ params: { gameId }, cookie, response }) => {
+export const getGameData = loader$(async (_) => {
+  const { cookie, params } = _
   const playerId = cookie.get('uid')?.value
-  if (!playerId) throw response.redirect('/')
-
   try {
     const res = await axios.post('/api/enter-game', {
-      gameId,
+      gameId: params.gameId,
       playerId
     })
     return res.data.game
@@ -35,23 +33,25 @@ export const onGet: RequestHandler<TGame> = async ({ params: { gameId }, cookie,
       return err.response.data.message
     }
   }
-};
+})
 
 export default component$(() => {
   useStylesScoped$(styles);
   const { id, loading, isGM } = useContext<User>(UserContext)
-  const data = useEndpoint<typeof onGet>()
-  const loaded = useSignal(false)
+  const { IP = '' } = useContext<TConfig>(ConfigContext)
+  const data = getGameData()
   const loc = useLocation()
-  const score = useSignal<TPlayer[] | null>(null)
+  const score = useSignal<TPlayer[] | null>(data.value.scoreboardShowing ? data.value.scoreboard : null)
   const round = useStore<TRound>({
-    trunfo: '',
-    players: [],
-    playedCards: [],
-    turns: [],
-    numOfCards: 0 as TGame['currentRound']['cardsForEachPlayer'],
-    cards: [],
-    betAvailable: []
+    trunfo: data.value.currentRound.trunfo,
+    players: data.value.currentRound.players,
+    playedCards: data.value.currentRound.currentTurn?.playedCards || [],
+    turns: data.value.currentRound.turns,
+    numOfCards: data.value.currentRound.cardsForEachPlayer as TGame['currentRound']['cardsForEachPlayer'],
+    cards: data.value.playableCards,
+    betAvailable: data.value.availableBets,
+    whoMade: data.value.currentRound.whoMade,
+    currentTurn: data.value.currentRound.currentTurn
   })
 
   // eslint-disable-next-line qwik/single-jsx-root
@@ -73,8 +73,8 @@ export default component$(() => {
     round.betAvailable = game.availableBets
   })
 
-  useClientEffect$(() => {
-    const socket = io(BASE_URL, {
+  useBrowserVisibleTask$(() => {
+    const socket = io(IP, {
       auth: {
         gameId: loc.params.gameId,
         playerId: id
@@ -136,12 +136,6 @@ export default component$(() => {
   const closeScoreboard = $(() => {
     axios.get(`/api/close-score?gameId=${loc.params.gameId}`)
     score.value = null
-  })
-
-  data.value.then(game => {
-    if (loaded.value) return
-    loaded.value = true
-    setState(game)
   })
  
   return (

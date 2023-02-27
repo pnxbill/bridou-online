@@ -2,15 +2,19 @@ import {
   component$,
   useStore,
   useContextProvider,
-  createContext,
-  useClientEffect$,
   $,
   Slot,
+  useTask$,
+  createContextId,
+  useBrowserVisibleTask$
 } from '@builder.io/qwik';
+
+import { isServer } from '@builder.io/qwik/build'
 
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth'
 import { initializeApp } from "firebase/app";
 import { setCookie } from '~/utils/cookie';
+import getServerIP from './getServerIP';
 import axios from 'axios';
 
 const firebaseConfig = {
@@ -42,14 +46,33 @@ export interface TAuth {
   logout?: () => void
 }
 
-// Create a new context descriptor
-export const UserContext = createContext('user-context');
-export const AuthContext = createContext('auth-context');
+export interface TIP {
+  IP?: string
+}
 
-export const BASE_URL = import.meta.env.VITE_APP_SERVER_IP
-axios.defaults.baseURL = BASE_URL
+export const gameMasters = [
+  'nIrszj4f3Actvh5YmQSev5CQvHz2'
+]
+
+// Create a new context descriptor
+export const UserContext = createContextId('user-context');
+export const AuthContext = createContextId('auth-context');
+export const ConfigContext = createContextId('config-context');
+
+export interface TConfig {
+  IP?: string
+}
 
 export const Context = component$(() => {
+  const config = useStore<TConfig>({ IP: '' })
+  useTask$(() => {
+    if (isServer) {
+      const SERVER_IP = import.meta.env.PROD ? '' : `http://${getServerIP}:3001`
+      config.IP = SERVER_IP
+    }
+  })
+  if (config.IP) axios.defaults.baseURL = config.IP
+
   const handleAuth = $(async () => {
     signInWithPopup(auth,provider)
   })
@@ -59,23 +82,25 @@ export const Context = component$(() => {
   })
 
   const user = useStore<User>({ loading: true })
-
-  useClientEffect$(() => {
+  useBrowserVisibleTask$(() => {
+    axios.defaults.baseURL = config.IP
     auth.onAuthStateChanged((firebaseUser) => {
+      if (!firebaseUser) return
       user.loading = false
-      user.email = firebaseUser?.email
-      user.id = firebaseUser?.uid
-      user.photoURL = firebaseUser?.photoURL
-      user.name = firebaseUser?.displayName
-      user.isGM = firebaseUser?.uid === 'nIrszj4f3Actvh5YmQSev5CQvHz2'
-      if (firebaseUser) setCookie('uid', firebaseUser.uid, 1)
+      user.email = firebaseUser.email
+      user.id = firebaseUser.uid
+      user.photoURL = firebaseUser.photoURL
+      user.name = firebaseUser.displayName
+      user.isGM =  gameMasters.includes(firebaseUser.uid)
+      setCookie('uid', firebaseUser.uid, 1)
     })
   })
 
 
   // Assign value (state) to the context (UserContext)
   useContextProvider(UserContext, user);
-  useContextProvider(AuthContext, { handleAuth, logout } as TAuth)
+  useContextProvider(ConfigContext, config);
+  useContextProvider(AuthContext, { handleAuth, logout } as TAuth);
 
   
   return (

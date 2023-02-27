@@ -1,8 +1,13 @@
 import { Router } from 'express'
 import GameController from './controllers/GameController'
 import app from './app'
+import getServerIP from './getServerIp'
 
 const routes = Router()
+
+routes.get('/api/ip', (req, res) => {
+  res.status(200).json(getServerIP)
+})
 
 routes.post('/api/enter-queue', (req, res) => {
   const { user } = req.body

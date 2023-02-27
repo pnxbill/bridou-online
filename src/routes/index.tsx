@@ -1,9 +1,9 @@
 import { component$, useContext, $, useStylesScoped$ } from '@builder.io/qwik';
-import type { DocumentHead} from '@builder.io/qwik-city';
+import type { DocumentHead } from '@builder.io/qwik-city';
 import { useNavigate } from '@builder.io/qwik-city';
 import axios from 'axios';
-import type { User } from '~/context';
 import { UserContext } from '~/context';
+import type { User } from '~/context';
 import styles from './styles.css?inline';
 
 export default component$(() => {
@@ -20,11 +20,11 @@ export default component$(() => {
           photoURL
         }
       })
-      nav.path = '/queue'
+      nav('/queue')
     } catch(err: unknown) {
       if (axios.isAxiosError(err) && err.response) {
         console.error('enter queue failed', err.response.data.message)
-        if (err.response.status === 401) nav.path = '/queue'
+        if (err.response.status === 401) nav('/queue')
         return err.response.data.message
       }
     }

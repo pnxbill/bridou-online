@@ -1,4 +1,4 @@
-import { TPlayer } from '../types'
+import { TPlayer, WithRequired } from '../types'
 import fs from 'fs'
 import readline from 'readline'
 import GameController from '../controllers/GameController'
@@ -11,7 +11,7 @@ class Utils {
     A: 14
   } as const
 
-  static sortPlayersByPoint(players: TPlayer[]) {
+  static sortPlayersByPoint(players: WithRequired<TPlayer, 'totalPoints'>[]) {
     return players.slice().sort((a, b) => {
       if (a.totalPoints > b.totalPoints) {
         return -1
@@ -23,11 +23,11 @@ class Utils {
     })
   }
 
-  static getCardValue(card) {
-    return isNaN(Number(card)) ? this.cardValues[card] : Number(card)
+  static getCardValue(card: string) {
+    return isNaN(Number(card)) ? this.cardValues[card as keyof typeof this.cardValues] : Number(card)
   }
 
-  static flip(data) {
+  static flip(data: {}) {
     return Object.fromEntries(Object
       .entries(data)
       .map(([key, value]) => [value, key])

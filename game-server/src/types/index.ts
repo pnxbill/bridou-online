@@ -44,3 +44,5 @@ export interface TTurn {
   trunfo: string
   playCard: (playerId: TPlayer['id'], card: string) => void
 }
+
+export type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] }

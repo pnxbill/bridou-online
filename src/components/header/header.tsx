@@ -15,7 +15,7 @@ export default component$(() => {
   return (
     <header>
       <div class="logo">
-          <button style={{border: 'none', backgrouund: 'transparent'}} onClick$={() => nav.path = '/'}>
+          <button style={{border: 'none', backgrouund: 'transparent'}} onClick$={() => nav('/')}>
             <QwikLogo />
           </button>         
         {id ? <span onClick$={auth.logout}>{name}</span> : loading ? null : <button onClick$={auth.handleAuth}>LOGAR</button>}

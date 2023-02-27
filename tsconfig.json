@@ -23,4 +23,5 @@
   },
   "files": ["./.eslintrc.cjs"],
   "include": ["src", "game-server"],
+  "exclude": ["game-server/src/test.ts"]
 }

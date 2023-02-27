@@ -1,6 +1,6 @@
-import { TCard } from "~/components/hand"
-import { TTurn } from "../../../../game-server/src/types"
-import { TGame } from "../../../../types"
+import type { TCard } from "~/components/hand"
+import type { TTurn } from "../../../../game-server/src/types"
+import type { TGame } from "../../../../types"
 
 export interface TRound {
   trunfo: string
