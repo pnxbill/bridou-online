@@ -14,7 +14,7 @@ export const getQueueData = loader$(async () => {
   try {
     const res = await axios.get('/api/queue')
     return res.data
-  } catch(err: unknown) {
+  } catch(err) {
     console.log('err', err)
     if (axios.isAxiosError(err) && err.response) {
       return err.response.data.message
@@ -72,7 +72,6 @@ export default component$(() => {
       <Resource
         value={data}
         onResolved={(res) => {
-          // eslint-disable-next-line qwik/single-jsx-root
           if (typeof res === 'string') return <h1>{res}</h1>
 
           const canStartGame = isGM || (res?.leaderId === id)

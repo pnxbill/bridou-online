@@ -20,8 +20,11 @@ import type { TRound } from './models';
 
 // This code runs in the Server
 export const getGameData = loader$(async (_) => {
-  const { cookie, params } = _
+  const { cookie, params, redirect } = _
   const playerId = cookie.get('uid')?.value
+  if (!playerId) {
+    throw redirect(301, '/');
+  }
   try {
     const res = await axios.post('/api/enter-game', {
       gameId: params.gameId,
@@ -54,9 +57,7 @@ export default component$(() => {
     currentTurn: data.value.currentRound.currentTurn
   })
 
-  // eslint-disable-next-line qwik/single-jsx-root
   if (loading) return <h1>Carregando...</h1>
-  // eslint-disable-next-line qwik/single-jsx-root
   if (!id) return <h1>Favor logar acima</h1>
 
   const setState = $((game: TGame) => {
