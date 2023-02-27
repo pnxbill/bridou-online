@@ -3,9 +3,8 @@ import { loader$ } from '@builder.io/qwik-city';
 import type { DocumentHead } from "@builder.io/qwik-city" 
 import { useLocation } from '@builder.io/qwik-city';
 import axios from 'axios';
-import { ConfigContext, UserContext  } from '~/context';
+import { ConfigContext, UserContext } from '~/context';
 import type { TConfig, User } from '~/context';
-import type { TGame } from '../../../types'
 import type { TCard } from '~/components/hand';
 import Hand from './components/hand';
 import { io } from "socket.io-client";
@@ -17,6 +16,7 @@ import Table from './components/table';
 import Score from './components/score';
 import setGameListeners from './connection/setGameListeners';
 import type { TRound } from './models';
+import setState from './connection/setState';
 
 // This code runs in the Server
 export const getGameData = loader$(async (_) => {
@@ -42,37 +42,18 @@ export default component$(() => {
   useStylesScoped$(styles);
   const { id, loading, isGM } = useContext<User>(UserContext)
   const { IP = '' } = useContext<TConfig>(ConfigContext)
-  const data = getGameData()
+  const game = getGameData()
+  if (game.value === 'Game not found') return <h1>{game.value}</h1>
   const loc = useLocation()
-  const score = useSignal<TPlayer[] | null>(data.value.scoreboardShowing ? data.value.scoreboard : null)
-  const round = useStore<TRound>({
-    trunfo: data.value.currentRound.trunfo,
-    players: data.value.currentRound.players,
-    playedCards: data.value.currentRound.currentTurn?.playedCards || [],
-    turns: data.value.currentRound.turns,
-    numOfCards: data.value.currentRound.cardsForEachPlayer as TGame['currentRound']['cardsForEachPlayer'],
-    cards: data.value.playableCards,
-    betAvailable: data.value.availableBets,
-    whoMade: data.value.currentRound.whoMade,
-    currentTurn: data.value.currentRound.currentTurn
+  const score = useSignal<TPlayer[] | null>(game.value.scoreboardShowing ? game.value.scoreboard : null)
+  const round = useStore<TRound>(() => {
+    const { score: _score, ...round } = setState(game.value)
+    score.value = _score
+    return round
   })
 
   if (loading) return <h1>Carregando...</h1>
   if (!id) return <h1>Favor logar acima</h1>
-
-  const setState = $((game: TGame) => {
-    if (!game) return
-    round.cards = game.playableCards
-    score.value = game.scoreboardShowing ? game.scoreboard : null
-    round.trunfo = game.currentRound.trunfo
-    round.players = game.currentRound.players
-    round.numOfCards = game.currentRound.cardsForEachPlayer
-    round.whoMade = game.currentRound.whoMade
-    round.playedCards =  game.currentRound.currentTurn?.playedCards || []
-    round.currentTurn = game.currentRound.currentTurn
-    round.turns = game.currentRound.turns
-    round.betAvailable = game.availableBets
-  })
 
   useBrowserVisibleTask$(() => {
     const socket = io(IP, {
@@ -89,15 +70,15 @@ export default component$(() => {
           gameId: loc.params.gameId,
           playerId: id
         })
-        setState(res.data.game)
-      } catch(err: unknown) {
+        const { score: _score, ...round } = res.data.game
+        score.value = _score
+        setState(round)
+      } catch(err) {
         if (axios.isAxiosError(err) && err.response) {
           console.error(err.response.data.message)
         }
       }
     });
-
-    setGameListeners(socket, round)
 
     socket.on('scoreboard', (res: TPlayer[]) => {
       score.value = res
@@ -106,6 +87,8 @@ export default component$(() => {
     socket.on('close-scoreboard', () => {
       if (score.value) score.value = null
     })
+
+    setGameListeners(socket, round) 
   })
 
   const playCard = $((card: TCard) => {
@@ -142,14 +125,12 @@ export default component$(() => {
   return (
     <div class="game-page">
       <Resource
-        value={data}
-        onResolved={(game) => {
-          if (typeof game === 'string') return <h1>{game}</h1>
-
+        value={game}
+        onResolved={(result) => {
           if (score.value) return (
             <Score
               players={score.value}
-              onClick={(isGM || game.leaderId === id) ? closeScoreboard : undefined}
+              onClick={(isGM || result.leaderId === id) ? closeScoreboard : undefined}
             />
           )
           const currentBettingPlayer = round.players.find(p => (p.bet === null) || p.bet === undefined)
@@ -161,6 +142,7 @@ export default component$(() => {
                 <Trunfo value={round.trunfo} />
               </div>
               <div class="table-container">
+                <button onClick$={$(getGameData)}>xx</button>
                   {round.betAvailable.length > 0 ?
                     <div class="bet-container">
                       {round.betAvailable.map(b => {

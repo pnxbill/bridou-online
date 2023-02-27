@@ -64,7 +64,8 @@ routes.post('/api/enter-game', (req, res) => {
         ...game,
         scoreboard: game.scoreboard,
         playableCards: game.currentRound.getPlayableCards.bind(game.currentRound, playerId)(),
-        availableBets: game.currentRound.getAvailableBets.bind(game.currentRound, playerId)()
+        availableBets: game.currentRound.getAvailableBets.bind(game.currentRound, playerId)(),
+        time:  Date.now()
       }
     }).status(200)
   } else {
