@@ -1,13 +1,8 @@
 import { Router } from 'express'
 import GameController from './controllers/GameController'
 import app from './app'
-import getServerIP from './getServerIp'
 
 const routes = Router()
-
-routes.get('/api/ip', (req, res) => {
-  res.status(200).json(getServerIP)
-})
 
 routes.post('/api/enter-queue', (req, res) => {
   const { user } = req.body
@@ -65,7 +60,7 @@ routes.post('/api/enter-game', (req, res) => {
         scoreboard: game.scoreboard,
         playableCards: game.currentRound.getPlayableCards.bind(game.currentRound, playerId)(),
         availableBets: game.currentRound.getAvailableBets.bind(game.currentRound, playerId)(),
-        time:  Date.now()
+        time: Date.now()
       }
     }).status(200)
   } else {
