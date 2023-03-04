@@ -14,6 +14,7 @@ class Game {
   rounds: TRound[]
   currentRoundNumber: Round['currentRoundNumber']
   scoreboardShowing: boolean
+  timeoutDelay: number
 
   constructor({ players, id, leaderId }: { players: TPlayer[], id: string, leaderId: string }) {
     this.id = id
@@ -24,6 +25,7 @@ class Game {
     this.rounds = [] as Round[]
     this.currentRound = {} as Round
     this.scoreboardShowing = false
+    this.timeoutDelay = 2000 + (this.players.length * 500)
   }
 
   start() {
@@ -36,7 +38,7 @@ class Game {
     this.players = this.scoreboard
     this.sendScoreboardSocket()
     console.log('\nGame ended!', ` Winner: ${this.players[0].name} with ${this.players[0].totalPoints}`)
-    console.log('results', JSON.stringify(this.rounds.length))
+    console.log('results', JSON.stringify(this.players.map(p => p.name + ' - ' + p.totalPoints)))
   }
 
   private startRound() {
@@ -59,19 +61,24 @@ class Game {
 
   endRound() {
     this.rounds.push(this.currentRound)
+    global.log('Round ended!')(this.id)
+    app.io.to(this.id).emit('round-ended', this.currentRound.bailadores)
     if (this.currentRoundNumber === 13) {
-      this.end()
+      setTimeout(this.end.bind(this), this.timeoutDelay)
       return
     }
     if (this.currentRoundNumber === 7) {
-      this.scoreboardShowing = true
-      this.sendScoreboardSocket()
+      setTimeout(() => {
+        this.scoreboardShowing = true
+        this.sendScoreboardSocket()
+      }, this.timeoutDelay)
     }
-    this.currentRoundNumber++
-    this.rotatePlayers()
-    global.log('Round ended!')(this.id)
-    app.io.to(this.id).emit('round-ended', this.currentRound.bailadores)
-    setTimeout(this.startRound.bind(this), 3000)
+
+    setTimeout(() => {
+      this.currentRoundNumber++
+      this.rotatePlayers()
+      this.startRound()
+    }, this.timeoutDelay)
   }
 
   get scoreboard() {
