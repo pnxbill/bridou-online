@@ -17,6 +17,7 @@ import Score from './components/score';
 import setGameListeners from './connection/setGameListeners';
 import type { TRound } from './models';
 import setState from './connection/setState';
+import BailadoresList from './components/bailadoresList';
 
 // This code runs in the Server
 export const getGameData = loader$(async (_) => {
@@ -127,6 +128,8 @@ export default component$(() => {
       <Resource
         value={game}
         onResolved={(result) => {
+          if (round.bailadores?.length) return <BailadoresList players={round.bailadores} />
+
           if (score.value) return (
             <Score
               players={score.value}
