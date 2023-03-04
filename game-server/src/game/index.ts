@@ -71,7 +71,7 @@ class Game {
     this.rotatePlayers()
     global.log('Round ended!')(this.id)
     app.io.to(this.id).emit('round-ended', this.currentRound.bailadores)
-    this.startRound()
+    setTimeout(this.startRound.bind(this), 3000)
   }
 
   get scoreboard() {
