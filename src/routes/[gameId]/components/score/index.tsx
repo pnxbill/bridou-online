@@ -1,4 +1,4 @@
-import { useClientEffect$, useSignal, useStylesScoped$ } from '@builder.io/qwik';
+import { useBrowserVisibleTask$, useClientEffect$, useSignal, useStylesScoped$ } from '@builder.io/qwik';
 import type { QRL } from '@builder.io/qwik'
 import { component$ } from '@builder.io/qwik';
 import type { TPlayer } from '../../../../../game-server/src/types';
@@ -16,7 +16,7 @@ export default component$(({ players, onClick }: Props) => {
   useStylesScoped$(styles)
   const showCloseButton = useSignal(false)
 
-  useClientEffect$(() => {
+  useBrowserVisibleTask$(() => {
     setTimeout(() => {
       showCloseButton.value = true
     }, 5000)
