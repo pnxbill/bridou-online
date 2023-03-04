@@ -45,6 +45,7 @@ function setGameListeners(socketInstance: any, state: TRound) {
   })
 
   socketInstance.on('round-started', (res: TGame['currentRound']) => {
+    state.bailadores = []
     state.trunfo = res.trunfo
     state.players = res.players
     state.turns = res.turns

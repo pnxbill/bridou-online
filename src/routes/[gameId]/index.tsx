@@ -82,6 +82,7 @@ export default component$(() => {
     });
 
     socket.on('scoreboard', (res: TPlayer[]) => {
+      round.bailadores = []
       score.value = res
     })
 
