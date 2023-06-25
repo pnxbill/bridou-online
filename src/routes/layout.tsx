@@ -1,20 +1,22 @@
-import { component$, Slot } from '@builder.io/qwik';
-import Header from '../components/header/header';
+import {
+  component$,
+  Slot,
+  useContext,
+} from '@builder.io/qwik';
+import { User, UserContext } from '~/context';
 
 export default component$(() => {
+  const { loading } = useContext<User>(UserContext);
+
   return (
-    <>
-      <main>
-        <Header />
+    <main>
+      {loading ? (
+        <h1 class="bridou-title">Bridou.com</h1>
+      ) : (
         <section>
           <Slot />
         </section>
-      </main>
-      {/* <footer>
-        <a href="https://linkedin.com/in/pnxbill" target="_blank">
-          Made with ♡ by pnxbill
-        </a>
-      </footer> */}
-    </>
+      )}
+    </main>
   );
 });

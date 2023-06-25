@@ -8,8 +8,8 @@ import styles from './styles.css?inline';
 
 export default component$(() => {
   useStylesScoped$(styles);
-  const nav = useNavigate()
-  const { name, id, loading, photoURL } = useContext<User>(UserContext)
+  const nav = useNavigate();
+  const { name, id, loading, photoURL } = useContext<User>(UserContext);
 
   const enterQueue = $(async () => {
     try {
@@ -17,28 +17,28 @@ export default component$(() => {
         user: {
           id,
           name,
-          photoURL
-        }
-      })
-      nav('/queue')
-    } catch(err: unknown) {
+          photoURL,
+        },
+      });
+      nav('/queue');
+    } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response) {
-        console.error('enter queue failed', err.response.data.message)
-        if (err.response.status === 401) nav('/queue')
-        return err.response.data.message
+        console.error('enter queue failed', err.response.data.message);
+        if (err.response.status === 401) nav('/queue');
+        return err.response.data.message;
       }
     }
-  })
+  });
 
-  // eslint-disable-next-line qwik/single-jsx-root
-  if (loading) return <h1>Carregando...</h1>
-  // eslint-disable-next-line qwik/single-jsx-root
-  if (!id) return <h1>Favor logar acima</h1>
+  if (loading) return <h1>Carregando...</h1>;
+  if (!id) return <h1>Favor logar acima</h1>;
 
   return (
     <div class="container">
       {name} conectado.
-      <button class="btn btn-enter-queue" onClick$={enterQueue}>Entrar na fila</button>
+      <button class="btn btn-enter-queue" onClick$={enterQueue}>
+        Entrar na fila
+      </button>
     </div>
   );
 });
