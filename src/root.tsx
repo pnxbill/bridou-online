@@ -4,10 +4,10 @@ import {
   RouterOutlet,
   ServiceWorkerRegister,
 } from '@builder.io/qwik-city';
-import { RouterHead } from './components/router-head/router-head';
+import { RouterHead } from '~/components/router-head/router-head';
 
-import globalStyles from './global.css?inline';
-import { Context } from './context';
+import globalStyles from '~/global.css?inline';
+import { Context } from '~/context';
 
 export default component$(() => {
   useStyles$(globalStyles);
@@ -17,8 +17,7 @@ export default component$(() => {
       <head>
         <meta charSet="utf-8" />
         <link rel="manifest" href="/manifest.json" />
-        {/* <script src="/card-script.js"></script>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script> */}
+        {/* <script src="/card-script.js"></script> */}
         <RouterHead />
       </head>
       <body lang="en">
