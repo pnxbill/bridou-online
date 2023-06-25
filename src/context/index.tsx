@@ -58,9 +58,9 @@ export interface TIP {
 export const gameMasters = ['nIrszj4f3Actvh5YmQSev5CQvHz2'];
 
 // Create a new context descriptor
-export const UserContext = createContextId('user-context');
-export const AuthContext = createContextId('auth-context');
-export const ConfigContext = createContextId('config-context');
+export const UserContext = createContextId<User>('user-context');
+export const AuthContext = createContextId<TAuth>('auth-context');
+export const ConfigContext = createContextId<TConfig>('config-context');
 
 export interface TConfig {
   IP?: string;
