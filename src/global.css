@@ -20,16 +20,6 @@ section {
   flex-direction: column;
   justify-content: space-between;
   height: 100%;
-  animation: 350ms darken ease-in-out forwards;
-}
-
-@keyframes darken {
-  from {
-    background: transparent;
-  }
-  to {
-    background: #000000d4;
-  }
 }
 
 #context-wrapper {
@@ -60,9 +50,7 @@ body {
 }
 
 main {
-  max-width: 760px;
   margin: 0 auto;
-  border-radius: 5px;
   box-shadow: 0px 0px 130px -50px var(--qwik-light-purple);
   overflow: hidden;
 }
@@ -279,15 +267,6 @@ button.btn:hover {
 button.btn:active {
   position: relative;
   top: 1px;
-}
-
-h1.bridou-title {
-  color: #fff;
-  font-family: 'Sail-Regular', sans-serif;
-  text-align: center;
-  margin-top: 8rem;
-  font-size: 3rem;
-  font-weight: lighter;
 }
 
 /* Load Fonts  */
