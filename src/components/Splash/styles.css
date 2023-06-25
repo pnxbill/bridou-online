@@ -1,0 +1,23 @@
+.splash {
+  height: 100vh;
+  width: 100vw;
+  animation: 350ms darken ease-in-out forwards;
+}
+
+h1.splash__title {
+  color: #fff;
+  font-family: 'Sail-Regular', sans-serif;
+  text-align: center;
+  margin-top: 8rem;
+  font-size: 3rem;
+  font-weight: lighter;
+}
+
+@keyframes darken {
+  from {
+    background: transparent;
+  }
+  to {
+    background: #000000d4;
+  }
+}
