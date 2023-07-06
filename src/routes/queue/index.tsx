@@ -6,7 +6,7 @@ import {
   useContext,
   useStore,
 } from '@builder.io/qwik';
-import { loader$ } from '@builder.io/qwik-city';
+import { routeLoader$ } from '@builder.io/qwik-city';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import axios from 'axios';
 import { io } from 'socket.io-client';
@@ -16,7 +16,7 @@ import { getCookie } from '~/utils/cookie';
 import PlayerList from '../../components/playerList';
 import { useNavigate } from '@builder.io/qwik-city';
 
-export const getQueueData = loader$(async () => {
+export const getQueueData = routeLoader$(async () => {
   try {
     const res = await axios.get('/api/queue');
     return res.data;
