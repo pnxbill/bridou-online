@@ -87,11 +87,23 @@ export const Context = component$(() => {
   });
 
   const user = useStore<User>({ loading: true });
+
+  const resetUser = $(() => {
+    user.id = undefined;
+    user.photoURL = undefined;
+    user.email = undefined;
+    user.name = undefined;
+    user.isGM = undefined;
+  });
+
   useVisibleTask$(() => {
     axios.defaults.baseURL = config.IP;
     auth.onAuthStateChanged((firebaseUser) => {
       user.loading = false;
-      if (!firebaseUser) return;
+      if (!firebaseUser) {
+        resetUser();
+        return;
+      }
       user.email = firebaseUser.email;
       user.id = firebaseUser.uid;
       user.photoURL = firebaseUser.photoURL;
