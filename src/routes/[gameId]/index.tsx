@@ -8,7 +8,7 @@ import {
   useStore,
   useStylesScoped$,
 } from '@builder.io/qwik';
-import { loader$ } from '@builder.io/qwik-city';
+import { routeLoader$ } from '@builder.io/qwik-city';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { useLocation } from '@builder.io/qwik-city';
 import axios from 'axios';
@@ -29,7 +29,7 @@ import setState from './connection/setState';
 import BailadoresList from './components/bailadoresList';
 
 // This code runs in the Server
-export const getGameData = loader$(async (_) => {
+export const getGameData = routeLoader$(async (_) => {
   const { cookie, params, redirect } = _;
   const playerId = cookie.get('uid')?.value;
   if (!playerId) {
@@ -50,8 +50,8 @@ export const getGameData = loader$(async (_) => {
 
 export default component$(() => {
   useStylesScoped$(styles);
-  const { id, loading, isGM } = useContext<User>(UserContext);
-  const { IP = '' } = useContext<TConfig>(ConfigContext);
+  const { id, loading, isGM } = useContext(UserContext);
+  const { IP = '' } = useContext(ConfigContext);
   const game = getGameData();
   if (game.value === 'Game not found') return <h1>{game.value}</h1>;
   const loc = useLocation();
