@@ -53,6 +53,7 @@
     "vite-tsconfig-paths": "3.5.0"
   },
   "dependencies": {
+    "@qwikest/icons": "^0.0.8",
     "axios": "^1.2.3",
     "body-parser": "^1.20.1",
     "cardsJS": "^1.1.1",
