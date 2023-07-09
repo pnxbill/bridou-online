@@ -1,0 +1,32 @@
+.footer {
+  height: 2.625rem;
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  z-index: 100;
+  background-color: #2c2c2c;
+  display: flex;
+  border-top: 1px solid #404040;
+  align-items: center;
+  padding-left: 2.625rem;
+  box-shadow: 0px -2px 16px black;
+}
+
+.profile-pic {
+  left: 0;
+  bottom: 0;
+  position: absolute;
+  border-top-right-radius: 0.5rem;
+  box-shadow: 1px -1px 4px #000000;
+  border: 2px solid #fff;
+  border-left: none;
+  border-bottom: none;
+}
+
+.user-name {
+  color: #fff;
+  font-family: Lalezar;
+  font-size: 1.4375rem;
+  margin-left: 1.5rem;
+  padding-top: 0.3rem;
+}
