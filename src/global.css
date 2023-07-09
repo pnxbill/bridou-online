@@ -17,7 +17,6 @@ main {
 
 section {
   display: flex;
-  flex-direction: column;
   justify-content: space-between;
   height: 100%;
   animation: 350ms darken ease-in-out forwards;
@@ -283,4 +282,9 @@ button.btn:active {
 @font-face {
   font-family: 'Sail-Regular';
   src: url('/fonts/Sail-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Lalezar';
+  src: url('/fonts/Lalezar-Regular.ttf') format('truetype');
 }
