@@ -1,11 +1,7 @@
 import { component$, useStylesScoped$ } from '@builder.io/qwik';
-import styles from './styles.css?inline';
-import { Link, useLocation, useNavigate } from '@builder.io/qwik-city';
+import { Link, useLocation } from '@builder.io/qwik-city';
 import { LuUsers, LuRadio, LuTrophy } from '@qwikest/icons/lucide';
-
-type TSideBarItem = {
-  href: string;
-};
+import styles from './styles.css?inline';
 
 const SIDEBAR_ITEM = [
   {
@@ -24,10 +20,7 @@ const SIDEBAR_ITEM = [
 
 export default component$(() => {
   useStylesScoped$(styles);
-
   const { url } = useLocation();
-
-  console.log(url.pathname.slice(0, -1));
 
   return (
     <div class="sidebar">
