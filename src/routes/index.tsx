@@ -35,7 +35,6 @@ export default component$(() => {
 
   return (
     <div class="container">
-      {name} conectado.
       <button class="btn btn-enter-queue" onClick$={enterQueue}>
         Entrar na fila
       </button>
