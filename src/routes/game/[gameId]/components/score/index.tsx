@@ -1,7 +1,7 @@
 import { useVisibleTask$, useSignal, useStylesScoped$ } from '@builder.io/qwik';
 import type { QRL } from '@builder.io/qwik';
 import { component$ } from '@builder.io/qwik';
-import type { TPlayer } from '../../../../../game-server/src/types';
+import type { TPlayer } from '../../../../../../game-server/src/types';
 import styles from './styles.css?inline';
 
 interface Props {

@@ -13,7 +13,7 @@ import { io } from 'socket.io-client';
 import { ConfigContext, UserContext } from '~/context';
 import type { TConfig, User } from '~/context';
 import { getCookie } from '~/utils/cookie';
-import PlayerList from '../../components/playerList';
+import PlayerList from '../../components/PlayerList';
 import { useNavigate } from '@builder.io/qwik-city';
 
 export const getQueueData = routeLoader$(async () => {

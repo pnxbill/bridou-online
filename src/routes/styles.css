@@ -6,3 +6,20 @@
 .btn-enter-queue {
   margin: auto;
 }
+
+.app-container {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  display: flex;
+  animation: 1s fadeIn ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

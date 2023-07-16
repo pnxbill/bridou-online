@@ -1,24 +1,24 @@
 import { component$, useStylesScoped$ } from '@builder.io/qwik';
-import type { TGame } from '../../../../../types';
-import styles from './styles.css?inline'
+import type { TGame } from '../../../../../../types';
+import styles from './styles.css?inline';
 
 export interface TCard {
-  value: string
-  disabled: boolean
+  value: string;
+  disabled: boolean;
 }
 
 interface Props {
-  players: TGame['currentRound']['players']
+  players: TGame['currentRound']['players'];
 }
 
 export default component$(({ players }: Props) => {
   useStylesScoped$(styles);
-  if (!players?.length) return null
-  
+  if (!players?.length) return null;
+
   return (
     <div class="bets-container">
       <ul>
-        {players.map(player => {
+        {players.map((player) => {
           return (
             <li>
               <span>
@@ -27,10 +27,9 @@ export default component$(({ players }: Props) => {
               </span>
               <span>{player.bet}</span>
             </li>
-          )
+          );
         })}
       </ul>
     </div>
   );
 });
-

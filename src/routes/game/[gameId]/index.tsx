@@ -20,7 +20,7 @@ import { io } from 'socket.io-client';
 import styles from './styles.css?inline';
 import Bets from './components/bets';
 import Trunfo from './components/trunfo';
-import type { TPlayer } from '../../../game-server/src/types';
+import type { TPlayer } from '../../../../game-server/src/types';
 import Table from './components/table';
 import Score from './components/score';
 import setGameListeners from './connection/setGameListeners';
