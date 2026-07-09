@@ -1,75 +1,47 @@
-# Qwik City App ⚡️
+# Bridou Online
 
-- [Qwik Docs](https://qwik.builder.io/)
-- [Discord](https://qwik.builder.io/chat)
-- [Qwik GitHub](https://github.com/BuilderIO/qwik)
-- [@QwikDev](https://twitter.com/QwikDev)
-- [Vite](https://vitejs.dev/)
+Online multiplayer trick-taking card game (13 rounds of 1→7→1 cards, bets, trunfo, bailadores).
 
----
+## Architecture
 
-## Project Structure
-
-This project is using Qwik with [QwikCity](https://qwik.builder.io/qwikcity/overview/). QwikCity is just a extra set of tools on top of Qwik to make it easier to build a full site, including directory-based routing, layouts, and more.
-
-Inside your project, you'll see the following directory structure:
+pnpm workspace monorepo. The game rules live in a pure, transport-agnostic engine;
+delivery (HTTP + realtime) is a thin layer around it.
 
 ```
-├── public/
-│   └── ...
-└── src/
-    ├── components/
-    │   └── ...
-    └── routes/
-        └── ...
+├── packages/
+│   ├── shared/          # Types + the DomainEvent contract (engine ↔ server ↔ future web app)
+│   └── engine/          # PURE game rules: Deck, Turn, Round, Game — no I/O, fully unit-tested
+├── apps/
+│   └── server/          # Delivery layer
+│       ├── application/ # Use-cases (GameService, Queue) + ports (GameRepository, RealtimeGateway)
+│       ├── infra/       # socket.io gateway, connection registry, in-memory repository
+│       └── http/        # Express routes (legacy REST API)
+├── src/                 # LEGACY Qwik frontend (POC) — to be replaced by a Next.js app
+└── game-server/         # LEGACY backend — superseded by apps/server, kept until the frontend port
 ```
 
-- `src/routes`: Provides the directory based routing, which can include a hierarchy of `layout.tsx` layout files, and an `index.tsx` file as the page. Additionally, `index.ts` files are endpoints. Please see the [routing docs](https://qwik.builder.io/qwikcity/routing/overview/) for more info.
+Key design points:
 
-- `src/components`: Recommended directory for components.
-
-- `public`: Any static assets, like images, can be placed in the public directory. Please see the [Vite public directory](https://vitejs.dev/guide/assets.html#the-public-directory) for more info.
-
-## Add Integrations and deployment
-
-Use the `pnpm qwik add` command to add additional integrations. Some examples of integrations include: Cloudflare, Netlify or Express server, and the [Static Site Generator (SSG)](https://qwik.builder.io/qwikcity/static-site-generation/static-site-config/).
-
-```shell
-pnpm qwik add # or `yarn qwik add`
-```
+- The engine emits `DomainEvent`s (`round-started`, `card-played`, …) through an injected
+  `EventPublisher`; it never touches sockets. `apps/server/src/infra/socket-io-gateway.ts`
+  maps those events to the socket event names the legacy Qwik client understands.
+  Swapping socket.io for SSE later means replacing only that gateway.
+- Randomness (`Rng`) and time (`Scheduler`) are injected, so tests run full games
+  deterministically with seeded shuffles and manual clocks.
+- Private events (a player's hand, their bet options) are routed per player via the
+  `ConnectionRegistry`; broadcast snapshots never contain hands.
 
 ## Development
 
-Development mode uses [Vite's development server](https://vitejs.dev/). During development, the `dev` command will server-side render (SSR) the output.
-
 ```shell
-npm start # or `yarn start`
+pnpm install
+pnpm dev:local     # Qwik frontend (:3000) + game server (:3001)
+pnpm dev:server    # game server only
+pnpm test          # all workspace tests (engine rules + server use-cases + wire-protocol e2e)
 ```
 
-> Note: during dev mode, Vite may request a significant number of `.js` files. This does not represent a Qwik production build.
+## Legacy Qwik frontend
 
-## Preview
-
-The preview command will create a production build of the client modules, a production build of `src/entry.preview.tsx`, and run a local server. The preview server is only for convenience to locally preview a production build, and it should not be used as a production server.
-
-```shell
-pnpm preview # or `yarn preview`
-```
-
-## Production
-
-The production build will generate client and server modules by running both client and server build commands. Additionally, the build command will use Typescript to run a type check on the source code.
-
-```shell
-pnpm build # or `yarn build`
-```
-
-## Express Server
-
-This app has a minimal [Express server](https://expressjs.com/) implementation. After running a full build, you can preview the build using the command:
-
-```
-pnpm serve
-```
-
-Then visit [http://localhost:8080/](http://localhost:8080/)
+The current frontend is a Qwik City POC (`src/`). It talks REST for actions
+(`/api/bet`, `/api/play-card`, …) and receives state over socket.io. See
+`apps/server/test/wire-protocol.e2e.test.ts` for the exact wire contract it relies on.
