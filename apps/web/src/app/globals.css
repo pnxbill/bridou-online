@@ -195,12 +195,23 @@ body {
   font-size: 0.875rem;
 }
 
+/* Cards from @bridou/cards-ui are 100x140; wrappers scale them down */
+.trunfo-card {
+  width: 50px;
+  height: 70px;
+}
+
+.trunfo-card .card {
+  transform: scale(0.5);
+  transform-origin: top left;
+}
+
 .table {
   position: relative;
   background: var(--felt);
   border: 1px solid var(--border);
   border-radius: 16px;
-  min-height: 180px;
+  min-height: 200px;
   padding: 1.5rem;
   display: flex;
   align-items: center;
@@ -229,6 +240,20 @@ body {
   gap: 0.25rem;
 }
 
+.table-card {
+  width: 72px;
+  height: 101px;
+}
+
+.table-card .card {
+  transform: scale(0.72);
+  transform-origin: top left;
+}
+
+.table-slot.waiting .table-card {
+  opacity: 0.75;
+}
+
 .table-player {
   font-size: 0.75rem;
   color: var(--muted);
@@ -236,23 +261,6 @@ body {
 
 .table-player.current {
   color: var(--accent);
-}
-
-.card {
-  width: 72px;
-  height: auto;
-  border-radius: 6px;
-}
-
-.card.small {
-  width: 44px;
-}
-
-.card.placeholder {
-  width: 72px;
-  height: 100px;
-  border: 2px dashed var(--border);
-  border-radius: 6px;
 }
 
 .bet-picker {
@@ -272,31 +280,6 @@ body {
 .bet-btn {
   min-width: 48px;
   font-weight: 700;
-}
-
-.hand {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-  padding-bottom: 1rem;
-}
-
-.card-btn {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  transition: transform 0.1s ease;
-}
-
-.card-btn:not(:disabled):hover {
-  transform: translateY(-8px);
-}
-
-.card-btn:disabled {
-  opacity: 0.5;
-  cursor: default;
 }
 
 /* overlays */

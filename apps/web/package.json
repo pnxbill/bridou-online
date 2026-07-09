@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@bridou/cards-ui": "workspace:*",
     "@bridou/shared": "workspace:*",
     "firebase": "^11.0.0",
     "next": "^15.3.0",

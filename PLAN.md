@@ -86,10 +86,10 @@ First decide **what actually needs durability**; active games can stay in memory
 
 Full redesign planned — decisions still open.
 
+- [x] Card rendering: vendored the user's cards-lib (github.com/pnxbill/cards-lib) as `packages/cards-ui` — CSS-drawn cards + framer-motion fanned hand with drag-to-reorder, tap-to-select, tap-again-to-play; added a `disabled` state for follow-suit dimming; SVG card assets deleted
 - [ ] Define visual direction (the current CSS is placeholder POC styling)
 - [ ] Design the table layout (players around the table, played cards, turn indicator)
 - [ ] Mobile-first pass (the game is played on phones at the table)
-- [ ] Reuse or redraw card assets (`public/cards/*.svg`)
 
 ## 8. Infra & Tooling
 

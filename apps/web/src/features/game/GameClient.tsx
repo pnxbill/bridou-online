@@ -9,7 +9,7 @@ import { AbandonedOverlay } from './components/AbandonedOverlay'
 import { BailadoresOverlay } from './components/BailadoresOverlay'
 import { BetPicker } from './components/BetPicker'
 import { BetsBar } from './components/BetsBar'
-import { Hand } from './components/Hand'
+import { PlayerHand } from './components/PlayerHand'
 import { ScoreboardOverlay } from './components/ScoreboardOverlay'
 import { Table } from './components/Table'
 import { Trunfo } from './components/Trunfo'
@@ -90,7 +90,7 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
       />
 
       <BetPicker bets={state.availableBets} onBet={placeBet} />
-      <Hand cards={state.hand} onPlay={playCard} />
+      <PlayerHand cards={state.hand} onPlay={playCard} />
     </div>
   )
 }
