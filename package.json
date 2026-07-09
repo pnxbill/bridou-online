@@ -19,6 +19,7 @@
     "deploy": "node server/entry.express",
     "dev": "vite --mode ssr",
     "dev:local": "concurrently \"vite --mode ssr --host\" \"pnpm --filter @bridou/server dev\"",
+    "dev:web": "concurrently \"pnpm --filter @bridou/web dev\" \"pnpm --filter @bridou/server dev\"",
     "dev:server": "pnpm --filter @bridou/server dev",
     "test": "pnpm -r --filter './packages/*' --filter './apps/*' test",
     "dev.debug": "node --inspect-brk ./node_modules/vite/bin/vite.js --mode ssr --force",

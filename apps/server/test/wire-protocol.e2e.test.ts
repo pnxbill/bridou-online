@@ -31,6 +31,8 @@ const LEGACY_EVENTS = [
 
 class FakeClient {
   received: ReceivedEvent[] = []
+  /** The clean contract on the 'event' channel — what the Next.js client consumes. */
+  domainEvents: { type: string; playerId?: string }[] = []
   private socket!: Socket
 
   constructor(
@@ -42,6 +44,9 @@ class FakeClient {
     this.socket = connect(this.baseUrl, { auth: { gameId, playerId: this.playerId } })
     LEGACY_EVENTS.forEach((name) => {
       this.socket.on(name, (payload: unknown) => this.received.push({ name, payload }))
+    })
+    this.socket.on('event', (event: { type: string; playerId?: string }) => {
+      this.domainEvents.push(event)
     })
     await new Promise<void>((resolve) => this.socket.on('connect', () => resolve()))
   }
@@ -154,6 +159,17 @@ describe('legacy wire protocol', () => {
     // alice bets first (she leads round 1)
     await waitFor(() => alice.ofType('bet-time').length === 1, 'alice is asked to bet')
     expect(bob.ofType('bet-time')).toHaveLength(0)
+
+    // the DomainEvent channel (consumed by the Next.js client) carries the same flow,
+    // with private events routed only to their owner
+    const aliceTypes = alice.domainEvents.map((e) => e.type)
+    expect(aliceTypes).toEqual(
+      expect.arrayContaining(['round-started', 'trunfo-set', 'cards-dealt', 'bet-requested']),
+    )
+    const privateTypes = ['cards-dealt', 'bet-requested', 'play-requested']
+    const bobPrivate = bob.domainEvents.filter((e) => privateTypes.includes(e.type))
+    expect(bobPrivate.every((e) => e.playerId === 'bob')).toBe(true)
+    expect(bob.domainEvents.some((e) => e.type === 'bet-requested')).toBe(false)
   })
 
   it('returns the reconnect snapshot from /api/enter-game', async () => {

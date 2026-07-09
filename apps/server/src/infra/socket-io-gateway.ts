@@ -52,10 +52,15 @@ export class SocketIoGateway implements RealtimeGateway {
 
         if (isPrivateEvent(event)) {
           const socketId = this.registry.socketOf(event.playerId)
-          if (socketId) this.io.to(socketId).emit(name, payload)
+          if (socketId) {
+            this.io.to(socketId).emit(name, payload)
+            this.io.to(socketId).emit('event', event)
+          }
           return
         }
         this.io.to(gameId).emit(name, payload)
+        // The clean contract the new client consumes; legacy names above die with the Qwik POC
+        this.io.to(gameId).emit('event', event)
       },
     }
   }

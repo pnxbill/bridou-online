@@ -9,15 +9,16 @@ delivery (HTTP + realtime) is a thin layer around it.
 
 ```
 ├── packages/
-│   ├── shared/          # Types + the DomainEvent contract (engine ↔ server ↔ future web app)
+│   ├── shared/          # Types + the DomainEvent contract (engine ↔ server ↔ web)
 │   └── engine/          # PURE game rules: Deck, Turn, Round, Game — no I/O, fully unit-tested
 ├── apps/
-│   └── server/          # Delivery layer
-│       ├── application/ # Use-cases (GameService, Queue) + ports (GameRepository, RealtimeGateway)
-│       ├── infra/       # socket.io gateway, connection registry, in-memory repository
-│       └── http/        # Express routes (legacy REST API)
-├── src/                 # LEGACY Qwik frontend (POC) — to be replaced by a Next.js app
-└── game-server/         # LEGACY backend — superseded by apps/server, kept until the frontend port
+│   ├── server/          # Delivery layer
+│   │   ├── application/ # Use-cases (GameService, Queue) + ports (GameRepository, RealtimeGateway)
+│   │   ├── infra/       # socket.io gateway, connection registry, in-memory repository
+│   │   └── http/        # Express routes (legacy REST API)
+│   └── web/             # Next.js frontend: DomainEvent reducer + useGameChannel (transport in one file)
+├── src/                 # LEGACY Qwik frontend (POC) — replaced by apps/web, delete after live validation
+└── game-server/         # LEGACY backend — superseded by apps/server, kept until legacy cleanup
 ```
 
 Key design points:
@@ -35,9 +36,10 @@ Key design points:
 
 ```shell
 pnpm install
-pnpm dev:local     # Qwik frontend (:3000) + game server (:3001)
+pnpm dev:web       # Next.js frontend (:3000) + game server (:3001)
+pnpm dev:local     # LEGACY Qwik frontend (:3000) + game server (:3001)
 pnpm dev:server    # game server only
-pnpm test          # all workspace tests (engine rules + server use-cases + wire-protocol e2e)
+pnpm test          # all workspace tests (engine rules + reducer + server + wire-protocol e2e)
 ```
 
 ## Legacy Qwik frontend

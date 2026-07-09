@@ -20,6 +20,7 @@ and every step leaves the game playable.
 - [x] Thin delivery layer: use-cases (`GameService`, `Queue`) + ports (`GameRepository`, `RealtimeGateway`)
 - [x] socket.io gateway translating domain events to the legacy wire protocol (keeps the POC alive during the port)
 - [x] Wire-protocol e2e test — **temporary**, delete together with the legacy client
+- [x] Emit raw `DomainEvent`s on the `event` channel alongside legacy names — the contract the Next.js client consumes
 - [ ] Multiple lobbies (create/join by code) instead of the single global queue
 - [ ] Evict finished/abandoned games from memory (TTL after `game-ended`)
 - [ ] Clean REST API v2 designed for the Next.js client (drop legacy naming quirks like `close-score`)
@@ -49,12 +50,12 @@ Do this **after** the Next.js port so we never change frontend and transport at 
 
 The Qwik app (`src/`) is a POC: port behavior, don't fix it.
 
-- [ ] Scaffold `apps/web` (Next.js App Router, TypeScript, importing `@bridou/shared`)
-- [ ] Game state as a pure reducer over `DomainEvent` (replaces `setGameListeners.ts`)
-- [ ] Realtime channel hook (`useGameChannel`) wrapping socket.io first, SSE later — one file to swap
-- [ ] Pages: home/login, lobby/queue, game table (server component fetches the snapshot, client component applies events)
-- [ ] Reconnect flow: refetch `/api/enter-game` snapshot (same pattern the POC uses)
-- [ ] Feature parity checklist: bets, hand, table, trunfo, scoreboard, bailadores overlay
+- [x] Scaffold `apps/web` (Next.js App Router, TypeScript, importing `@bridou/shared`)
+- [x] Game state as a pure reducer over `DomainEvent` (replaces `setGameListeners.ts`), unit-tested
+- [x] Realtime channel hook (`useGameChannel`) wrapping socket.io first, SSE later — one file to swap
+- [x] Pages: home/login, lobby/queue, game table (server component fetches the snapshot, client component applies events)
+- [x] Reconnect flow: socket.io auto-reconnect + refetch `/api/enter-game` snapshot; failed actions also resync
+- [ ] Feature parity verified in a real multi-player game (bets, hand, table, trunfo, scoreboard, bailadores — implemented, needs a live playthrough)
 - [ ] Abandonment UI: "player X left — bot takes over in 30s" countdown, bot badge on the seat, rejoin flow
 - [ ] Delete legacy: Qwik `src/`, `game-server/`, root Qwik deps, wire-protocol e2e test
 
