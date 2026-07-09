@@ -45,4 +45,12 @@ pnpm test          # all workspace tests (engine rules + reducer + server + game
 pnpm build         # production build of the web app
 ```
 
+### Configuration
+
+The web app runs with zero configuration — sensible defaults are built in
+(game server on `http://localhost:3001`, SSE transport, the public Firebase config).
+To override anything, `cp apps/web/.env.example apps/web/.env.local` and edit;
+e.g. `NEXT_PUBLIC_REALTIME_TRANSPORT=socketio` switches the realtime transport back
+to sockets. The server side has just `PORT` (defaults to 3001).
+
 See `PLAN.md` for the revamp roadmap and what's still open.
