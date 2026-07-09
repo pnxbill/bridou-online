@@ -1,4 +1,4 @@
-import type { PlayerInfo } from '@bridou/shared'
+import { MAX_PLAYERS, type PlayerInfo } from '@bridou/shared'
 import { GameError } from '@bridou/engine'
 import { randomUUID } from 'node:crypto'
 
@@ -17,6 +17,9 @@ export class Queue {
   add(player: PlayerInfo): void {
     if (this.players.some((p) => p.id === player.id)) {
       throw new GameError('Already on the queue')
+    }
+    if (this.players.length >= MAX_PLAYERS) {
+      throw new GameError(`Queue is full (max ${MAX_PLAYERS} players)`)
     }
     this.players.push(player)
   }

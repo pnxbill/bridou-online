@@ -20,7 +20,7 @@ export function BetsBar({ players, betting, botSeats = [] }: Props) {
         >
           {player.photoURL && <img className="avatar" src={player.photoURL} alt="" />}
           <span className="bet-name">
-            {botSeats.includes(player.id) && <span title="Bot jogando">🤖 </span>}
+            {(player.isBot || botSeats.includes(player.id)) && <span title="Bot jogando">🤖 </span>}
             {player.name}
           </span>
           <span className="bet-value">

@@ -27,6 +27,10 @@ describe('setup', () => {
     expect(() => makeGame({ playerCount: 1 })).toThrow('Required at least 2 players')
   })
 
+  it('caps the table at 7 players (the deck runs out beyond that)', () => {
+    expect(() => makeGame({ playerCount: 8 })).toThrow('Maximum of 7 players')
+  })
+
   it('cannot start twice', () => {
     const { game } = makeGame()
     game.start()

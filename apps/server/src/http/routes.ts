@@ -49,6 +49,10 @@ export const createRoutes = (service: GameService): Router => {
     respond(res, () => service.queueState())
   })
 
+  routes.post('/api/add-bot', (_req: Request, res: Response) => {
+    respond(res, () => service.addBotToQueue())
+  })
+
   routes.get('/api/start-game', (_req: Request, res: Response) => {
     respond(res, () => ({ gameId: service.startGame().id }))
   })

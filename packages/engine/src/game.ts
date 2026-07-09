@@ -1,4 +1,5 @@
 import {
+  MAX_PLAYERS,
   TOTAL_ROUNDS,
   type EventPublisher,
   type GameSnapshot,
@@ -46,6 +47,7 @@ export class Game {
 
   constructor({ id, leaderId, players }: GameConfig, deps: GameDeps) {
     if (players.length < 2) throw new GameError('Required at least 2 players')
+    if (players.length > MAX_PLAYERS) throw new GameError(`Maximum of ${MAX_PLAYERS} players`)
     this.id = id
     this.leaderId = leaderId
     this.playerOrder = [...players]
@@ -97,6 +99,7 @@ export class Game {
         id: player.id,
         name: player.name,
         ...(player.photoURL !== undefined && { photoURL: player.photoURL }),
+        ...(player.isBot && { isBot: true }),
         totalPoints: this.rounds.reduce(
           (acc, round) => acc + (round.players.find((p) => p.id === player.id)?.points ?? 0),
           0,

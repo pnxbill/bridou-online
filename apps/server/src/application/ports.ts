@@ -24,4 +24,6 @@ export interface GameSessionMonitor {
   /** Throws while the game is paused waiting on an abandoned seat. */
   assertPlayable(gameId: string): void
   sessionState(gameId: string): SessionState
+  /** Seats that are bots from the start; call before the game's first event. */
+  registerBotSeats(gameId: string, playerIds: string[]): void
 }

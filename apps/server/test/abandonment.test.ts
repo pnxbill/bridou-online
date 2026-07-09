@@ -166,6 +166,31 @@ describe('abandonment flow', () => {
     expect(gateway.ofType('player-abandoned')).toHaveLength(0)
   })
 
+  it('plays a queue bot from the very first move', () => {
+    // fresh queue: alice + a queue bot
+    const { bot } = service.addBotToQueue()
+    expect(bot.isBot).toBe(true)
+    expect(bot.name).toBeTruthy()
+
+    // (alice/bob game from beforeEach is separate; start a game on the new queue)
+    const botGameId = service.queueState().queueId
+    service.joinQueue(player('carol'))
+    presence.connected(botGameId, 'carol', 'conn-carol')
+    service.startGame()
+
+    // round 1: the bot is somewhere in the betting order; flush its think timers
+    scheduler.flushAll()
+    const botBet = gateway
+      .ofType('player-bet')
+      .find((e) => e.playerId === bot.id)
+    expect(botBet).toBeDefined()
+
+    // snapshot marks the seat as bot for reconnecting clients
+    const entry = service.enterGame(botGameId, 'carol')
+    expect(entry.botSeats).toContain(bot.id)
+    expect(entry.currentRound.players.find((p) => p.id === bot.id)?.isBot).toBe(true)
+  })
+
   it('keeps the game paused until every abandoned seat is resolved', () => {
     presence.disconnected('conn-alice')
     presence.disconnected('conn-bob')

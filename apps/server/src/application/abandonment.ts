@@ -79,6 +79,14 @@ export class AbandonmentService implements PresenceListener {
     }
   }
 
+  /** Seats that never had a human (queue bots) — bot-controlled from move one. */
+  registerBotSeats(gameId: string, playerIds: string[]): void {
+    if (!playerIds.length) return
+    const bots = this.botSeats.get(gameId) ?? new Set<string>()
+    playerIds.forEach((id) => bots.add(id))
+    this.botSeats.set(gameId, bots)
+  }
+
   sessionState(gameId: string): SessionState {
     return {
       abandoned: [...(this.abandoned.get(gameId) ?? [])].map(([playerId, resumeAt]) => ({

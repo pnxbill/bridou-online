@@ -21,6 +21,7 @@ and every step leaves the game playable.
 - [x] Thin delivery layer: use-cases (`GameService`, `Queue`) + ports (`GameRepository`, `RealtimeGateway`)
 - [x] socket.io gateway delivering `DomainEvent`s on the `event` channel (legacy event-name mapping removed with the POC)
 - [x] Game-flow e2e pinning the real wire contract (REST + `event` channel + private routing)
+- [x] Queue bots: the leader can seat bots (random names, `isBot` flag rendered everywhere); they play from the first move; table capped at 7 seats
 - [ ] Multiple lobbies (create/join by code) instead of the single global queue
 - [ ] Evict finished/abandoned games from memory (TTL after `game-ended`)
 - [ ] Clean REST API v2 designed for the Next.js client (drop legacy naming quirks like `close-score`)

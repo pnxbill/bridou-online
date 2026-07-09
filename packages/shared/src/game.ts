@@ -9,6 +9,8 @@ export interface PlayerInfo {
   id: string
   name: string
   photoURL?: string
+  /** Seat played by the machine from the start — always shown as a bot. */
+  isBot?: boolean
 }
 
 /** A player as everyone may see them inside a round — never includes their hand. */

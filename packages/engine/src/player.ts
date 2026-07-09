@@ -13,6 +13,7 @@ export const toRoundPlayer = (player: RoundPlayerState): RoundPlayer => ({
   id: player.id,
   name: player.name,
   ...(player.photoURL !== undefined && { photoURL: player.photoURL }),
+  ...(player.isBot && { isBot: true }),
   bet: player.bet,
   made: player.made,
   points: player.points,

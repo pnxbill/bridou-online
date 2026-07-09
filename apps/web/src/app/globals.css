@@ -124,6 +124,25 @@ body {
   background: var(--panel);
 }
 
+.queue-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.bot-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+.bot-tag {
+  color: var(--muted);
+  font-size: 0.8em;
+}
+
 /* game */
 .game {
   display: flex;

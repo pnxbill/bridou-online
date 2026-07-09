@@ -48,7 +48,17 @@ export function QueueClient() {
   if (!user) return <p className="hint">Faça login para entrar na fila.</p>
   if (error) return <p className="hint">{error}</p>
 
-  const canStart = leaderId === user.id && players.length >= 2
+  const isLeader = leaderId === user.id
+  const canStart = isLeader && players.length >= 2
+
+  const addBot = async () => {
+    try {
+      await api.addBot()
+      // the player-entered-queue event updates the list for everyone, us included
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível adicionar o bot')
+    }
+  }
 
   return (
     <div className="queue">
@@ -56,16 +66,32 @@ export function QueueClient() {
       <ul className="queue-list">
         {players.map((player) => (
           <li key={player.id} className="queue-row">
-            {player.photoURL && <img className="avatar" src={player.photoURL} alt="" />}
-            <span>{player.name}</span>
+            {player.isBot ? (
+              <span className="avatar bot-avatar" title="Bot">
+                🤖
+              </span>
+            ) : (
+              player.photoURL && <img className="avatar" src={player.photoURL} alt="" />
+            )}
+            <span>
+              {player.name}
+              {player.isBot && <span className="bot-tag"> · bot</span>}
+            </span>
           </li>
         ))}
         {!players.length && <li className="hint">Ninguém na fila ainda.</li>}
       </ul>
-      {canStart && (
-        <button className="btn primary" onClick={() => api.startGame().catch(() => {})}>
-          COMEÇAR
-        </button>
+      {isLeader && (
+        <div className="queue-actions">
+          <button className="btn" onClick={addBot}>
+            Adicionar bot 🤖
+          </button>
+          {canStart && (
+            <button className="btn primary" onClick={() => api.startGame().catch(() => {})}>
+              COMEÇAR
+            </button>
+          )}
+        </div>
       )}
     </div>
   )

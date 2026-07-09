@@ -16,7 +16,10 @@ export function ScoreboardOverlay({ scoreboard, onClose }: Props) {
           {scoreboard.map((entry) => (
             <li key={entry.id} className="score-row">
               {entry.photoURL && <img className="avatar" src={entry.photoURL} alt="" />}
-              <span className="score-name">{entry.name}</span>
+              <span className="score-name">
+                {entry.isBot && <span title="Bot">🤖 </span>}
+                {entry.name}
+              </span>
               <span className="score-points">{entry.totalPoints}</span>
             </li>
           ))}

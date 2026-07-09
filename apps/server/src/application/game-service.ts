@@ -1,8 +1,20 @@
 import { Game, GameError, type Scheduler } from '@bridou/engine'
 import type { GameSnapshot, PlayerInfo, PlayerPerspective, SessionState } from '@bridou/shared'
+import { randomUUID } from 'node:crypto'
 import { ForbiddenError, NotFoundError } from './errors'
 import type { GameRepository, GameSessionMonitor, RealtimeGateway } from './ports'
 import type { Queue } from './queue'
+
+const BOT_NAMES = [
+  'Botelho',
+  'Robertinho',
+  'Botafogo',
+  'Bot Marley',
+  'Botina',
+  'Beto Bot',
+  'Boticário',
+  'Roboto',
+]
 
 export interface EnterGameResult extends GameSnapshot, PlayerPerspective, SessionState {
   time: number
@@ -24,6 +36,20 @@ export class GameService {
     return { queueId: this.queue.id, leaderId: this.queue.leaderId! }
   }
 
+  /** Seats a bot in the queue — it plays from the game's very first move. */
+  addBotToQueue(): { bot: PlayerInfo } {
+    const taken = new Set(this.queue.players.map((p) => p.name))
+    const free = BOT_NAMES.filter((name) => !taken.has(name))
+    const name = free.length
+      ? free[Math.floor(Math.random() * free.length)]!
+      : `Bot ${this.queue.players.length + 1}`
+
+    const bot: PlayerInfo = { id: `bot-${randomUUID()}`, name, isBot: true }
+    this.queue.add(bot)
+    this.gateway.playerJoinedQueue(this.queue.id, bot)
+    return { bot }
+  }
+
   queueState(): { queueId: string; leaderId?: string; queue: PlayerInfo[] } {
     return {
       queueId: this.queue.id,
@@ -34,10 +60,14 @@ export class GameService {
 
   startGame(): Game {
     if (this.queue.players.length < 2) throw new GameError('Required at least 2 players')
+    if (this.queue.players.every((p) => p.isBot)) {
+      throw new GameError('At least one human player is required')
+    }
 
     const gameId = this.queue.id
+    const players = [...this.queue.players]
     const game = new Game(
-      { id: gameId, leaderId: this.queue.leaderId!, players: [...this.queue.players] },
+      { id: gameId, leaderId: this.queue.leaderId!, players },
       {
         publisher: this.gateway.publisherFor(gameId),
         ...(this.options.scheduler ? { scheduler: this.options.scheduler } : {}),
@@ -45,6 +75,12 @@ export class GameService {
     )
     this.games.save(game)
     this.queue.reset()
+
+    // Bot seats must be known before the first prompt fires
+    this.sessions.registerBotSeats(
+      gameId,
+      players.filter((p) => p.isBot).map((p) => p.id),
+    )
 
     this.gateway.gameStarted(gameId)
     game.start()

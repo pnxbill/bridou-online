@@ -59,6 +59,31 @@ describe('GameService', () => {
     expect(() => service.startGame()).toThrow('Required at least 2 players')
   })
 
+  it('adds clearly-flagged bots with distinct names to the queue', () => {
+    service.joinQueue(player('a'))
+    const first = service.addBotToQueue().bot
+    const second = service.addBotToQueue().bot
+
+    expect(first.isBot).toBe(true)
+    expect(second.isBot).toBe(true)
+    expect(first.name).not.toBe(second.name)
+    expect(gateway.queueJoins.map((j) => j.player.id)).toContain(first.id)
+    expect(service.queueState().queue.filter((p) => p.isBot)).toHaveLength(2)
+  })
+
+  it('caps the queue at 7 players', () => {
+    service.joinQueue(player('a'))
+    for (let i = 0; i < 6; i++) service.addBotToQueue()
+    expect(() => service.addBotToQueue()).toThrow('Queue is full')
+    expect(() => service.joinQueue(player('b'))).toThrow('Queue is full')
+  })
+
+  it('refuses to start a game with only bots', () => {
+    service.addBotToQueue()
+    service.addBotToQueue()
+    expect(() => service.startGame()).toThrow('At least one human player is required')
+  })
+
   it('starts a game with the queue id, announces it, and resets the queue', () => {
     const { queueId } = service.joinQueue(player('a'))
     service.joinQueue(player('b'))

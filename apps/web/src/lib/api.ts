@@ -35,6 +35,8 @@ export const api = {
   enterQueue: (user: PlayerInfo) =>
     post<{ queueId: string; leaderId: string }>('/api/enter-queue', { user }),
 
+  addBot: () => post<{ bot: PlayerInfo }>('/api/add-bot', {}),
+
   startGame: () => request<{ gameId: string }>('/api/start-game'),
 
   enterGame: (gameId: string, playerId: string) =>
