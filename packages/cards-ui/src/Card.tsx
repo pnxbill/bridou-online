@@ -2,7 +2,10 @@
 
 /**
  * Vendored from github.com/pnxbill/cards-lib @ 47bc27c.
- * Local changes: 'use client' directive; `disabled` prop (dimmed, not clickable).
+ * Local changes: 'use client' directive; `disabled` prop. Instead of dimming
+ * (which muddies this deck's dark gradient), playable cards (clickable and
+ * not disabled) get a gold glow matching the card back's accent, while
+ * disabled cards stay crisp but inert.
  */
 import React from 'react'
 
@@ -66,6 +69,13 @@ export const Card: React.FC<CardProps> = ({
   }
 
   const handleClick = disabled ? undefined : onClick
+  // Playable = actionable right now → gold accent glow (same gold as the card back)
+  const isPlayable = !disabled && !!onClick
+
+  const restingBorder = isDark ? 'rgba(148, 163, 184, 0.3)' : '#e2e8f0' // Subtle slate border in dark
+  const restingShadow = isDark
+    ? '0 8px 16px -4px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(148, 163, 184, 0.1) inset' // Stronger shadow + inner glow
+    : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
 
   const baseStyles: React.CSSProperties = {
     width: '100px',
@@ -75,7 +85,7 @@ export const Card: React.FC<CardProps> = ({
       ? 'linear-gradient(135deg, #334155 0%, #1e293b 100%)' // Lighter, more visible gradient
       : 'linear-gradient(135deg, #fffbf0 0%, #f0f0f0 100%)',
     borderRadius: '12px',
-    border: `2px solid ${isDark ? 'rgba(148, 163, 184, 0.3)' : '#e2e8f0'}`, // Subtle slate border in dark
+    border: `2px solid ${isPlayable ? 'rgba(251, 191, 36, 0.75)' : restingBorder}`,
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
@@ -84,14 +94,14 @@ export const Card: React.FC<CardProps> = ({
     boxSizing: 'border-box',
     cursor: handleClick ? 'pointer' : 'default',
     userSelect: 'none',
-    boxShadow: isDark
-      ? '0 8px 16px -4px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(148, 163, 184, 0.1) inset' // Stronger shadow + inner glow
-      : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    boxShadow: isPlayable
+      ? `${restingShadow}, 0 0 14px rgba(251, 191, 36, 0.35)`
+      : restingShadow,
     color: finalColor,
     position: 'relative',
     fontFamily: '"Outfit", sans-serif', // Use the new font
-    transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease',
-    ...(disabled && { opacity: 0.45, filter: 'saturate(0.5)' }),
+    transition:
+      'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease',
     ...style,
   }
 

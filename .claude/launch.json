@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web-preview",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@bridou/web", "exec", "next", "dev", "-p", "3999"],
+      "port": 3999
+    }
+  ]
+}

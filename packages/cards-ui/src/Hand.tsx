@@ -3,7 +3,9 @@
 /**
  * Vendored from github.com/pnxbill/cards-lib @ 47bc27c.
  * Local changes: 'use client' directive; disabled cards can't be selected or
- * clicked (no vibration either) but stay draggable for hand organization.
+ * clicked (no vibration either) but stay draggable for hand organization —
+ * they also sit slightly lower in the fan, while playable cards keep the
+ * gold glow (drop shadows stay stripped inside the fan).
  */
 import React from 'react'
 import { Card, type CardProps } from './Card'
@@ -101,7 +103,9 @@ export const Hand: React.FC<HandProps> = ({
         // Arc calculations
         const distanceFromCenter = index - centerIndex
         const rotate = distanceFromCenter * 5 // 5 degrees per unit
-        const yOffset = Math.abs(distanceFromCenter) * Math.abs(distanceFromCenter) * 2 // Parabolic Y offset
+        const arcOffset = Math.abs(distanceFromCenter) * Math.abs(distanceFromCenter) * 2 // Parabolic Y offset
+        // Unplayable cards sink a bit — readable but visibly out of reach
+        const yOffset = arcOffset + (card.disabled ? 16 : 0)
         const zOffset = index * 10 // Ascending z-index: Rightmost cards are closer to camera
 
         // Dynamic margin calculation
@@ -161,7 +165,13 @@ export const Hand: React.FC<HandProps> = ({
                 navigator?.vibrate?.(50) // Short 50ms vibration
                 onCardClick && onCardClick(index)
               }}
-              style={{ boxShadow: 'none' }}
+              style={{
+                // Drop shadows off inside the fan, but keep the playable glow
+                boxShadow:
+                  !card.disabled && onCardClick
+                    ? '0 0 14px rgba(251, 191, 36, 0.35)'
+                    : 'none',
+              }}
             />
           </Reorder.Item>
         )
