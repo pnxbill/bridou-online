@@ -29,6 +29,11 @@ export type DomainEvent =
   | { type: 'scoreboard-shown'; scoreboard: ScoreboardEntry[] }
   | { type: 'scoreboard-hidden' }
   | { type: 'game-ended'; scoreboard: ScoreboardEntry[] }
+  // seat control (abandonment): the game pauses until `resumeAt`, then a bot
+  // takes the seat; the player reclaims it by coming back
+  | { type: 'player-abandoned'; playerId: string; resumeAt: number }
+  | { type: 'player-rejoined'; playerId: string }
+  | { type: 'bot-took-over'; playerId: string }
 
 export type DomainEventType = DomainEvent['type']
 

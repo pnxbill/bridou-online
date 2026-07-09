@@ -5,6 +5,7 @@ import { useCallback, useReducer } from 'react'
 import { api, type GameEntry } from '@/lib/api'
 import { gameReducer, stateFromSnapshot } from './reducer'
 import { useGameChannel } from './useGameChannel'
+import { AbandonedOverlay } from './components/AbandonedOverlay'
 import { BailadoresOverlay } from './components/BailadoresOverlay'
 import { BetPicker } from './components/BetPicker'
 import { BetsBar } from './components/BetsBar'
@@ -66,6 +67,10 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
     )
   }
 
+  if (state.abandoned.length) {
+    return <AbandonedOverlay seats={state.abandoned} players={state.players} />
+  }
+
   if (state.bailadores.length) {
     return <BailadoresOverlay bailadores={state.bailadores} />
   }
@@ -73,7 +78,7 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
   return (
     <div className="game">
       <div className="status-bar">
-        <BetsBar players={state.players} betting={state.betting} />
+        <BetsBar players={state.players} betting={state.betting} botSeats={state.botSeats} />
         <Trunfo card={state.trunfo} />
       </div>
 

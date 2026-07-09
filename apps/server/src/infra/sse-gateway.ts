@@ -2,6 +2,7 @@ import type { DomainEvent, EventPublisher, PlayerInfo } from '@bridou/shared'
 import { isPrivateEvent } from '@bridou/shared'
 import type { Request, Response } from 'express'
 import type { RealtimeGateway } from '../application/ports'
+import type { PresenceTracker } from '../application/presence'
 
 /**
  * Every SSE message carries this envelope, mirroring socket.io's
@@ -29,8 +30,9 @@ export class SseGateway implements RealtimeGateway {
   private readonly rooms = new Map<string, Set<SseConnection>>()
   private readonly heartbeat: NodeJS.Timeout
   private nextEventId = 1
+  private nextConnectionId = 1
 
-  constructor() {
+  constructor(private readonly presence?: PresenceTracker) {
     // Periodic comment keeps proxies from killing idle connections and lets
     // the OS surface dead sockets.
     this.heartbeat = setInterval(() => {
@@ -62,10 +64,13 @@ export class SseGateway implements RealtimeGateway {
       const room = this.rooms.get(gameId) ?? new Set()
       room.add(connection)
       this.rooms.set(gameId, room)
+      const connectionId = `sse-${this.nextConnectionId++}`
+      this.presence?.connected(gameId, playerId, connectionId)
 
       res.on('close', () => {
         room.delete(connection)
         if (!room.size) this.rooms.delete(gameId)
+        this.presence?.disconnected(connectionId)
       })
     }
   }

@@ -11,8 +11,9 @@ and every step leaves the game playable.
 - [x] Pure engine: Deck / Turn / Round / Game with injected publisher, scheduler, RNG
 - [x] Deterministic unit tests for all rules (bets, follow-suit, trick winner, scoring, rotation, full games for 2–7 players)
 - [x] Fix fairness/safety bugs found during the port (biased shuffle, hands leaked in broadcasts, fs logging)
-- [ ] Bot player: strategy port (`decideBet`, `decideCard`) + a baseline bot that makes legal, sensible decisions — plays for abandoned seats
-- [ ] Seat control can switch mid-game (human → bot on abandonment, bot → human on rejoin)
+- [x] Bot player: strategy port (`decideBet`, `decideCard`) fed only snapshot + own perspective (cannot cheat by construction); heuristic bot beats random seats 93% of the time
+- [x] Seat control can switch mid-game (human → bot on abandonment, bot → human on rejoin)
+- [ ] Stronger bot (Monte Carlo over hidden hands) — *optional, slots into the `BotStrategy` port*
 - [ ] Configurable game rules (round count, scoring) if we ever want variants — *optional, low priority*
 
 ## 2. Backend — Server & API (`apps/server`)
@@ -31,10 +32,10 @@ everyone else is told the player abandoned, and when the timer expires the game 
 with a **bot playing that seat**. If the player comes back (during grace or later), they
 reclaim their seat.
 
-- [ ] Detect abandonment via `ConnectionRegistry` disconnects; start the 30s grace timer (through the `Scheduler` port so it's testable)
-- [ ] New domain events: `player-abandoned` (with deadline), `player-rejoined`, `bot-took-over`
-- [ ] Pause the game during grace (reject plays/bets, stop turn prompts), resume after
-- [ ] Bot acts through the same use-cases as humans (`placeBet`/`playCard`) — no engine backdoors
+- [x] Detect abandonment via `PresenceTracker` (fed by both transports), 3s debounce against blips, 30s grace via the `Scheduler` port
+- [x] New domain events: `player-abandoned` (with deadline), `player-rejoined`, `bot-took-over`
+- [x] Pause the game during grace (plays/bets rejected), resume on takeover or rejoin
+- [x] Bot acts through the same use-cases as humans (`placeBet`/`playCard`) — no engine backdoors
 
 ## 3. Realtime Transport (socket.io → SSE)
 
@@ -59,7 +60,7 @@ The Qwik app (`src/`) is a POC: port behavior, don't fix it.
 - [x] Reconnect flow: socket.io auto-reconnect + refetch `/api/enter-game` snapshot; failed actions also resync
 - [x] Feature parity verified in a real multi-player game (bets, hand, table, trunfo, scoreboard, bailadores)
 - [x] Delete legacy: Qwik `src/`, `game-server/`, root Qwik deps and configs, legacy wire protocol
-- [ ] Abandonment UI: "player X left — bot takes over in 30s" countdown, bot badge on the seat, rejoin flow
+- [x] Abandonment UI: pause overlay with live countdown, 🤖 badge on bot seats, rejoin restores the seat
 
 ## 5. Data & Persistence
 
@@ -91,7 +92,7 @@ Full redesign planned — decisions still open.
 
 ## 8. Infra & Tooling
 
-- [ ] CI: run `pnpm test` + typecheck on every push (GitHub Actions)
+- [x] CI: GitHub Actions running typecheck, all tests and the web build on every push
 - [ ] Decide deployment target for server + web (the old `pem/` setup is stale — the committed key should be rotated/removed then)
 - [ ] Production build pipeline for `apps/server` (currently dev-only via tsx)
 - [x] Remove dead artifacts: `adaptors/`, `server/`, `types/`, `public/`, root env/eslint/vite configs

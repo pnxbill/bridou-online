@@ -2,6 +2,7 @@ import type { DomainEvent, EventPublisher, PlayerInfo } from '@bridou/shared'
 import { isPrivateEvent } from '@bridou/shared'
 import type { Server } from 'socket.io'
 import type { RealtimeGateway } from '../application/ports'
+import type { PresenceTracker } from '../application/presence'
 import type { ConnectionRegistry } from './connection-registry'
 
 /**
@@ -38,7 +39,11 @@ export class SocketIoGateway implements RealtimeGateway {
 }
 
 /** Joins sockets to their game's room and keeps the player→socket map fresh. */
-export const registerConnectionHandlers = (io: Server, registry: ConnectionRegistry): void => {
+export const registerConnectionHandlers = (
+  io: Server,
+  registry: ConnectionRegistry,
+  presence?: PresenceTracker,
+): void => {
   io.on('connection', (socket) => {
     const { gameId, playerId } = socket.handshake.auth as {
       gameId?: string
@@ -51,9 +56,11 @@ export const registerConnectionHandlers = (io: Server, registry: ConnectionRegis
 
     socket.join(gameId)
     registry.bind(playerId, socket.id)
+    presence?.connected(gameId, playerId, socket.id)
 
     socket.on('disconnect', () => {
       registry.unbind(playerId, socket.id)
+      presence?.disconnected(socket.id)
     })
   })
 }

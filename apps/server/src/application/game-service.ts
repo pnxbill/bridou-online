@@ -1,10 +1,10 @@
-import { Game, GameError } from '@bridou/engine'
-import type { GameSnapshot, PlayerInfo, PlayerPerspective } from '@bridou/shared'
+import { Game, GameError, type Scheduler } from '@bridou/engine'
+import type { GameSnapshot, PlayerInfo, PlayerPerspective, SessionState } from '@bridou/shared'
 import { ForbiddenError, NotFoundError } from './errors'
-import type { GameRepository, RealtimeGateway } from './ports'
+import type { GameRepository, GameSessionMonitor, RealtimeGateway } from './ports'
 import type { Queue } from './queue'
 
-export interface EnterGameResult extends GameSnapshot, PlayerPerspective {
+export interface EnterGameResult extends GameSnapshot, PlayerPerspective, SessionState {
   time: number
 }
 
@@ -13,6 +13,9 @@ export class GameService {
     private readonly games: GameRepository,
     private readonly queue: Queue,
     private readonly gateway: RealtimeGateway,
+    /** Seat control: pause enforcement + abandoned/bot state for snapshots. */
+    private readonly sessions: GameSessionMonitor,
+    private readonly options: { scheduler?: Scheduler } = {},
   ) {}
 
   joinQueue(player: PlayerInfo): { queueId: string; leaderId: string } {
@@ -35,7 +38,10 @@ export class GameService {
     const gameId = this.queue.id
     const game = new Game(
       { id: gameId, leaderId: this.queue.leaderId!, players: [...this.queue.players] },
-      { publisher: this.gateway.publisherFor(gameId) },
+      {
+        publisher: this.gateway.publisherFor(gameId),
+        ...(this.options.scheduler ? { scheduler: this.options.scheduler } : {}),
+      },
     )
     this.games.save(game)
     this.queue.reset()
@@ -53,16 +59,21 @@ export class GameService {
     return {
       ...game.snapshot(),
       ...game.perspective(playerId),
+      ...this.sessions.sessionState(gameId),
       time: Date.now(),
     }
   }
 
   placeBet(gameId: string, playerId: string, bet: number): void {
-    this.getGame(gameId).placeBet(playerId, bet)
+    const game = this.getGame(gameId)
+    this.sessions.assertPlayable(gameId)
+    game.placeBet(playerId, bet)
   }
 
   playCard(gameId: string, playerId: string, card: string): void {
-    this.getGame(gameId).playCard(playerId, card)
+    const game = this.getGame(gameId)
+    this.sessions.assertPlayable(gameId)
+    game.playCard(playerId, card)
   }
 
   closeScoreboard(gameId: string): void {

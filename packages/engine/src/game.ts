@@ -64,6 +64,10 @@ export class Game {
     return this.playerOrder
   }
 
+  get finished(): boolean {
+    return this.rounds.length === TOTAL_ROUNDS
+  }
+
   hasPlayer(playerId: string): boolean {
     return this.playerOrder.some((p) => p.id === playerId)
   }

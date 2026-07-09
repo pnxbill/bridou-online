@@ -1,5 +1,6 @@
 import type { DomainEvent, PlayerInfo } from '@bridou/shared'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { AbandonmentService } from '../src/application/abandonment'
 import { GameService } from '../src/application/game-service'
 import { Queue } from '../src/application/queue'
 import type { RealtimeGateway } from '../src/application/ports'
@@ -33,7 +34,8 @@ describe('GameService', () => {
   beforeEach(() => {
     gateway = new FakeGateway()
     queue = new Queue()
-    service = new GameService(new InMemoryGameRepository(), queue, gateway)
+    const games = new InMemoryGameRepository()
+    service = new GameService(games, queue, gateway, new AbandonmentService({ games }))
   })
 
   it('queues players, reporting the first as leader', () => {

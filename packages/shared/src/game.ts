@@ -60,3 +60,16 @@ export interface PlayerPerspective {
   playableCards: HandCard[]
   availableBets: number[]
 }
+
+/** A seat whose player left: the game is paused until `resumeAt` (epoch ms). */
+export interface AbandonedSeat {
+  playerId: string
+  resumeAt: number
+}
+
+/** Seat-control state kept by the server session, included in game snapshots. */
+export interface SessionState {
+  abandoned: AbandonedSeat[]
+  /** Seats currently played by the bot. */
+  botSeats: string[]
+}

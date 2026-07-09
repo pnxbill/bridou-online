@@ -1,4 +1,5 @@
 import type {
+  AbandonedSeat,
   Card,
   DomainEvent,
   HandCard,
@@ -27,6 +28,10 @@ export interface GameViewState {
   bailadores: RoundPlayer[]
   /** Non-null → scoreboard overlay is visible. */
   scoreboard: ScoreboardEntry[] | null
+  /** Seats in their grace period — the game is paused while any exist. */
+  abandoned: AbandonedSeat[]
+  /** Seats currently played by the bot. */
+  botSeats: string[]
 }
 
 export type GameAction =
@@ -51,6 +56,8 @@ export const stateFromSnapshot = (snapshot: GameEntry): GameViewState => ({
   turnsCompleted: snapshot.currentRound.turns.length,
   bailadores: snapshot.currentRound.bailadores,
   scoreboard: snapshot.scoreboardShowing ? snapshot.scoreboard : null,
+  abandoned: snapshot.abandoned ?? [],
+  botSeats: snapshot.botSeats ?? [],
 })
 
 const applyEvent = (state: GameViewState, event: DomainEvent): GameViewState => {
@@ -106,6 +113,28 @@ const applyEvent = (state: GameViewState, event: DomainEvent): GameViewState => 
       return { ...state, scoreboard: event.scoreboard, bailadores: [] }
     case 'scoreboard-hidden':
       return { ...state, scoreboard: null }
+    case 'player-abandoned':
+      return {
+        ...state,
+        abandoned: [
+          ...state.abandoned.filter((a) => a.playerId !== event.playerId),
+          { playerId: event.playerId, resumeAt: event.resumeAt },
+        ],
+      }
+    case 'player-rejoined':
+      return {
+        ...state,
+        abandoned: state.abandoned.filter((a) => a.playerId !== event.playerId),
+        botSeats: state.botSeats.filter((id) => id !== event.playerId),
+      }
+    case 'bot-took-over':
+      return {
+        ...state,
+        abandoned: state.abandoned.filter((a) => a.playerId !== event.playerId),
+        botSeats: state.botSeats.includes(event.playerId)
+          ? state.botSeats
+          : [...state.botSeats, event.playerId],
+      }
     default:
       // Future events (e.g. player-abandoned) are ignored until the UI learns them
       return state

@@ -34,6 +34,8 @@ const snapshot = (overrides: Partial<GameEntry> = {}): GameEntry => ({
   scoreboard: [],
   playableCards: [{ value: 'A-♠️', disabled: true }],
   availableBets: [0, 1, 2, 3],
+  abandoned: [],
+  botSeats: [],
   time: 0,
   ...overrides,
 })
@@ -209,10 +211,44 @@ describe('optimistic UI actions', () => {
   })
 })
 
+describe('seat control (abandonment)', () => {
+  const base = stateFromSnapshot(snapshot())
+
+  it('tracks the abandoned seat and its deadline', () => {
+    const state = apply(base, { type: 'player-abandoned', playerId: 'other', resumeAt: 99_000 })
+    expect(state.abandoned).toEqual([{ playerId: 'other', resumeAt: 99_000 }])
+  })
+
+  it('clears the seat when the player rejoins', () => {
+    let state = apply(base, { type: 'player-abandoned', playerId: 'other', resumeAt: 99_000 })
+    state = apply(state, { type: 'player-rejoined', playerId: 'other' })
+    expect(state.abandoned).toEqual([])
+    expect(state.botSeats).toEqual([])
+  })
+
+  it('moves the seat to the bot on takeover, and back on rejoin', () => {
+    let state = apply(base, { type: 'player-abandoned', playerId: 'other', resumeAt: 99_000 })
+    state = apply(state, { type: 'bot-took-over', playerId: 'other' })
+    expect(state.abandoned).toEqual([])
+    expect(state.botSeats).toEqual(['other'])
+
+    state = apply(state, { type: 'player-rejoined', playerId: 'other' })
+    expect(state.botSeats).toEqual([])
+  })
+
+  it('restores session state from a reconnect snapshot', () => {
+    const state = stateFromSnapshot(
+      snapshot({ abandoned: [{ playerId: 'other', resumeAt: 99_000 }], botSeats: ['me'] }),
+    )
+    expect(state.abandoned).toHaveLength(1)
+    expect(state.botSeats).toEqual(['me'])
+  })
+})
+
 describe('forward compatibility', () => {
   it('ignores events the UI does not know yet', () => {
     const base = stateFromSnapshot(snapshot())
-    const unknown = { type: 'player-abandoned', playerId: 'other' } as unknown as DomainEvent
+    const unknown = { type: 'some-future-event', playerId: 'other' } as unknown as DomainEvent
     expect(apply(base, unknown)).toEqual(base)
   })
 })

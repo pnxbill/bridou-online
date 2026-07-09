@@ -1,8 +1,8 @@
-import type { GameSnapshot, PlayerInfo, PlayerPerspective } from '@bridou/shared'
+import type { GameSnapshot, PlayerInfo, PlayerPerspective, SessionState } from '@bridou/shared'
 import { SERVER_URL } from './config'
 
 /** What `/api/enter-game` returns: the shared snapshot plus the caller's private view. */
-export type GameEntry = GameSnapshot & PlayerPerspective & { time: number }
+export type GameEntry = GameSnapshot & PlayerPerspective & SessionState & { time: number }
 
 export class ApiError extends Error {
   constructor(

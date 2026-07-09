@@ -1,4 +1,4 @@
-import type { EventPublisher, PlayerInfo } from '@bridou/shared'
+import type { EventPublisher, PlayerInfo, SessionState } from '@bridou/shared'
 import type { Game } from '@bridou/engine'
 
 export interface GameRepository {
@@ -17,4 +17,11 @@ export interface RealtimeGateway {
   publisherFor(gameId: string): EventPublisher
   playerJoinedQueue(queueId: string, player: PlayerInfo): void
   gameStarted(gameId: string): void
+}
+
+/** Seat control as GameService sees it (implemented by AbandonmentService). */
+export interface GameSessionMonitor {
+  /** Throws while the game is paused waiting on an abandoned seat. */
+  assertPlayable(gameId: string): void
+  sessionState(gameId: string): SessionState
 }

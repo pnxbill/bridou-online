@@ -1,4 +1,5 @@
 import type { DomainEvent, DomainEventType, EventPublisher, PlayerInfo } from '@bridou/shared'
+import type { BotStrategy } from '../src/bot'
 import type { Game } from '../src/game'
 import type { RoundPlayerState } from '../src/player'
 import type { Rng, Scheduler } from '../src/ports'
@@ -61,29 +62,52 @@ export const makeRoundPlayer = (id: string, cards: string[]): RoundPlayerState =
 /** Anything bots can act on — a Game or a single Round. */
 type Actor = Pick<Game, 'placeBet' | 'playCard'>
 
+/** Strategies per seat; seats without one answer pseudo-randomly. */
+export interface DriverOptions {
+  strategies?: Record<string, BotStrategy>
+}
+
 /**
  * Bot driver: consumes bet/play requests from the event log and answers with
- * a legal move (picked pseudo-randomly so games vary by seed), until the
- * engine stops asking.
+ * a legal move — via the seat's strategy when given one, else picked
+ * pseudo-randomly so games vary by seed — until the engine stops asking.
  */
 export const drivePendingRequests = (
   game: Actor,
   publisher: RecordingPublisher,
   rng: Rng,
   cursor = { index: 0 },
+  options: DriverOptions = {},
 ): void => {
   let guard = 10_000
   while (cursor.index < publisher.events.length) {
     if (--guard === 0) throw new Error('Bot driver seems stuck in a loop')
     const event = publisher.events[cursor.index++]!
+    const strategy = options.strategies?.[
+      'playerId' in event ? (event.playerId as string) : ''
+    ]
 
     if (event.type === 'bet-requested') {
-      const bet = event.availableBets[Math.floor(rng() * event.availableBets.length)]!
+      const bet = strategy
+        ? strategy.decideBet({
+            playerId: event.playerId,
+            snapshot: (game as Game).snapshot(),
+            hand: (game as Game).perspective(event.playerId).playableCards.map((c) => c.value),
+            availableBets: event.availableBets,
+          })
+        : event.availableBets[Math.floor(rng() * event.availableBets.length)]!
       game.placeBet(event.playerId, bet)
     } else if (event.type === 'play-requested') {
-      const playable = event.cards.filter((c) => !c.disabled)
-      const card = playable[Math.floor(rng() * playable.length)]!
-      game.playCard(event.playerId, card.value)
+      const card = strategy
+        ? strategy.decideCard({
+            playerId: event.playerId,
+            snapshot: (game as Game).snapshot(),
+            playableCards: event.cards,
+          })
+        : event.cards.filter((c) => !c.disabled)[
+            Math.floor(rng() * event.cards.filter((c) => !c.disabled).length)
+          ]!.value
+      game.playCard(event.playerId, card)
     }
   }
 }
@@ -94,13 +118,14 @@ export const playFullGame = (
   publisher: RecordingPublisher,
   scheduler: ManualScheduler,
   rng: Rng,
+  options: DriverOptions = {},
 ): void => {
   const cursor = { index: 0 }
   game.start()
   let guard = 100
   while (true) {
     if (--guard === 0) throw new Error('Game never finished')
-    drivePendingRequests(game, publisher, rng, cursor)
+    drivePendingRequests(game, publisher, rng, cursor, options)
     if (!scheduler.pending.length) return
     scheduler.flush()
   }
