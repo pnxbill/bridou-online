@@ -2,10 +2,10 @@
 
 /**
  * Vendored from github.com/pnxbill/cards-lib @ 47bc27c.
- * Local changes: 'use client' directive; `disabled` prop. Instead of dimming
- * (which muddies this deck's dark gradient), playable cards (clickable and
- * not disabled) get a gold glow matching the card back's accent, while
- * disabled cards stay crisp but inert.
+ * Local changes: 'use client' directive; `disabled` prop. Playable cards
+ * (clickable and not disabled) get a gold glow matching the card back's
+ * accent; disabled cards fade via CSS filters (brightness/saturation) —
+ * never opacity, which would let the felt bleed through the dark gradient.
  */
 import React from 'react'
 
@@ -101,7 +101,9 @@ export const Card: React.FC<CardProps> = ({
     position: 'relative',
     fontFamily: '"Outfit", sans-serif', // Use the new font
     transition:
-      'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease',
+      'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease, filter 0.2s ease',
+    // Fade without opacity: the card stays a solid object on the table
+    ...(disabled && { filter: 'brightness(0.72) saturate(0.5) contrast(0.95)' }),
     ...style,
   }
 
