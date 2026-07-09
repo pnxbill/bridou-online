@@ -11,39 +11,36 @@ delivery (HTTP + realtime) is a thin layer around it.
 ├── packages/
 │   ├── shared/          # Types + the DomainEvent contract (engine ↔ server ↔ web)
 │   └── engine/          # PURE game rules: Deck, Turn, Round, Game — no I/O, fully unit-tested
-├── apps/
-│   ├── server/          # Delivery layer
-│   │   ├── application/ # Use-cases (GameService, Queue) + ports (GameRepository, RealtimeGateway)
-│   │   ├── infra/       # socket.io gateway, connection registry, in-memory repository
-│   │   └── http/        # Express routes (legacy REST API)
-│   └── web/             # Next.js frontend: DomainEvent reducer + useGameChannel (transport in one file)
-├── src/                 # LEGACY Qwik frontend (POC) — replaced by apps/web, delete after live validation
-└── game-server/         # LEGACY backend — superseded by apps/server, kept until legacy cleanup
+└── apps/
+    ├── server/          # Delivery layer
+    │   ├── application/ # Use-cases (GameService, Queue) + ports (GameRepository, RealtimeGateway)
+    │   ├── infra/       # socket.io gateway, connection registry, in-memory repository
+    │   └── http/        # Express routes
+    └── web/             # Next.js frontend: DomainEvent reducer + useGameChannel (transport in one file)
 ```
 
 Key design points:
 
 - The engine emits `DomainEvent`s (`round-started`, `card-played`, …) through an injected
-  `EventPublisher`; it never touches sockets. `apps/server/src/infra/socket-io-gateway.ts`
-  maps those events to the socket event names the legacy Qwik client understands.
-  Swapping socket.io for SSE later means replacing only that gateway.
+  `EventPublisher`; it never touches sockets. The socket.io gateway
+  (`apps/server/src/infra/socket-io-gateway.ts`) delivers them on the `event` channel —
+  broadcast to the game room, private events (hands, prompts) only to their owner.
+  Swapping socket.io for SSE means replacing that gateway and the internals of
+  `apps/web/src/features/game/useGameChannel.ts`; nothing else changes.
+- Client actions go over REST (`/api/bet`, `/api/play-card`, …); state comes back as
+  events. Reconnects refetch the `/api/enter-game` snapshot.
 - Randomness (`Rng`) and time (`Scheduler`) are injected, so tests run full games
   deterministically with seeded shuffles and manual clocks.
-- Private events (a player's hand, their bet options) are routed per player via the
-  `ConnectionRegistry`; broadcast snapshots never contain hands.
+- `apps/server/test/game-flow.e2e.test.ts` pins the wire contract end to end.
 
 ## Development
 
 ```shell
 pnpm install
-pnpm dev:web       # Next.js frontend (:3000) + game server (:3001)
-pnpm dev:local     # LEGACY Qwik frontend (:3000) + game server (:3001)
+pnpm dev           # Next.js frontend (:3000) + game server (:3001)
 pnpm dev:server    # game server only
-pnpm test          # all workspace tests (engine rules + reducer + server + wire-protocol e2e)
+pnpm test          # all workspace tests (engine rules + reducer + server + game-flow e2e)
+pnpm build         # production build of the web app
 ```
 
-## Legacy Qwik frontend
-
-The current frontend is a Qwik City POC (`src/`). It talks REST for actions
-(`/api/bet`, `/api/play-card`, …) and receives state over socket.io. See
-`apps/server/test/wire-protocol.e2e.test.ts` for the exact wire contract it relies on.
+See `PLAN.md` for the revamp roadmap and what's still open.

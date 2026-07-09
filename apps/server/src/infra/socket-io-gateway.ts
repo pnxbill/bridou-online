@@ -5,40 +5,10 @@ import type { RealtimeGateway } from '../application/ports'
 import type { ConnectionRegistry } from './connection-registry'
 
 /**
- * Translates domain events into the socket event names and payloads the
- * existing Qwik client already understands. When the frontend moves to SSE,
- * this file is what gets replaced — nothing above it changes.
+ * Delivers domain events over socket.io: broadcasts to the game room, private
+ * events (hands, prompts) only to their owner's socket. When the transport
+ * moves to SSE, this gateway is the only thing that gets replaced.
  */
-const toLegacyEvent = (event: DomainEvent): { name: string; payload?: unknown } => {
-  switch (event.type) {
-    case 'round-started':
-      return { name: 'round-started', payload: event.round }
-    case 'trunfo-set':
-      return { name: 'set-trunfo', payload: event.trunfo }
-    case 'cards-dealt':
-      return { name: 'cards', payload: event.cards }
-    case 'bet-requested':
-      return { name: 'bet-time', payload: event.availableBets }
-    case 'play-requested':
-      return { name: 'play-time', payload: event.cards }
-    case 'player-bet':
-      return { name: 'player-bet', payload: { id: event.playerId, bet: event.bet } }
-    case 'card-played':
-      return { name: 'player-play', payload: event.playedCards }
-    case 'turn-started':
-      return { name: 'turn-started', payload: event.turn }
-    case 'turn-ended':
-      return { name: 'turn-ended', payload: event.turn }
-    case 'round-ended':
-      return { name: 'round-ended', payload: event.bailadores }
-    case 'scoreboard-shown':
-    case 'game-ended':
-      return { name: 'scoreboard', payload: event.scoreboard }
-    case 'scoreboard-hidden':
-      return { name: 'close-scoreboard' }
-  }
-}
-
 export class SocketIoGateway implements RealtimeGateway {
   constructor(
     private readonly io: Server,
@@ -48,18 +18,11 @@ export class SocketIoGateway implements RealtimeGateway {
   publisherFor(gameId: string): EventPublisher {
     return {
       publish: (event: DomainEvent) => {
-        const { name, payload } = toLegacyEvent(event)
-
         if (isPrivateEvent(event)) {
           const socketId = this.registry.socketOf(event.playerId)
-          if (socketId) {
-            this.io.to(socketId).emit(name, payload)
-            this.io.to(socketId).emit('event', event)
-          }
+          if (socketId) this.io.to(socketId).emit('event', event)
           return
         }
-        this.io.to(gameId).emit(name, payload)
-        // The clean contract the new client consumes; legacy names above die with the Qwik POC
         this.io.to(gameId).emit('event', event)
       },
     }

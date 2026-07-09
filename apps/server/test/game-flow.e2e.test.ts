@@ -1,0 +1,166 @@
+import type { DomainEvent } from '@bridou/shared'
+import type { AddressInfo } from 'node:net'
+import { io as connect, type Socket } from 'socket.io-client'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { createApp, type AppInstance } from '../src/app'
+
+/**
+ * Exercises the real contract the web client relies on: the REST endpoints,
+ * the queue socket events, and the DomainEvent stream on the 'event' channel
+ * (with private events routed only to their owner).
+ */
+
+class FakeClient {
+  events: DomainEvent[] = []
+  queueJoins: unknown[] = []
+  gameStarted = 0
+  private socket!: Socket
+
+  constructor(
+    readonly playerId: string,
+    private readonly baseUrl: string,
+  ) {}
+
+  async connectSocket(gameId: string): Promise<void> {
+    this.socket = connect(this.baseUrl, { auth: { gameId, playerId: this.playerId } })
+    this.socket.on('event', (event: DomainEvent) => this.events.push(event))
+    this.socket.on('player-entered-queue', (player: unknown) => this.queueJoins.push(player))
+    this.socket.on('game-started', () => this.gameStarted++)
+    await new Promise<void>((resolve) => this.socket.on('connect', () => resolve()))
+  }
+
+  disconnect(): void {
+    this.socket?.disconnect()
+  }
+
+  ofType<T extends DomainEvent['type']>(type: T): Extract<DomainEvent, { type: T }>[] {
+    return this.events.filter((e): e is Extract<DomainEvent, { type: T }> => e.type === type)
+  }
+
+  async post(path: string, body: object): Promise<{ status: number; data: any }> {
+    const res = await fetch(`${this.baseUrl}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    return { status: res.status, data: await res.json() }
+  }
+
+  async get(path: string): Promise<{ status: number; data: any }> {
+    const res = await fetch(`${this.baseUrl}${path}`)
+    return { status: res.status, data: await res.json() }
+  }
+}
+
+const waitFor = async (predicate: () => boolean, what: string, timeoutMs = 5000): Promise<void> => {
+  const start = Date.now()
+  while (!predicate()) {
+    if (Date.now() - start > timeoutMs) throw new Error(`Timed out waiting for: ${what}`)
+    await new Promise((r) => setTimeout(r, 15))
+  }
+}
+
+describe('game flow over REST + DomainEvent channel', () => {
+  let app: AppInstance
+  let baseUrl: string
+  let alice: FakeClient
+  let bob: FakeClient
+  let gameId: string
+
+  beforeAll(async () => {
+    app = createApp()
+    await new Promise<void>((resolve) => app.httpServer.listen(0, resolve))
+    baseUrl = `http://localhost:${(app.httpServer.address() as AddressInfo).port}`
+    alice = new FakeClient('alice', baseUrl)
+    bob = new FakeClient('bob', baseUrl)
+  })
+
+  afterAll(async () => {
+    alice?.disconnect()
+    bob?.disconnect()
+    app.io.close()
+    await new Promise<void>((resolve) => app.httpServer.close(() => resolve()))
+  })
+
+  it('queues players and notifies the queue room', async () => {
+    const res = await alice.post('/api/enter-queue', { user: { id: 'alice', name: 'Alice' } })
+    expect(res.status).toBe(200)
+    expect(res.data.leaderId).toBe('alice')
+    gameId = res.data.queueId
+    await alice.connectSocket(gameId)
+
+    await bob.post('/api/enter-queue', { user: { id: 'bob', name: 'Bob' } })
+    await bob.connectSocket(gameId)
+
+    await waitFor(() => alice.queueJoins.length === 1, 'alice sees bob join')
+    const queue = await alice.get('/api/queue')
+    expect(queue.data.queue.map((p: any) => p.id)).toEqual(['alice', 'bob'])
+  })
+
+  it('starts the game and streams the round-start events, hands kept private', async () => {
+    await alice.get('/api/start-game')
+
+    await waitFor(
+      () =>
+        [alice, bob].every(
+          (c) =>
+            c.gameStarted === 1 &&
+            c.ofType('round-started').length === 1 &&
+            c.ofType('cards-dealt').length === 1,
+        ),
+      'both players get the round-start sequence',
+    )
+
+    // each player receives only their own hand
+    expect(alice.ofType('cards-dealt')[0]!.playerId).toBe('alice')
+    expect(bob.ofType('cards-dealt')[0]!.playerId).toBe('bob')
+
+    // broadcast snapshots never contain hands
+    const round = alice.ofType('round-started')[0]!.round
+    round.players.forEach((p) => expect(p).not.toHaveProperty('cards'))
+
+    // alice leads round 1: only she is asked to bet
+    await waitFor(() => alice.ofType('bet-requested').length === 1, 'alice asked to bet')
+    expect(bob.ofType('bet-requested')).toHaveLength(0)
+  })
+
+  it('serves the reconnect snapshot and rejects strangers', async () => {
+    const res = await alice.post('/api/enter-game', { gameId, playerId: 'alice' })
+    expect(res.status).toBe(200)
+    expect(res.data.game.currentRound.players).toHaveLength(2)
+    expect(res.data.game.availableBets.length).toBeGreaterThan(0)
+
+    const stranger = await alice.post('/api/enter-game', { gameId, playerId: 'nobody' })
+    expect(stranger.status).toBe(403)
+    const missing = await alice.post('/api/enter-game', { gameId: 'nope', playerId: 'alice' })
+    expect(missing.status).toBe(404)
+  })
+
+  it('plays a whole round driven by the event stream', async () => {
+    await alice.post('/api/bet', { gameId, playerId: 'alice', bet: 0 })
+    await waitFor(() => bob.ofType('bet-requested').length === 1, 'bob asked to bet')
+    const bobBets = bob.ofType('bet-requested')[0]!.availableBets
+    await bob.post('/api/bet', { gameId, playerId: 'bob', bet: bobBets[0]! })
+
+    await waitFor(() => alice.ofType('play-requested').length === 1, 'alice asked to play')
+    const aliceCard = alice.ofType('play-requested')[0]!.cards.find((c) => !c.disabled)!
+    await alice.post('/api/play-card', { gameId, playerId: 'alice', card: aliceCard.value })
+
+    await waitFor(() => bob.ofType('play-requested').length === 1, 'bob asked to play')
+    const bobCard = bob.ofType('play-requested')[0]!.cards.find((c) => !c.disabled)!
+    await bob.post('/api/play-card', { gameId, playerId: 'bob', card: bobCard.value })
+
+    await waitFor(
+      () => [alice, bob].every((c) => c.ofType('round-ended').length === 1),
+      'the round ends',
+    )
+    expect(alice.ofType('card-played')).toHaveLength(2)
+  })
+
+  it('starts round 2 with the table rotated after the transition delay', async () => {
+    await waitFor(() => alice.ofType('round-started').length === 2, 'round 2 starts', 6000)
+    const round2 = alice.ofType('round-started')[1]!.round
+    expect(round2.cardsForEachPlayer).toBe(2)
+    expect(round2.players[0]!.id).toBe('bob')
+  }, 10_000)
+})

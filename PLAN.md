@@ -18,9 +18,8 @@ and every step leaves the game playable.
 ## 2. Backend — Server & API (`apps/server`)
 
 - [x] Thin delivery layer: use-cases (`GameService`, `Queue`) + ports (`GameRepository`, `RealtimeGateway`)
-- [x] socket.io gateway translating domain events to the legacy wire protocol (keeps the POC alive during the port)
-- [x] Wire-protocol e2e test — **temporary**, delete together with the legacy client
-- [x] Emit raw `DomainEvent`s on the `event` channel alongside legacy names — the contract the Next.js client consumes
+- [x] socket.io gateway delivering `DomainEvent`s on the `event` channel (legacy event-name mapping removed with the POC)
+- [x] Game-flow e2e pinning the real wire contract (REST + `event` channel + private routing)
 - [ ] Multiple lobbies (create/join by code) instead of the single global queue
 - [ ] Evict finished/abandoned games from memory (TTL after `game-ended`)
 - [ ] Clean REST API v2 designed for the Next.js client (drop legacy naming quirks like `close-score`)
@@ -55,9 +54,9 @@ The Qwik app (`src/`) is a POC: port behavior, don't fix it.
 - [x] Realtime channel hook (`useGameChannel`) wrapping socket.io first, SSE later — one file to swap
 - [x] Pages: home/login, lobby/queue, game table (server component fetches the snapshot, client component applies events)
 - [x] Reconnect flow: socket.io auto-reconnect + refetch `/api/enter-game` snapshot; failed actions also resync
-- [ ] Feature parity verified in a real multi-player game (bets, hand, table, trunfo, scoreboard, bailadores — implemented, needs a live playthrough)
+- [x] Feature parity verified in a real multi-player game (bets, hand, table, trunfo, scoreboard, bailadores)
+- [x] Delete legacy: Qwik `src/`, `game-server/`, root Qwik deps and configs, legacy wire protocol
 - [ ] Abandonment UI: "player X left — bot takes over in 30s" countdown, bot badge on the seat, rejoin flow
-- [ ] Delete legacy: Qwik `src/`, `game-server/`, root Qwik deps, wire-protocol e2e test
 
 ## 5. Data & Persistence
 
@@ -90,6 +89,6 @@ Full redesign planned — decisions still open.
 ## 8. Infra & Tooling
 
 - [ ] CI: run `pnpm test` + typecheck on every push (GitHub Actions)
-- [ ] Decide deployment target for server + web (the old `pem/` + `.env.production` setup is stale)
+- [ ] Decide deployment target for server + web (the old `pem/` setup is stale — the committed key should be rotated/removed then)
 - [ ] Production build pipeline for `apps/server` (currently dev-only via tsx)
-- [ ] Remove dead artifacts once legacy is gone: `adaptors/`, `server/`, `types/`, `game*.txt`, `mock.json`
+- [x] Remove dead artifacts: `adaptors/`, `server/`, `types/`, `public/`, root env/eslint/vite configs
