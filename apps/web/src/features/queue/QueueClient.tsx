@@ -3,10 +3,9 @@
 import type { PlayerInfo } from '@bridou/shared'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { io } from 'socket.io-client'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { api } from '@/lib/api'
-import { SERVER_URL } from '@/lib/config'
+import { openChannel } from '@/lib/realtime'
 
 export function QueueClient() {
   const router = useRouter()
@@ -30,17 +29,19 @@ export function QueueClient() {
   useEffect(() => {
     if (!queueId || !user) return
 
-    const socket = io(SERVER_URL, { auth: { gameId: queueId, playerId: user.id } })
-    socket.on('player-entered-queue', (player: PlayerInfo) => {
-      setPlayers((current) =>
-        current.some((p) => p.id === player.id) ? current : [...current, player],
-      )
+    const channel = openChannel(queueId, user.id, {
+      onEvent: (name, payload) => {
+        if (name === 'player-entered-queue') {
+          const player = payload as PlayerInfo
+          setPlayers((current) =>
+            current.some((p) => p.id === player.id) ? current : [...current, player],
+          )
+        }
+        if (name === 'game-started') router.push(`/game/${queueId}`)
+      },
     })
-    socket.on('game-started', () => router.push(`/game/${queueId}`))
 
-    return () => {
-      socket.disconnect()
-    }
+    return () => channel.close()
   }, [queueId, user, router])
 
   if (loading) return <p className="hint">Carregando…</p>

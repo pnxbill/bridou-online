@@ -1,36 +1,52 @@
 import type { DomainEvent } from '@bridou/shared'
 import type { AddressInfo } from 'node:net'
-import { io as connect, type Socket } from 'socket.io-client'
+import { io as connectSocket, type Socket } from 'socket.io-client'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createApp, type AppInstance } from '../src/app'
 
 /**
- * Exercises the real contract the web client relies on: the REST endpoints,
- * the queue socket events, and the DomainEvent stream on the 'event' channel
- * (with private events routed only to their owner).
+ * Exercises the real contract the web client relies on — REST endpoints,
+ * queue events, and the DomainEvent stream with private routing — once per
+ * transport, since both socket.io and SSE are live until one wins.
  */
+
+type Transport = 'socketio' | 'sse'
 
 class FakeClient {
   events: DomainEvent[] = []
   queueJoins: unknown[] = []
   gameStarted = 0
-  private socket!: Socket
+  private socket?: Socket
+  private abort?: AbortController
 
   constructor(
     readonly playerId: string,
     private readonly baseUrl: string,
+    private readonly transport: Transport,
   ) {}
 
-  async connectSocket(gameId: string): Promise<void> {
-    this.socket = connect(this.baseUrl, { auth: { gameId, playerId: this.playerId } })
-    this.socket.on('event', (event: DomainEvent) => this.events.push(event))
-    this.socket.on('player-entered-queue', (player: unknown) => this.queueJoins.push(player))
-    this.socket.on('game-started', () => this.gameStarted++)
-    await new Promise<void>((resolve) => this.socket.on('connect', () => resolve()))
+  async connect(gameId: string): Promise<void> {
+    if (this.transport === 'socketio') {
+      this.socket = connectSocket(this.baseUrl, {
+        auth: { gameId, playerId: this.playerId },
+      })
+      this.socket.onAny((name: string, payload: unknown) => this.route(name, payload))
+      await new Promise<void>((resolve) => this.socket!.on('connect', () => resolve()))
+      return
+    }
+
+    this.abort = new AbortController()
+    const res = await fetch(
+      `${this.baseUrl}/api/games/${gameId}/events?playerId=${this.playerId}`,
+      { signal: this.abort.signal },
+    )
+    expect(res.headers.get('content-type')).toContain('text/event-stream')
+    void this.readSseStream(res.body!)
   }
 
   disconnect(): void {
     this.socket?.disconnect()
+    this.abort?.abort()
   }
 
   ofType<T extends DomainEvent['type']>(type: T): Extract<DomainEvent, { type: T }>[] {
@@ -50,6 +66,42 @@ class FakeClient {
     const res = await fetch(`${this.baseUrl}${path}`)
     return { status: res.status, data: await res.json() }
   }
+
+  private route(name: string, payload: unknown): void {
+    if (name === 'event') this.events.push(payload as DomainEvent)
+    if (name === 'player-entered-queue') this.queueJoins.push(payload)
+    if (name === 'game-started') this.gameStarted++
+  }
+
+  /** Minimal SSE parser: frames split on blank lines, `data:` lines carry the envelope. */
+  private async readSseStream(body: ReadableStream<Uint8Array>): Promise<void> {
+    const reader = body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    try {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) return
+        buffer += decoder.decode(value, { stream: true })
+
+        let boundary
+        while ((boundary = buffer.indexOf('\n\n')) !== -1) {
+          const frame = buffer.slice(0, boundary)
+          buffer = buffer.slice(boundary + 2)
+          const data = frame
+            .split('\n')
+            .filter((line) => line.startsWith('data:'))
+            .map((line) => line.slice(5).trim())
+            .join('')
+          if (!data) continue
+          const { name, payload } = JSON.parse(data) as { name: string; payload?: unknown }
+          this.route(name, payload)
+        }
+      }
+    } catch {
+      // stream aborted on disconnect
+    }
+  }
 }
 
 const waitFor = async (predicate: () => boolean, what: string, timeoutMs = 5000): Promise<void> => {
@@ -60,7 +112,7 @@ const waitFor = async (predicate: () => boolean, what: string, timeoutMs = 5000)
   }
 }
 
-describe('game flow over REST + DomainEvent channel', () => {
+describe.each<Transport>(['socketio', 'sse'])('game flow over %s', (transport) => {
   let app: AppInstance
   let baseUrl: string
   let alice: FakeClient
@@ -71,15 +123,14 @@ describe('game flow over REST + DomainEvent channel', () => {
     app = createApp()
     await new Promise<void>((resolve) => app.httpServer.listen(0, resolve))
     baseUrl = `http://localhost:${(app.httpServer.address() as AddressInfo).port}`
-    alice = new FakeClient('alice', baseUrl)
-    bob = new FakeClient('bob', baseUrl)
+    alice = new FakeClient('alice', baseUrl, transport)
+    bob = new FakeClient('bob', baseUrl, transport)
   })
 
   afterAll(async () => {
     alice?.disconnect()
     bob?.disconnect()
-    app.io.close()
-    await new Promise<void>((resolve) => app.httpServer.close(() => resolve()))
+    await app.close()
   })
 
   it('queues players and notifies the queue room', async () => {
@@ -87,10 +138,10 @@ describe('game flow over REST + DomainEvent channel', () => {
     expect(res.status).toBe(200)
     expect(res.data.leaderId).toBe('alice')
     gameId = res.data.queueId
-    await alice.connectSocket(gameId)
+    await alice.connect(gameId)
 
     await bob.post('/api/enter-queue', { user: { id: 'bob', name: 'Bob' } })
-    await bob.connectSocket(gameId)
+    await bob.connect(gameId)
 
     await waitFor(() => alice.queueJoins.length === 1, 'alice sees bob join')
     const queue = await alice.get('/api/queue')

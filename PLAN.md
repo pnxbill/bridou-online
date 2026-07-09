@@ -38,12 +38,15 @@ reclaim their seat.
 
 ## 3. Realtime Transport (socket.io → SSE)
 
-Do this **after** the Next.js port so we never change frontend and transport at the same time.
+Both transports are live side by side: the server publishes through a composite gateway,
+and the client picks via `NEXT_PUBLIC_REALTIME_TRANSPORT` (`sse` is the default,
+`socketio` switches back) — one flag, no server coordination.
 
-- [ ] SSE endpoint (`GET /api/games/:id/events`) implementing `RealtimeGateway`, with per-player private event routing
-- [ ] Heartbeat comment every ~20s + monotonic event ids
-- [ ] Client reconnect strategy: `EventSource` auto-retry + snapshot refetch on reconnect
-- [ ] Remove socket.io (server + client dependencies)
+- [x] SSE endpoint (`GET /api/games/:id/events`) implementing `RealtimeGateway`, with per-player private event routing
+- [x] Heartbeat comment every ~20s + monotonic event ids
+- [x] Client reconnect strategy: `EventSource` auto-retry + snapshot refetch on reconnect
+- [x] Transport toggle: `lib/realtime.ts` abstraction on the client, composite gateway on the server; e2e runs against both
+- [ ] Remove socket.io (server + client dependencies + composite gateway) once SSE has proven itself in real games
 
 ## 4. Frontend — Next.js (`apps/web`)
 

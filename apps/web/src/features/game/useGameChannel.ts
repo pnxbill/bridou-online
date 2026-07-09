@@ -2,8 +2,7 @@
 
 import type { DomainEvent } from '@bridou/shared'
 import { useEffect, useRef } from 'react'
-import { io } from 'socket.io-client'
-import { SERVER_URL } from '@/lib/config'
+import { openChannel } from '@/lib/realtime'
 
 interface Options {
   gameId: string
@@ -13,11 +12,7 @@ interface Options {
   onReconnect: () => void
 }
 
-/**
- * The realtime channel for a game. This is the ONLY file that knows the
- * transport is socket.io — the SSE migration swaps its internals
- * (EventSource + auto-retry) without touching the reducer or the UI.
- */
+/** Subscribes to a game's DomainEvent stream (transport chosen in lib/realtime). */
 export function useGameChannel({ gameId, playerId, onEvent, onReconnect }: Options) {
   const handlers = useRef({ onEvent, onReconnect })
   handlers.current = { onEvent, onReconnect }
@@ -25,12 +20,13 @@ export function useGameChannel({ gameId, playerId, onEvent, onReconnect }: Optio
   useEffect(() => {
     if (!gameId || !playerId) return
 
-    const socket = io(SERVER_URL, { auth: { gameId, playerId } })
-    socket.on('event', (event: DomainEvent) => handlers.current.onEvent(event))
-    socket.io.on('reconnect', () => handlers.current.onReconnect())
+    const channel = openChannel(gameId, playerId, {
+      onEvent: (name, payload) => {
+        if (name === 'event') handlers.current.onEvent(payload as DomainEvent)
+      },
+      onReconnect: () => handlers.current.onReconnect(),
+    })
 
-    return () => {
-      socket.disconnect()
-    }
+    return () => channel.close()
   }, [gameId, playerId])
 }

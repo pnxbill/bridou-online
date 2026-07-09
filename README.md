@@ -22,11 +22,13 @@ delivery (HTTP + realtime) is a thin layer around it.
 Key design points:
 
 - The engine emits `DomainEvent`s (`round-started`, `card-played`, …) through an injected
-  `EventPublisher`; it never touches sockets. The socket.io gateway
-  (`apps/server/src/infra/socket-io-gateway.ts`) delivers them on the `event` channel —
-  broadcast to the game room, private events (hands, prompts) only to their owner.
-  Swapping socket.io for SSE means replacing that gateway and the internals of
-  `apps/web/src/features/game/useGameChannel.ts`; nothing else changes.
+  `EventPublisher`; it never touches transports. The server publishes every event over
+  **both** transports (composite gateway): socket.io rooms and an SSE stream
+  (`GET /api/games/:gameId/events?playerId=…`, heartbeat every 20s). Private events
+  (hands, prompts) reach only their owner on either transport.
+- The client picks its transport in one place (`apps/web/src/lib/realtime.ts`):
+  SSE by default; set `NEXT_PUBLIC_REALTIME_TRANSPORT=socketio` to switch back.
+  The game-flow e2e runs against both.
 - Client actions go over REST (`/api/bet`, `/api/play-card`, …); state comes back as
   events. Reconnects refetch the `/api/enter-game` snapshot.
 - Randomness (`Rng`) and time (`Scheduler`) are injected, so tests run full games
