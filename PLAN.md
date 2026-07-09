@@ -84,12 +84,19 @@ First decide **what actually needs durability**; active games can stay in memory
 
 ## 7. Design / UX
 
-Full redesign planned — decisions still open.
+Direction decided (2026-07-09): **"noite de jogo"** — dark slate + gold + Outfit (the deck's
+world), green felt table as the centerpiece, seats arranged around the table, loud & playful
+celebrations. Mobile-first: hand and actions in the thumb zone, the table is the screen.
 
 - [x] Card rendering: vendored the user's cards-lib (github.com/pnxbill/cards-lib) as `packages/cards-ui` — CSS-drawn cards + framer-motion fanned hand with drag-to-reorder, tap-to-select, tap-again-to-play; added a `disabled` state for follow-suit dimming; SVG card assets deleted
-- [ ] Define visual direction (the current CSS is placeholder POC styling)
-- [ ] Design the table layout (players around the table, played cards, turn indicator)
-- [ ] Mobile-first pass (the game is played on phones at the table)
+- [x] Define visual direction (noite de jogo, above)
+- [x] Game-table mockup (`/dev/table`): felt/seats/played cards on one shared ellipse, HUD (round + trunfo), my seat on the near rim, betting + playing phases
+- [ ] Wire the table design into the real game screen (replace BetsBar/Table layout), hide the app header in-game
+- [ ] Motion pass: cards travel from seat to table, trick pulls toward the winner, turn transitions
+- [ ] Bailou / round-end / game-end celebration moments (loud & playful)
+- [ ] Lobby redesign in the same language (the table filling up as people join)
+- [ ] Home/login as a proper entrance (5-second first impression)
+- [ ] Edge layouts: 6–7 seats on small screens, 6–7 card hands on narrow phones, landscape lock or support decision
 
 ## 8. Infra & Tooling
 
