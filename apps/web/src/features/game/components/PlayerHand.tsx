@@ -22,8 +22,8 @@ export function PlayerHand({ cards, onPlay }: Props) {
   const ordered = useMemo(() => orderHand(cards, arrangement), [cards, arrangement])
   const libCards = useMemo(() => ordered.map(toLibCard), [ordered])
 
-  if (!cards.length) return null
-
+  // Keep the Hand mounted even when empty so its fixed height still
+  // reserves the thumb zone — otherwise the table flexes into that space.
   const selectedIndex = ordered.findIndex((c) => c.value === selected && !c.disabled)
 
   const handleCardClick = (index: number) => {
