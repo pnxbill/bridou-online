@@ -12,6 +12,7 @@ import { InMemoryGameRepository } from './infra/in-memory-game-repository'
 import { InterceptingGateway } from './infra/intercepting-gateway'
 import { SocketIoGateway, registerConnectionHandlers } from './infra/socket-io-gateway'
 import { SseGateway } from './infra/sse-gateway'
+import { registerVoiceHandlers } from './infra/voice-gateway'
 import { createRoutes } from './http/routes'
 
 export interface AppInstance {
@@ -47,6 +48,10 @@ export const createApp = (options: AppOptions = {}): AppInstance => {
   registerConnectionHandlers(io, registry, presence)
   const sse = new SseGateway(presence)
 
+  // Voice chat: browsers exchange WebRTC signaling through the /voice
+  // namespace; the audio itself flows peer-to-peer and never touches us
+  const voiceRooms = registerVoiceHandlers(io)
+
   // Events flow out through both transports, teed to the abandonment service
   // so it can act when a bot-controlled seat is prompted
   const gateway = new InterceptingGateway(
@@ -58,6 +63,9 @@ export const createApp = (options: AppOptions = {}): AppInstance => {
   abandonment.bind({ gateway, actions: service })
 
   app.get('/api/games/:gameId/events', sse.handler())
+  app.get('/api/games/:gameId/voice', (req, res) => {
+    res.json({ participants: voiceRooms.rosterOf(req.params.gameId) })
+  })
   app.use(createRoutes(service))
 
   const close = async (): Promise<void> => {
