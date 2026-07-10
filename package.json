@@ -14,7 +14,7 @@
     "dev": "concurrently \"pnpm --filter @bridou/web dev\" \"pnpm --filter @bridou/server dev\"",
     "dev:web": "pnpm --filter @bridou/web dev",
     "dev:server": "pnpm --filter @bridou/server dev",
-    "build": "pnpm --filter @bridou/web build",
+    "build": "pnpm --filter @bridou/server build && pnpm --filter @bridou/web build",
     "test": "pnpm -r --filter './packages/*' --filter './apps/*' test",
     "typecheck": "pnpm -r --filter './apps/*' typecheck"
   },

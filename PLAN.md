@@ -23,7 +23,7 @@ and every step leaves the game playable.
 - [x] Game-flow e2e pinning the real wire contract (REST + `event` channel + private routing)
 - [x] Queue bots: the leader can seat bots (random names, `isBot` flag rendered everywhere); they play from the first move; table capped at 7 seats
 - [ ] Multiple lobbies (create/join by code) instead of the single global queue
-- [ ] Evict finished/abandoned games from memory (TTL after `game-ended`)
+- [x] Evict finished/abandoned games from memory (TTL after `game-ended`)
 - [ ] Clean REST API v2 designed for the Next.js client (drop legacy naming quirks like `close-score`)
 
 ### Abandonment flow (decided)
@@ -38,7 +38,7 @@ reclaim their seat.
 - [x] Pause the game during grace (plays/bets rejected), resume on takeover or rejoin
 - [x] Bot acts through the same use-cases as humans (`placeBet`/`playCard`) — no engine backdoors
 
-## 3. Realtime Transport (socket.io → SSE)
+## 3. Realtime Transport (socket.io + SSE)
 
 Both transports are live side by side: the server publishes through a composite gateway,
 and the client picks via `NEXT_PUBLIC_REALTIME_TRANSPORT` (`sse` is the default,
@@ -48,7 +48,7 @@ and the client picks via `NEXT_PUBLIC_REALTIME_TRANSPORT` (`sse` is the default,
 - [x] Heartbeat comment every ~20s + monotonic event ids
 - [x] Client reconnect strategy: `EventSource` auto-retry + snapshot refetch on reconnect
 - [x] Transport toggle: `lib/realtime.ts` abstraction on the client, composite gateway on the server; e2e runs against both
-- [ ] Remove socket.io (server + client dependencies + composite gateway) once SSE has proven itself in real games
+- [x] Dual transport kept on purpose: SSE is the default; socket.io stays as an env fallback for game events if SSE misbehaves, and always for `/voice` WebRTC signaling (see §9)
 
 ## 4. Frontend — Next.js (`apps/web`)
 
@@ -103,5 +103,22 @@ celebrations. Mobile-first: hand and actions in the thumb zone, the table is the
 
 - [x] CI: GitHub Actions running typecheck, all tests and the web build on every push
 - [ ] Decide deployment target for server + web (the old `pem/` setup is stale — the committed key should be rotated/removed then)
-- [ ] Production build pipeline for `apps/server` (currently dev-only via tsx)
+- [x] Production build pipeline for `apps/server` (tsup → `dist/main.js`; `pnpm start` runs `node dist/main.js`)
 - [x] Remove dead artifacts: `adaptors/`, `server/`, `types/`, `public/`, root env/eslint/vite configs
+
+## 9. Voice Chat (P2P WebRTC mesh)
+
+Friends talking while they play. Each game is a voice room (2–7 players); audio flows
+browser-to-browser, the game server only relays signaling. Off by default — players
+opt in with "Entrar na voz", then mute mic / mute audio / leave as they like.
+
+- [x] Shared signaling contract (`VoiceSignal`, `VoicePresence` in `@bridou/shared`)
+- [x] Server `/voice` socket.io namespace: roster, peer join/leave, mute broadcast, targeted offer/answer/ICE relay (stamps real `from`); `GET /api/games/:id/voice` for the join-button count
+- [x] Client `useVoiceChat`: getUserMedia, full mesh, glare-free negotiation (joiner offers), mute/deafen, teardown on leave/unmount
+- [x] `VoiceControls` dock on the game screen (join count, mic/audio/leave, roster)
+- [x] Speaking indicators: AnalyserNode VAD → green ring on table avatars / my chip / voice roster
+- [x] ICE config ready for TURN (`NEXT_PUBLIC_TURN_*` in `.env.example`); STUN-only by default
+- [x] Signaling e2e (`apps/server/test/voice.e2e.test.ts`)
+- [ ] TURN relay for players behind symmetric NATs (coturn or a free-tier service) — *follow-up when friends hit connection failures*
+- [ ] HTTPS / secure-context story for LAN testing (mic needs `https://` or `localhost`) — *testing concern until production deploy*
+- [ ] Optional: speaking glow on the dock only when unmuted and connected (already works); finer VAD tuning if fake-mic / noisy rooms mis-trigger

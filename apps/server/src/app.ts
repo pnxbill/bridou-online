@@ -3,6 +3,7 @@ import express from 'express'
 import http from 'node:http'
 import { Server } from 'socket.io'
 import { AbandonmentService } from './application/abandonment'
+import { GameEviction } from './application/game-eviction'
 import { GameService } from './application/game-service'
 import { PresenceTracker } from './application/presence'
 import { Queue } from './application/queue'
@@ -41,6 +42,7 @@ export const createApp = (options: AppOptions = {}): AppInstance => {
 
   const games = new InMemoryGameRepository()
   const abandonment = new AbandonmentService({ games, ...options.abandonment })
+  const eviction = new GameEviction({ games })
 
   // Presence flows in from every transport; abandonment reacts to it
   const registry = new ConnectionRegistry()
@@ -52,11 +54,14 @@ export const createApp = (options: AppOptions = {}): AppInstance => {
   // namespace; the audio itself flows peer-to-peer and never touches us
   const voiceRooms = registerVoiceHandlers(io)
 
-  // Events flow out through both transports, teed to the abandonment service
-  // so it can act when a bot-controlled seat is prompted
+  // Events flow out through both transports, teed to abandonment (bot seats)
+  // and eviction (TTL cleanup after game-ended)
   const gateway = new InterceptingGateway(
     new CompositeGateway([new SocketIoGateway(io, registry), sse]),
-    (gameId, event) => abandonment.onDomainEvent(gameId, event),
+    (gameId, event) => {
+      abandonment.onDomainEvent(gameId, event)
+      eviction.onDomainEvent(gameId, event)
+    },
   )
 
   const service = new GameService(games, new Queue(), gateway, abandonment)
