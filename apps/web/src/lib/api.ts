@@ -1,4 +1,10 @@
-import type { GameSnapshot, PlayerInfo, PlayerPerspective, SessionState } from '@bridou/shared'
+import type {
+  GameSnapshot,
+  PlayerInfo,
+  PlayerPerspective,
+  SessionState,
+  VoicePresence,
+} from '@bridou/shared'
 import { getServerUrl } from './config'
 
 /** What `/api/enter-game` returns: the shared snapshot plus the caller's private view. */
@@ -55,4 +61,9 @@ export const api = {
 
   closeScore: (gameId: string) =>
     request(`/api/close-score?gameId=${encodeURIComponent(gameId)}`),
+
+  voiceRoster: (gameId: string) =>
+    request<{ participants: VoicePresence[] }>(
+      `/api/games/${encodeURIComponent(gameId)}/voice`,
+    ),
 }

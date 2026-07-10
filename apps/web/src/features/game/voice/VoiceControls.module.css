@@ -1,0 +1,218 @@
+/* Voice chat dock — bottom-left corner, below the overlays (z 50) */
+
+.dock {
+  --gold: #fbbf24;
+  --gold-soft: rgba(251, 191, 36, 0.35);
+  --glass: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --ink: #e2e8f0;
+  --ink-muted: #94a3b8;
+  --danger: #fb7185;
+  --live: #34d399;
+
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+  color: var(--ink);
+  font-size: 0.8rem;
+}
+
+.joinButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  border: 2px solid var(--gold-soft);
+  background: linear-gradient(160deg, #16213c 0%, #0b1120 100%);
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.8);
+}
+
+.joinButton:hover {
+  border-color: var(--gold);
+  background: linear-gradient(160deg, #1b2a4d 0%, #0d1428 100%);
+}
+
+.joinButton:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.joinCount {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(52, 211, 153, 0.15);
+  border: 1px solid rgba(52, 211, 153, 0.45);
+  color: var(--live);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 18px;
+  background: linear-gradient(160deg, rgba(22, 33, 60, 0.95) 0%, rgba(11, 17, 32, 0.95) 100%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 16px 40px -14px rgba(0, 0, 0, 0.85);
+  min-width: 168px;
+}
+
+.buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.control {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  color: var(--ink);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.control:hover {
+  border-color: var(--gold-soft);
+}
+
+.controlActive {
+  border-color: var(--danger);
+  background: rgba(251, 113, 133, 0.12);
+}
+
+.controlLeave:hover {
+  border-color: var(--danger);
+  background: rgba(251, 113, 133, 0.12);
+}
+
+.people {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  border-radius: 10px;
+  background: var(--glass);
+}
+
+.personAvatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #0b1120;
+  background: linear-gradient(135deg, #cbd5e1, #64748b);
+}
+
+.personAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.personName {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 110px;
+  font-weight: 600;
+}
+
+.personState {
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}
+
+.personConnecting {
+  color: var(--ink-muted);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.personFailed {
+  color: var(--danger);
+}
+
+.personLive {
+  color: var(--live);
+}
+
+.personMuted {
+  color: var(--ink-muted);
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.alone {
+  color: var(--ink-muted);
+  font-size: 0.72rem;
+  text-align: center;
+  padding: 2px 4px;
+}
+
+.error {
+  max-width: 220px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: rgba(251, 113, 133, 0.1);
+  border: 1px solid rgba(251, 113, 133, 0.4);
+  color: var(--ink);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.retry {
+  margin-top: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.retry:hover {
+  border-color: var(--gold-soft);
+}

@@ -9,6 +9,7 @@ import { AbandonedOverlay } from './components/AbandonedOverlay'
 import { GameTable } from './components/GameTable'
 import { RoundEndOverlay } from './components/RoundEndOverlay'
 import { ScoreboardOverlay } from './components/ScoreboardOverlay'
+import { VoiceControls } from './voice/VoiceControls'
 
 interface Props {
   gameId: string
@@ -59,6 +60,7 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
   return (
     <>
       <GameTable state={state} onPlay={playCard} onBet={placeBet} />
+      <VoiceControls gameId={gameId} playerId={playerId} players={state.players} />
 
       {state.scoreboard && (
         <ScoreboardOverlay

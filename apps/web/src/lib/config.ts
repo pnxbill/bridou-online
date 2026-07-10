@@ -21,3 +21,25 @@ export const getServerUrl = (): string => {
 
 /** @deprecated Prefer `getServerUrl()` — kept for call sites that only run on the server. */
 export const SERVER_URL = process.env.NEXT_PUBLIC_GAME_SERVER_URL ?? 'http://localhost:3001'
+
+/**
+ * ICE servers for the voice chat's WebRTC connections. Public STUN is enough
+ * for most home networks; set the NEXT_PUBLIC_TURN_* vars to add a relay for
+ * players behind strict NATs (no code change needed).
+ */
+export const getIceServers = (): RTCIceServer[] => {
+  const servers: RTCIceServer[] = [
+    { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+  ]
+
+  const turnUrl = process.env.NEXT_PUBLIC_TURN_URL
+  if (turnUrl) {
+    servers.push({
+      urls: turnUrl,
+      username: process.env.NEXT_PUBLIC_TURN_USERNAME,
+      credential: process.env.NEXT_PUBLIC_TURN_CREDENTIAL,
+    })
+  }
+
+  return servers
+}
