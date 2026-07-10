@@ -91,9 +91,10 @@ celebrations. Mobile-first: hand and actions in the thumb zone, the table is the
 - [x] Card rendering: vendored the user's cards-lib (github.com/pnxbill/cards-lib) as `packages/cards-ui` — CSS-drawn cards + framer-motion fanned hand with drag-to-reorder, tap-to-select, tap-again-to-play; added a `disabled` state for follow-suit dimming; SVG card assets deleted
 - [x] Define visual direction (noite de jogo, above)
 - [x] Game-table mockup (`/dev/table`): felt/seats/played cards on one shared ellipse, HUD (round + trunfo), my seat on the near rim, betting + playing phases
-- [ ] Wire the table design into the real game screen (replace BetsBar/Table layout), hide the app header in-game
-- [ ] Motion pass: cards travel from seat to table, trick pulls toward the winner, turn transitions
-- [ ] Bailou / round-end / game-end celebration moments (loud & playful)
+- [x] Wire the table design into the real game screen (GameTable replaces BetsBar/Table/Trunfo/BetPicker), header-free full-bleed game route
+- [x] Motion pass v1: played cards enter from their seat, completed trick pauses 1.5s (server-paced via the engine) then flies to the winner; live "ganhando"/"ganhou" tag (turn-ended now carries winnerId)
+- [ ] Bailou / round-end / game-end celebration moments (loud & playful) — overlays still on the old styling
+- [ ] Motion pass v2: my card travels from the fan to the table, dealing animation at round start
 - [ ] Lobby redesign in the same language (the table filling up as people join)
 - [ ] Home/login as a proper entrance (5-second first impression)
 - [ ] Edge layouts: 6–7 seats on small screens, 6–7 card hands on narrow phones, landscape lock or support decision

@@ -11,7 +11,10 @@ import type { GameEntry } from '@/lib/api'
 
 /** Everything the game screen needs, derived purely from snapshot + events. */
 export interface GameViewState {
+  /** The local player — lets events about "me" (like my own play) update my hand. */
+  myId: string
   leaderId: string
+  roundNumber: number
   /** Betting order for the current round. */
   players: RoundPlayer[]
   trunfo: Card
@@ -24,6 +27,10 @@ export interface GameViewState {
   playedCards: Card[]
   currentTurn: TurnSnapshot | null
   turnsCompleted: number
+  /** Tricks taken so far this round, per player id. */
+  madeByPlayer: Record<string, number>
+  /** Winner of the most recent trick — drives the cards-to-winner animation. */
+  lastTrickWinnerId: string | null
   /** Non-empty right after a round ends → bailadores overlay. */
   bailadores: RoundPlayer[]
   /** Non-null → scoreboard overlay is visible. */
@@ -43,8 +50,17 @@ export type GameAction =
   /** Optimistic UI: hide bet buttons while a bet is in flight. */
   | { type: 'clear-bets' }
 
-export const stateFromSnapshot = (snapshot: GameEntry): GameViewState => ({
+/** Tricks taken per player, from the round's winner-per-trick list. */
+const countMade = (whoMade: RoundPlayer[]): Record<string, number> =>
+  whoMade.reduce<Record<string, number>>((acc, winner) => {
+    acc[winner.id] = (acc[winner.id] ?? 0) + 1
+    return acc
+  }, {})
+
+export const stateFromSnapshot = (snapshot: GameEntry, myId = ''): GameViewState => ({
+  myId,
   leaderId: snapshot.leaderId,
+  roundNumber: snapshot.currentRound.currentRoundNumber,
   players: snapshot.currentRound.players,
   trunfo: snapshot.currentRound.trunfo,
   cardsForEachPlayer: snapshot.currentRound.cardsForEachPlayer,
@@ -54,6 +70,8 @@ export const stateFromSnapshot = (snapshot: GameEntry): GameViewState => ({
   playedCards: snapshot.currentRound.currentTurn?.playedCards ?? [],
   currentTurn: snapshot.currentRound.currentTurn,
   turnsCompleted: snapshot.currentRound.turns.length,
+  madeByPlayer: countMade(snapshot.currentRound.whoMade),
+  lastTrickWinnerId: snapshot.currentRound.whoMade.at(-1)?.id ?? null,
   bailadores: snapshot.currentRound.bailadores,
   scoreboard: snapshot.scoreboardShowing ? snapshot.scoreboard : null,
   abandoned: snapshot.abandoned ?? [],
@@ -65,6 +83,7 @@ const applyEvent = (state: GameViewState, event: DomainEvent): GameViewState => 
     case 'round-started':
       return {
         ...state,
+        roundNumber: event.round.currentRoundNumber,
         players: event.round.players,
         trunfo: event.round.trunfo,
         cardsForEachPlayer: event.round.cardsForEachPlayer,
@@ -74,6 +93,8 @@ const applyEvent = (state: GameViewState, event: DomainEvent): GameViewState => 
         playedCards: [],
         currentTurn: null,
         turnsCompleted: 0,
+        madeByPlayer: countMade(event.round.whoMade),
+        lastTrickWinnerId: null,
         bailadores: [],
       }
     case 'trunfo-set':
@@ -99,12 +120,26 @@ const applyEvent = (state: GameViewState, event: DomainEvent): GameViewState => 
         playedCards: event.turn.playedCards,
       }
     case 'card-played':
-      return { ...state, playedCards: event.playedCards }
+      return {
+        ...state,
+        playedCards: event.playedCards,
+        // my own play leaves my hand immediately (the server only refreshes
+        // the hand on the next prompt)
+        hand:
+          event.playerId === state.myId
+            ? state.hand.filter((c) => c.value !== event.card)
+            : state.hand,
+      }
     case 'turn-ended':
       return {
         ...state,
         currentTurn: event.turn,
         turnsCompleted: state.turnsCompleted + 1,
+        madeByPlayer: {
+          ...state.madeByPlayer,
+          [event.winnerId]: (state.madeByPlayer[event.winnerId] ?? 0) + 1,
+        },
+        lastTrickWinnerId: event.winnerId,
       }
     case 'round-ended':
       return { ...state, bailadores: event.bailadores, playedCards: [] }
@@ -146,7 +181,7 @@ export const gameReducer = (state: GameViewState, action: GameAction): GameViewS
     case 'apply-event':
       return applyEvent(state, action.event)
     case 'sync':
-      return stateFromSnapshot(action.snapshot)
+      return stateFromSnapshot(action.snapshot, state.myId)
     case 'lock-hand':
       return { ...state, hand: state.hand.map((c) => ({ ...c, disabled: true })) }
     case 'clear-bets':

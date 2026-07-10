@@ -141,6 +141,7 @@ export class Game {
       {
         publisher: this.publisher,
         rng: this.rng,
+        scheduler: this.scheduler,
         onComplete: () => this.handleRoundComplete(),
       },
     )

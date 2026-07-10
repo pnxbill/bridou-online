@@ -8,12 +8,16 @@ import {
 import { createDeck, shuffle } from './deck'
 import { GameError } from './errors'
 import { toRoundPlayer, type RoundPlayerState } from './player'
-import type { Rng } from './ports'
+import type { Rng, Scheduler } from './ports'
 import { Turn } from './turn'
+
+/** Completed tricks stay on the table this long before the next one starts. */
+export const TRICK_RESOLUTION_MS = 1500
 
 export interface RoundDeps {
   publisher: EventPublisher
   rng: Rng
+  scheduler: Scheduler
   /** Called once, after points are distributed for the last trick. */
   onComplete: () => void
 }
@@ -191,8 +195,9 @@ export class Round {
 
   private endTurn(turn: Turn): void {
     this.turns.push(turn)
-    this.whoMade.push(turn.winner)
-    this.deps.publisher.publish({ type: 'turn-ended', turn: turn.snapshot() })
+    const winner = turn.winner
+    this.whoMade.push(winner)
+    this.deps.publisher.publish({ type: 'turn-ended', turn: turn.snapshot(), winnerId: winner.id })
 
     const isLastTurn = this.turns.length === this.cardsForEachPlayer
     if (isLastTurn) {
@@ -203,7 +208,8 @@ export class Round {
       })
       this.deps.onComplete()
     } else {
-      this.startTurn()
+      // Let everyone see the completed trick before the next one starts
+      this.deps.scheduler.schedule(() => this.startTurn(), TRICK_RESOLUTION_MS)
     }
   }
 

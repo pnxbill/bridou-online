@@ -24,7 +24,7 @@ export type DomainEvent =
   // tricks
   | { type: 'turn-started'; turn: TurnSnapshot }
   | { type: 'card-played'; playerId: string; card: Card; playedCards: Card[] }
-  | { type: 'turn-ended'; turn: TurnSnapshot }
+  | { type: 'turn-ended'; turn: TurnSnapshot; winnerId: string }
   // scoring / game end
   | { type: 'scoreboard-shown'; scoreboard: ScoreboardEntry[] }
   | { type: 'scoreboard-hidden' }

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { Round, cardsForRound } from '../src/round'
 import type { RoundPlayerState } from '../src/player'
 import {
+  ManualScheduler,
   RecordingPublisher,
   drivePendingRequests,
   makeRoundPlayer,
@@ -10,15 +11,16 @@ import {
 
 const makeRound = ({ roundNumber = 3, playerCount = 3, seed = 1 } = {}) => {
   const publisher = new RecordingPublisher()
+  const scheduler = new ManualScheduler()
   const onComplete = vi.fn()
   const players: RoundPlayerState[] = Array.from({ length: playerCount }, (_, i) =>
     makeRoundPlayer(`p${i + 1}`, []),
   )
   const round = new Round(
     { roundNumber, players },
-    { publisher, rng: seededRng(seed), onComplete },
+    { publisher, rng: seededRng(seed), scheduler, onComplete },
   )
-  return { round, publisher, onComplete, players }
+  return { round, publisher, scheduler, onComplete, players }
 }
 
 describe('cardsForRound', () => {
@@ -143,10 +145,22 @@ describe('betting', () => {
 
 describe('a full round', () => {
   const playRound = (seed: number, roundNumber = 3, playerCount = 3) => {
-    const { round, publisher, onComplete, players } = makeRound({ roundNumber, playerCount, seed })
+    const { round, publisher, scheduler, onComplete, players } = makeRound({
+      roundNumber,
+      playerCount,
+      seed,
+    })
     const rng = seededRng(seed + 1000)
+    const cursor = { index: 0 }
     round.start()
-    drivePendingRequests(round, publisher, rng)
+    // tricks are separated by a scheduled resolution pause — flush through them
+    let guard = 30
+    while (true) {
+      if (--guard === 0) throw new Error('round never finished')
+      drivePendingRequests(round, publisher, rng, cursor)
+      if (!scheduler.pending.length) break
+      scheduler.flush()
+    }
     return { round, publisher, onComplete, players }
   }
 
@@ -180,6 +194,25 @@ describe('a full round', () => {
     const missed = players.filter((p) => p.points === -1).map((p) => p.id)
     expect(round.bailadores.map((b) => b.id)).toEqual(missed)
     expect(publisher.last('round-ended')?.bailadores.map((b) => b.id)).toEqual(missed)
+  })
+
+  it('announces the trick winner and pauses before the next trick starts', () => {
+    const { round, publisher, scheduler } = makeRound({ roundNumber: 2, playerCount: 2 })
+    const rng = seededRng(42)
+    const cursor = { index: 0 }
+    round.start()
+    drivePendingRequests(round, publisher, rng, cursor)
+
+    // first trick is complete; the winner is announced…
+    const ended = publisher.ofType('turn-ended')
+    expect(ended).toHaveLength(1)
+    expect(ended[0]!.winnerId).toBe(round.whoMade[0]!.id)
+
+    // …but the next trick waits for the resolution pause
+    expect(publisher.ofType('turn-started')).toHaveLength(1)
+    expect(scheduler.pending).toHaveLength(1)
+    scheduler.flush()
+    expect(publisher.ofType('turn-started')).toHaveLength(2)
   })
 
   it('lets the winner of a trick lead the next one', () => {

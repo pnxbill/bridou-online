@@ -161,8 +161,34 @@ describe('tricks', () => {
     })
     expect(state.playedCards).toEqual(['K-♠️'])
 
-    state = apply(state, { type: 'turn-ended', turn: turn(['K-♠️', '3-♠️']) })
+    state = apply(state, { type: 'turn-ended', turn: turn(['K-♠️', '3-♠️']), winnerId: 'other' })
     expect(state.turnsCompleted).toBe(1)
+  })
+
+  it('tracks tricks made per player and the last winner', () => {
+    let state = apply(base, { type: 'turn-ended', turn: turn(['K-♠️', '3-♠️']), winnerId: 'me' })
+    state = apply(state, { type: 'turn-ended', turn: turn(['5-♠️', '2-♠️']), winnerId: 'me' })
+    state = apply(state, { type: 'turn-ended', turn: turn(['A-♠️', '9-♠️']), winnerId: 'other' })
+
+    expect(state.madeByPlayer).toEqual({ me: 2, other: 1 })
+    expect(state.lastTrickWinnerId).toBe('other')
+
+    // next round wipes the counts
+    state = apply(state, { type: 'round-started', round: roundSnapshot() })
+    expect(state.madeByPlayer).toEqual({})
+    expect(state.lastTrickWinnerId).toBeNull()
+  })
+
+  it('rebuilds made counts from a reconnect snapshot', () => {
+    const state = stateFromSnapshot(
+      snapshot({
+        currentRound: roundSnapshot({
+          whoMade: [player('other'), player('me'), player('other')],
+        }),
+      }),
+    )
+    expect(state.madeByPlayer).toEqual({ other: 2, me: 1 })
+    expect(state.lastTrickWinnerId).toBe('other')
   })
 })
 

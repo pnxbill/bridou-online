@@ -7,12 +7,8 @@ import { gameReducer, stateFromSnapshot } from './reducer'
 import { useGameChannel } from './useGameChannel'
 import { AbandonedOverlay } from './components/AbandonedOverlay'
 import { BailadoresOverlay } from './components/BailadoresOverlay'
-import { BetPicker } from './components/BetPicker'
-import { BetsBar } from './components/BetsBar'
-import { PlayerHand } from './components/PlayerHand'
+import { GameTable } from './components/GameTable'
 import { ScoreboardOverlay } from './components/ScoreboardOverlay'
-import { Table } from './components/Table'
-import { Trunfo } from './components/Trunfo'
 
 interface Props {
   gameId: string
@@ -21,7 +17,9 @@ interface Props {
 }
 
 export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
-  const [state, dispatch] = useReducer(gameReducer, initialSnapshot, stateFromSnapshot)
+  const [state, dispatch] = useReducer(gameReducer, initialSnapshot, (snapshot) =>
+    stateFromSnapshot(snapshot, playerId),
+  )
 
   const resync = useCallback(async () => {
     try {
@@ -58,39 +56,22 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
     }
   }
 
-  if (state.scoreboard) {
-    return (
-      <ScoreboardOverlay
-        scoreboard={state.scoreboard}
-        onClose={state.leaderId === playerId ? () => api.closeScore(gameId) : undefined}
-      />
-    )
-  }
-
-  if (state.abandoned.length) {
-    return <AbandonedOverlay seats={state.abandoned} players={state.players} />
-  }
-
-  if (state.bailadores.length) {
-    return <BailadoresOverlay bailadores={state.bailadores} />
-  }
-
   return (
-    <div className="game">
-      <div className="status-bar">
-        <BetsBar players={state.players} betting={state.betting} botSeats={state.botSeats} />
-        <Trunfo card={state.trunfo} />
-      </div>
+    <>
+      <GameTable state={state} onPlay={playCard} onBet={placeBet} />
 
-      <Table
-        playedCards={state.playedCards}
-        currentTurn={state.currentTurn}
-        turnNumber={state.turnsCompleted + 1}
-        maxTurns={state.cardsForEachPlayer}
-      />
-
-      <BetPicker bets={state.availableBets} onBet={placeBet} />
-      <PlayerHand cards={state.hand} onPlay={playCard} />
-    </div>
+      {state.scoreboard && (
+        <ScoreboardOverlay
+          scoreboard={state.scoreboard}
+          onClose={state.leaderId === playerId ? () => api.closeScore(gameId) : undefined}
+        />
+      )}
+      {!state.scoreboard && state.abandoned.length > 0 && (
+        <AbandonedOverlay seats={state.abandoned} players={state.players} />
+      )}
+      {!state.scoreboard && !state.abandoned.length && state.bailadores.length > 0 && (
+        <BailadoresOverlay bailadores={state.bailadores} />
+      )}
+    </>
   )
 }

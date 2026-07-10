@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { orderHand, parseCard, toLibCard } from './cards'
+import { orderHand, parseCard, toLibCard, winningCardIndex } from './cards'
 
 describe('parseCard', () => {
   it('maps engine card strings to rank + suit names', () => {
@@ -23,6 +23,28 @@ describe('toLibCard', () => {
       disabled: true,
       variant: 'dark',
     })
+  })
+})
+
+describe('winningCardIndex', () => {
+  const trunfo = '7-♦️'
+
+  it('is -1 for an empty table', () => {
+    expect(winningCardIndex([], trunfo)).toBe(-1)
+  })
+
+  it('is the highest card of the led suit when no trunfo was played', () => {
+    expect(winningCardIndex(['5-♠️', 'K-♠️', 'A-♥️'], trunfo)).toBe(1)
+  })
+
+  it('any trunfo beats the led suit; the highest trunfo wins', () => {
+    expect(winningCardIndex(['A-♠️', '3-♦️'], trunfo)).toBe(1)
+    expect(winningCardIndex(['4-♦️', 'J-♦️', 'A-♠️'], trunfo)).toBe(1)
+  })
+
+  it('the leader wins until someone beats them', () => {
+    expect(winningCardIndex(['Q-♣️'], trunfo)).toBe(0)
+    expect(winningCardIndex(['Q-♣️', '2-♣️'], trunfo)).toBe(0)
   })
 })
 

@@ -1,8 +1,7 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Outfit } from 'next/font/google'
 import type { ReactNode } from 'react'
 import { AuthProvider } from '@/features/auth/AuthProvider'
-import { Header } from '@/components/Header'
 import './globals.css'
 
 // The card faces (@bridou/cards-ui) are designed around Outfit
@@ -13,14 +12,20 @@ export const metadata: Metadata = {
   description: 'Bridou online',
 }
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  // the game screen is a fixed table — no pinch zoom fighting the card drags
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: '#0b1120',
+}
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR">
       <body className={outfit.className}>
-        <AuthProvider>
-          <Header />
-          <main className="main">{children}</main>
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   )

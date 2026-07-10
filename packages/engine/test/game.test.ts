@@ -111,12 +111,20 @@ describe('a full game', () => {
 })
 
 describe('mid-game scoreboard', () => {
+  /** Completes `count` rounds (through trick pauses) and their aftermath timers. */
   const playRounds = (count: number) => {
     const context = makeGame({ playerCount: 3, seed: 2 })
     const cursor = { index: 0 }
     context.game.start()
     for (let round = 1; round <= count; round++) {
-      drivePendingRequests(context.game, context.publisher, context.rng, cursor)
+      let guard = 30
+      while (context.publisher.ofType('round-ended').length < round) {
+        if (--guard === 0) throw new Error(`round ${round} never finished`)
+        drivePendingRequests(context.game, context.publisher, context.rng, cursor)
+        if (context.publisher.ofType('round-ended').length >= round) break
+        context.scheduler.flush()
+      }
+      // aftermath: mid-game scoreboard and/or the next round's start
       context.scheduler.flush()
     }
     return context

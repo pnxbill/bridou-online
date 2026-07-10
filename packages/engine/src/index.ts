@@ -1,6 +1,6 @@
 export { createHeuristicBot, type BetView, type BotStrategy, type PlayView } from './bot'
 export { Game, type GameConfig, type GameDeps } from './game'
-export { Round, cardsForRound, type RoundDeps } from './round'
+export { Round, TRICK_RESOLUTION_MS, cardsForRound, type RoundDeps } from './round'
 export { Turn } from './turn'
 export { createDeck, shuffle } from './deck'
 export { GameError } from './errors'
