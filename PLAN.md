@@ -13,7 +13,7 @@ and every step leaves the game playable.
 - [x] Fix fairness/safety bugs found during the port (biased shuffle, hands leaked in broadcasts, fs logging)
 - [x] Bot player: strategy port (`decideBet`, `decideCard`) fed only snapshot + own perspective (cannot cheat by construction); heuristic bot beats random seats 93% of the time
 - [x] Seat control can switch mid-game (human → bot on abandonment, bot → human on rejoin)
-- [ ] Stronger bot (Monte Carlo over hidden hands) — *optional, slots into the `BotStrategy` port*
+- [x] Stronger bot (Monte Carlo over hidden hands) — slots into the `BotStrategy` port; heuristic kept as `createHeuristicBot`
 - [ ] Configurable game rules (round count, scoring) if we ever want variants — *optional, low priority*
 
 ## 2. Backend — Server & API (`apps/server`)

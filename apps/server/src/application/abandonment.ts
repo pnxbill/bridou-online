@@ -1,6 +1,6 @@
 import {
   GameError,
-  createHeuristicBot,
+  createMonteCarloBot,
   systemScheduler,
   type BotStrategy,
   type Scheduler,
@@ -60,7 +60,7 @@ export class AbandonmentService implements PresenceListener {
   constructor(deps: Deps) {
     this.games = deps.games
     this.scheduler = deps.scheduler ?? systemScheduler
-    this.bot = deps.bot ?? createHeuristicBot()
+    this.bot = deps.bot ?? createMonteCarloBot()
     this.now = deps.now ?? Date.now
     this.debounceMs = deps.debounceMs ?? 3_000
     this.graceMs = deps.graceMs ?? 30_000
