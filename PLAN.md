@@ -93,7 +93,7 @@ celebrations. Mobile-first: hand and actions in the thumb zone, the table is the
 - [x] Game-table mockup (`/dev/table`): felt/seats/played cards on one shared ellipse, HUD (round + trunfo), my seat on the near rim, betting + playing phases
 - [x] Wire the table design into the real game screen (GameTable replaces BetsBar/Table/Trunfo/BetPicker), header-free full-bleed game route
 - [x] Motion pass v1: played cards enter from their seat, completed trick pauses 1.5s (server-paced via the engine) then flies to the winner; live "ganhando"/"ganhou" tag (turn-ended now carries winnerId)
-- [ ] Bailou / round-end / game-end celebration moments (loud & playful) — overlays still on the old styling
+- [x] Celebration moments: RoundEndOverlay (BAILOU!/BAILARAM!/NINGUÉM BAILOU with confetti, delayed reveal so the final trick lands first), scoreboard as podium with medals, game-end with crown + champion + confetti (`finished` flag on snapshots), abandoned overlay restyled calm — playground at `/dev/moments`
 - [ ] Motion pass v2: my card travels from the fan to the table, dealing animation at round start
 - [ ] Lobby redesign in the same language (the table filling up as people join)
 - [ ] Home/login as a proper entrance (5-second first impression)

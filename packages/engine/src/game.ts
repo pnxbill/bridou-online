@@ -54,7 +54,9 @@ export class Game {
     this.publisher = deps.publisher
     this.scheduler = deps.scheduler ?? systemScheduler
     this.rng = deps.rng ?? Math.random
-    this.roundTransitionDelay = 2000 + players.length * 500
+    // long enough for the final trick to resolve AND the round-result
+    // celebration to land before the next deal
+    this.roundTransitionDelay = 3500 + players.length * 500
   }
 
   get currentRound(): Round {
@@ -114,6 +116,7 @@ export class Game {
       leaderId: this.leaderId,
       currentRoundNumber: this.currentRoundNumber,
       scoreboardShowing: this.scoreboardShowing,
+      finished: this.finished,
       currentRound: this.currentRound.snapshot(),
       scoreboard: this.scoreboard,
     }

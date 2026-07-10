@@ -1,0 +1,254 @@
+/* Celebration + pause overlays — noite de jogo language */
+
+.overlay {
+  --gold: #fbbf24;
+  --gold-soft: rgba(251, 191, 36, 0.35);
+  --glass: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --ink: #e2e8f0;
+  --ink-muted: #94a3b8;
+  --danger: #fb7185;
+
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(4, 8, 18, 0.72);
+  backdrop-filter: blur(10px);
+  color: var(--ink);
+  overflow: hidden;
+}
+
+.panel {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.75rem 1.5rem;
+  border-radius: 24px;
+  background:
+    radial-gradient(120% 100% at 50% 0%, rgba(251, 191, 36, 0.07) 0%, transparent 55%),
+    linear-gradient(160deg, #16213c 0%, #0b1120 100%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 30px 70px -20px rgba(0, 0, 0, 0.85);
+}
+
+.emoji {
+  font-size: 3.4rem;
+  line-height: 1;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.5));
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-align: center;
+  line-height: 1.05;
+}
+
+.titleBailou {
+  color: var(--danger);
+  animation: shake 0.6s ease-in-out 0.25s 2;
+}
+
+.titleClean {
+  color: var(--gold);
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  20% {
+    transform: rotate(-4deg);
+  }
+  40% {
+    transform: rotate(4deg);
+  }
+  60% {
+    transform: rotate(-3deg);
+  }
+  80% {
+    transform: rotate(3deg);
+  }
+}
+
+.subtitle {
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+  text-align: center;
+  margin-top: -0.5rem;
+}
+
+/* people rows (bailadores / standings) */
+
+.rows {
+  list-style: none;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+}
+
+.rowWinner {
+  border-color: var(--gold);
+  background: rgba(251, 191, 36, 0.1);
+  box-shadow: 0 0 18px rgba(251, 191, 36, 0.15);
+}
+
+.rank {
+  width: 26px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--ink-muted);
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #0b1120;
+  background: linear-gradient(135deg, #cbd5e1, #64748b);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarBot {
+  background: linear-gradient(135deg, #334155, #1e293b);
+  font-size: 1rem;
+}
+
+.rowName {
+  flex: 1;
+  font-weight: 600;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowDetail {
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.rowDetail b {
+  color: var(--danger);
+}
+
+.points {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.rowWinner .points {
+  color: var(--gold);
+}
+
+.action {
+  margin-top: 0.25rem;
+  padding: 0.6rem 1.6rem;
+  border-radius: 999px;
+  border: 2px solid var(--gold-soft);
+  background: rgba(251, 191, 36, 0.08);
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.action:hover {
+  border-color: var(--gold);
+  background: rgba(251, 191, 36, 0.18);
+}
+
+/* paused (abandonment) */
+
+.pausedDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--gold);
+  animation: breathe 1.4s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.countdown {
+  font-size: 2.6rem;
+  font-weight: 900;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* confetti */
+
+.confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.piece {
+  position: absolute;
+  top: -4%;
+  border-radius: 2px;
+  animation: fall linear infinite;
+}
+
+@keyframes fall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) rotate(var(--spin, 540deg));
+    opacity: 0.4;
+  }
+}

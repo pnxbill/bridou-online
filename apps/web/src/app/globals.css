@@ -282,47 +282,4 @@ body {
   font-weight: 700;
 }
 
-/* overlays */
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgb(0 0 0 / 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-
-.overlay-panel {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 1.5rem;
-  width: 100%;
-  max-width: 420px;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  align-items: center;
-}
-
-.score-list {
-  list-style: none;
-  width: 100%;
-}
-
-.score-row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.score-name {
-  flex: 1;
-}
-
-.score-points {
-  font-weight: 700;
-}
+/* game overlays live in features/game/components/Overlays.module.css */

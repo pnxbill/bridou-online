@@ -30,6 +30,7 @@ const snapshot = (overrides: Partial<GameEntry> = {}): GameEntry => ({
   leaderId: 'me',
   currentRoundNumber: 3,
   scoreboardShowing: false,
+  finished: false,
   currentRound: roundSnapshot(),
   scoreboard: [],
   playableCards: [{ value: 'A-♠️', disabled: true }],
@@ -107,13 +108,23 @@ describe('round lifecycle', () => {
     ])
   })
 
-  it('round-ended surfaces bailadores and clears the table', () => {
+  it('round-ended surfaces the result but keeps the final trick on the table', () => {
     const state = apply(
       { ...base, playedCards: ['A-♠️'] },
       { type: 'round-ended', bailadores: [player('other')] },
     )
     expect(state.bailadores.map((b) => b.id)).toEqual(['other'])
-    expect(state.playedCards).toEqual([])
+    expect(state.lastRoundResult).toEqual({ round: 3, bailadores: [player('other')] })
+    expect(state.playedCards).toEqual(['A-♠️']) // cleared on round-started
+
+    const next = apply(state, { type: 'round-started', round: roundSnapshot() })
+    expect(next.playedCards).toEqual([])
+    expect(next.lastRoundResult).toBeNull()
+  })
+
+  it('records a round result even when nobody bailou', () => {
+    const state = apply(base, { type: 'round-ended', bailadores: [] })
+    expect(state.lastRoundResult).toEqual({ round: 3, bailadores: [] })
   })
 })
 
@@ -206,6 +217,14 @@ describe('scoreboard', () => {
 
     state = apply(state, { type: 'game-ended', scoreboard: board })
     expect(state.scoreboard).toEqual(board)
+    expect(state.gameOver).toBe(true)
+  })
+
+  it('shows the final scoreboard when reconnecting to a finished game', () => {
+    const board = [{ id: 'me', name: 'me', totalPoints: 40 }]
+    const state = stateFromSnapshot(snapshot({ finished: true, scoreboard: board }))
+    expect(state.scoreboard).toEqual(board)
+    expect(state.gameOver).toBe(true)
   })
 })
 

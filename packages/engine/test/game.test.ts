@@ -42,7 +42,23 @@ describe('setup', () => {
     game.start()
     drivePendingRequests(game, publisher, rng)
     expect(scheduler.pending).toHaveLength(1)
-    expect(scheduler.pending[0]!.delayMs).toBe(2000 + 4 * 500)
+    expect(scheduler.pending[0]!.delayMs).toBe(3500 + 4 * 500)
+  })
+
+  it('marks the snapshot finished only after the last round', () => {
+    const { game, publisher, scheduler, rng } = makeGame({ playerCount: 3 })
+    game.start()
+    expect(game.snapshot().finished).toBe(false)
+
+    const cursor = { index: 0 }
+    let guard = 200
+    while (true) {
+      if (--guard === 0) throw new Error('game never finished')
+      drivePendingRequests(game, publisher, rng, cursor)
+      if (!scheduler.pending.length) break
+      scheduler.flush()
+    }
+    expect(game.snapshot().finished).toBe(true)
   })
 })
 

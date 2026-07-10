@@ -33,8 +33,15 @@ export interface GameViewState {
   lastTrickWinnerId: string | null
   /** Non-empty right after a round ends → bailadores overlay. */
   bailadores: RoundPlayer[]
+  /**
+   * Set when a round just ended (cleared when the next one starts) —
+   * triggers the round-result celebration even when nobody bailou.
+   */
+  lastRoundResult: { round: number; bailadores: RoundPlayer[] } | null
   /** Non-null → scoreboard overlay is visible. */
   scoreboard: ScoreboardEntry[] | null
+  /** The 13th round is done — the scoreboard is final. */
+  gameOver: boolean
   /** Seats in their grace period — the game is paused while any exist. */
   abandoned: AbandonedSeat[]
   /** Seats currently played by the bot. */
@@ -73,7 +80,9 @@ export const stateFromSnapshot = (snapshot: GameEntry, myId = ''): GameViewState
   madeByPlayer: countMade(snapshot.currentRound.whoMade),
   lastTrickWinnerId: snapshot.currentRound.whoMade.at(-1)?.id ?? null,
   bailadores: snapshot.currentRound.bailadores,
-  scoreboard: snapshot.scoreboardShowing ? snapshot.scoreboard : null,
+  lastRoundResult: null,
+  scoreboard: snapshot.scoreboardShowing || snapshot.finished ? snapshot.scoreboard : null,
+  gameOver: snapshot.finished ?? false,
   abandoned: snapshot.abandoned ?? [],
   botSeats: snapshot.botSeats ?? [],
 })
@@ -96,6 +105,7 @@ const applyEvent = (state: GameViewState, event: DomainEvent): GameViewState => 
         madeByPlayer: countMade(event.round.whoMade),
         lastTrickWinnerId: null,
         bailadores: [],
+        lastRoundResult: null,
       }
     case 'trunfo-set':
       return { ...state, trunfo: event.trunfo }
@@ -142,10 +152,23 @@ const applyEvent = (state: GameViewState, event: DomainEvent): GameViewState => 
         lastTrickWinnerId: event.winnerId,
       }
     case 'round-ended':
-      return { ...state, bailadores: event.bailadores, playedCards: [] }
+      // the final trick stays on the table (cleared on round-started) so the
+      // result celebration doesn't swallow it
+      return {
+        ...state,
+        bailadores: event.bailadores,
+        lastRoundResult: { round: state.roundNumber, bailadores: event.bailadores },
+      }
     case 'scoreboard-shown':
+      return { ...state, scoreboard: event.scoreboard, bailadores: [], lastRoundResult: null }
     case 'game-ended':
-      return { ...state, scoreboard: event.scoreboard, bailadores: [] }
+      return {
+        ...state,
+        scoreboard: event.scoreboard,
+        gameOver: true,
+        bailadores: [],
+        lastRoundResult: null,
+      }
     case 'scoreboard-hidden':
       return { ...state, scoreboard: null }
     case 'player-abandoned':

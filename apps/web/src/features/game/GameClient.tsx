@@ -6,8 +6,8 @@ import { api, type GameEntry } from '@/lib/api'
 import { gameReducer, stateFromSnapshot } from './reducer'
 import { useGameChannel } from './useGameChannel'
 import { AbandonedOverlay } from './components/AbandonedOverlay'
-import { BailadoresOverlay } from './components/BailadoresOverlay'
 import { GameTable } from './components/GameTable'
+import { RoundEndOverlay } from './components/RoundEndOverlay'
 import { ScoreboardOverlay } from './components/ScoreboardOverlay'
 
 interface Props {
@@ -63,14 +63,19 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
       {state.scoreboard && (
         <ScoreboardOverlay
           scoreboard={state.scoreboard}
-          onClose={state.leaderId === playerId ? () => api.closeScore(gameId) : undefined}
+          final={state.gameOver}
+          onClose={
+            !state.gameOver && state.leaderId === playerId
+              ? () => api.closeScore(gameId)
+              : undefined
+          }
         />
       )}
       {!state.scoreboard && state.abandoned.length > 0 && (
         <AbandonedOverlay seats={state.abandoned} players={state.players} />
       )}
-      {!state.scoreboard && !state.abandoned.length && state.bailadores.length > 0 && (
-        <BailadoresOverlay bailadores={state.bailadores} />
+      {!state.scoreboard && !state.abandoned.length && state.lastRoundResult && (
+        <RoundEndOverlay key={state.lastRoundResult.round} result={state.lastRoundResult} />
       )}
     </>
   )

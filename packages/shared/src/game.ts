@@ -53,6 +53,8 @@ export interface GameSnapshot {
   leaderId: string
   currentRoundNumber: number
   scoreboardShowing: boolean
+  /** All 13 rounds played — the scoreboard is final. */
+  finished: boolean
   currentRound: RoundSnapshot
   scoreboard: ScoreboardEntry[]
 }
