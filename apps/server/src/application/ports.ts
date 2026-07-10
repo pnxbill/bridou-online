@@ -5,6 +5,8 @@ export interface GameRepository {
   get(gameId: string): Game | undefined
   save(game: Game): void
   delete(gameId: string): void
+  /** Unfinished game the player is seated in, if any. */
+  findActiveByPlayerId(playerId: string): Game | undefined
 }
 
 /**

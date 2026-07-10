@@ -48,9 +48,13 @@ pnpm build         # production build of the web app
 ### Configuration
 
 The web app runs with zero configuration — sensible defaults are built in
-(game server on `http://localhost:3001`, SSE transport, the public Firebase config).
-To override anything, `cp apps/web/.env.example apps/web/.env.local` and edit;
-e.g. `NEXT_PUBLIC_REALTIME_TRANSPORT=socketio` switches the realtime transport back
-to sockets. The server side has just `PORT` (defaults to 3001).
+(SSE transport, the public Firebase config). In the browser the game server URL
+defaults to the same host as the page on port 3001, so opening the app via a LAN
+IP (`http://192.168.x.x:3000`) also reaches the game server on that machine.
+SSR still uses `http://localhost:3001`. To override, set
+`NEXT_PUBLIC_GAME_SERVER_URL` in `apps/web/.env.local`
+(see `.env.example`). `NEXT_PUBLIC_REALTIME_TRANSPORT=socketio` switches the
+realtime transport back to sockets. The server side has `PORT` (defaults to 3001)
+and `HOST` (defaults to `0.0.0.0` so phones on the LAN can connect).
 
 See `PLAN.md` for the revamp roadmap and what's still open.

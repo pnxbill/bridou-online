@@ -57,6 +57,10 @@ export const createRoutes = (service: GameService): Router => {
     respond(res, () => ({ gameId: service.startGame().id }))
   })
 
+  routes.get('/api/current-game', (req: Request, res: Response) => {
+    respond(res, () => service.currentGame(requireString(req.query.playerId, 'playerId')))
+  })
+
   routes.post('/api/enter-game', (req: Request, res: Response) => {
     respond(res, () => ({
       game: service.enterGame(

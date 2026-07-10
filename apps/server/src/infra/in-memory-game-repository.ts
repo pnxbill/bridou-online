@@ -15,4 +15,11 @@ export class InMemoryGameRepository implements GameRepository {
   delete(gameId: string): void {
     this.games.delete(gameId)
   }
+
+  findActiveByPlayerId(playerId: string): Game | undefined {
+    for (const game of this.games.values()) {
+      if (!game.finished && game.hasPlayer(playerId)) return game
+    }
+    return undefined
+  }
 }

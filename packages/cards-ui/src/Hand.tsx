@@ -147,7 +147,10 @@ export const Hand: React.FC<HandProps> = ({
               opacity: 1,
               y: isSelected ? -50 : yOffset,
               rotate: rotate,
-              z: isSelected ? 0 : zOffset, // Use Z for stacking
+              // preserve-3d stacks by translateZ, so the selected card must sit
+              // above the fan's max zOffset (60) — kept small vs. the 1000px
+              // perspective so the projection stays sane
+              z: isSelected ? 80 : zOffset,
               scale: isSelected ? 1.1 * baseScale : baseScale,
             }}
             transition={{

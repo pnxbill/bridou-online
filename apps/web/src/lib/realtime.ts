@@ -1,7 +1,7 @@
 'use client'
 
 import { io } from 'socket.io-client'
-import { SERVER_URL } from './config'
+import { getServerUrl } from './config'
 
 /**
  * Transport-agnostic realtime channel. The active transport is a build-time
@@ -36,7 +36,7 @@ const openSseChannel = (
   playerId: string,
   handlers: RealtimeHandlers,
 ): RealtimeChannel => {
-  const url = `${SERVER_URL}/api/games/${encodeURIComponent(gameId)}/events?playerId=${encodeURIComponent(playerId)}`
+  const url = `${getServerUrl()}/api/games/${encodeURIComponent(gameId)}/events?playerId=${encodeURIComponent(playerId)}`
   const source = new EventSource(url)
   let dropped = false
 
@@ -63,7 +63,7 @@ const openSocketChannel = (
   playerId: string,
   handlers: RealtimeHandlers,
 ): RealtimeChannel => {
-  const socket = io(SERVER_URL, { auth: { gameId, playerId } })
+  const socket = io(getServerUrl(), { auth: { gameId, playerId } })
   socket.onAny((name: string, payload: unknown) => handlers.onEvent(name, payload))
   socket.io.on('reconnect', () => handlers.onReconnect?.())
 

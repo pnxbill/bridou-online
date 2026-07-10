@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   transpilePackages: ['@bridou/shared', '@bridou/cards-ui'],
   // The root .eslintrc.cjs belongs to the legacy Qwik app; don't let it break builds
   eslint: { ignoreDuringBuilds: true },
+  allowedDevOrigins: ['192.168.0.6'],
 }
 
 export default nextConfig

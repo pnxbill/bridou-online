@@ -87,6 +87,12 @@ export class GameService {
     return game
   }
 
+  /** Active unfinished game for this player, if any (for home-screen reconnect). */
+  currentGame(playerId: string): { gameId: string | null } {
+    const game = this.games.findActiveByPlayerId(playerId)
+    return { gameId: game?.id ?? null }
+  }
+
   /** Full state for a (re)connecting player: snapshot + what they may do now. */
   enterGame(gameId: string, playerId: string): EnterGameResult {
     const game = this.getGame(gameId)

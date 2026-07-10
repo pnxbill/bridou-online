@@ -122,6 +122,18 @@ describe('GameService', () => {
     expect(() => service.enterGame('nope', 'a')).toThrow('Game not found')
   })
 
+  it('finds the active game for a seated player', () => {
+    expect(service.currentGame('a')).toEqual({ gameId: null })
+
+    service.joinQueue(player('a'))
+    service.joinQueue(player('b'))
+    const game = service.startGame()
+
+    expect(service.currentGame('a')).toEqual({ gameId: game.id })
+    expect(service.currentGame('b')).toEqual({ gameId: game.id })
+    expect(service.currentGame('stranger')).toEqual({ gameId: null })
+  })
+
   it('routes bets and plays into the engine', () => {
     service.joinQueue(player('a'))
     service.joinQueue(player('b'))

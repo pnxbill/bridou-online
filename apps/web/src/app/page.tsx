@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { ApiError, api } from '@/lib/api'
 
@@ -9,6 +9,28 @@ export default function HomePage() {
   const router = useRouter()
   const { user, loading, signIn } = useAuth()
   const [error, setError] = useState('')
+  const [activeGameId, setActiveGameId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!user) {
+      setActiveGameId(null)
+      return
+    }
+
+    let cancelled = false
+    api
+      .currentGame(user.id)
+      .then(({ gameId }) => {
+        if (!cancelled) setActiveGameId(gameId)
+      })
+      .catch(() => {
+        if (!cancelled) setActiveGameId(null)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [user])
 
   const joinQueue = async () => {
     if (!user) return
@@ -31,9 +53,19 @@ export default function HomePage() {
     <div className="home">
       <h1>Bridou Online</h1>
       {user ? (
-        <button className="btn primary" onClick={joinQueue}>
-          Entrar na fila
-        </button>
+        <>
+          {activeGameId && (
+            <button
+              className="btn primary"
+              onClick={() => router.push(`/game/${activeGameId}`)}
+            >
+              Voltar ao jogo
+            </button>
+          )}
+          <button className={activeGameId ? 'btn' : 'btn primary'} onClick={joinQueue}>
+            Entrar na fila
+          </button>
+        </>
       ) : (
         <button className="btn primary" onClick={signIn}>
           Entrar com Google

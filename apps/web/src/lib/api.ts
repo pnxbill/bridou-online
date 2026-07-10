@@ -1,5 +1,5 @@
 import type { GameSnapshot, PlayerInfo, PlayerPerspective, SessionState } from '@bridou/shared'
-import { SERVER_URL } from './config'
+import { getServerUrl } from './config'
 
 /** What `/api/enter-game` returns: the shared snapshot plus the caller's private view. */
 export type GameEntry = GameSnapshot & PlayerPerspective & SessionState & { time: number }
@@ -15,7 +15,7 @@ export class ApiError extends Error {
 }
 
 const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
-  const res = await fetch(`${SERVER_URL}${path}`, {
+  const res = await fetch(`${getServerUrl()}${path}`, {
     headers: { 'Content-Type': 'application/json' },
     cache: 'no-store',
     ...init,
@@ -38,6 +38,11 @@ export const api = {
   addBot: () => post<{ bot: PlayerInfo }>('/api/add-bot', {}),
 
   startGame: () => request<{ gameId: string }>('/api/start-game'),
+
+  currentGame: (playerId: string) =>
+    request<{ gameId: string | null }>(
+      `/api/current-game?playerId=${encodeURIComponent(playerId)}`,
+    ),
 
   enterGame: (gameId: string, playerId: string) =>
     post<{ game: GameEntry }>('/api/enter-game', { gameId, playerId }),
