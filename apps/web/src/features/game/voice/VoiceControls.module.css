@@ -123,6 +123,16 @@
   padding: 3px 6px;
   border-radius: 10px;
   background: var(--glass);
+  border: 1px solid transparent;
+  transition: border-color 0.15s ease;
+}
+
+.personSpeaking {
+  border-color: rgba(52, 211, 153, 0.7);
+}
+
+.personSpeaking .personAvatar {
+  box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.8);
 }
 
 .personAvatar {

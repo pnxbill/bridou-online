@@ -1,12 +1,12 @@
 'use client'
 
 import type { RoundPlayer } from '@bridou/shared'
-import { useVoiceChat, type VoiceParticipant } from './useVoiceChat'
+import type { VoiceChat, VoiceParticipant } from './useVoiceChat'
 import styles from './VoiceControls.module.css'
 
 interface Props {
-  gameId: string
-  playerId: string
+  /** Owned by GameClient so the table can also react to voice state. */
+  voice: VoiceChat
   /** Seats of the current round — used to show names/photos in the roster. */
   players: RoundPlayer[]
 }
@@ -16,9 +16,7 @@ interface Props {
  * "Entrar na voz" button joins with open mic; once in, buttons to mute the
  * mic, mute incoming audio (deafen) and leave, plus who's in the room.
  */
-export function VoiceControls({ gameId, playerId, players }: Props) {
-  const voice = useVoiceChat({ gameId, playerId })
-
+export function VoiceControls({ voice, players }: Props) {
   if (voice.status === 'error') {
     return (
       <div className={styles.dock}>
@@ -93,6 +91,7 @@ export function VoiceControls({ gameId, playerId, players }: Props) {
                 key={participant.playerId}
                 participant={participant}
                 player={players.find((p) => p.id === participant.playerId)}
+                speaking={voice.speakingIds.includes(participant.playerId)}
               />
             ))}
           </ul>
@@ -105,9 +104,11 @@ export function VoiceControls({ gameId, playerId, players }: Props) {
 function Person({
   participant,
   player,
+  speaking,
 }: {
   participant: VoiceParticipant
   player?: RoundPlayer
+  speaking: boolean
 }) {
   const name = player?.name ?? participant.playerId
 
@@ -123,7 +124,7 @@ function Person({
     )
 
   return (
-    <li className={styles.person}>
+    <li className={`${styles.person} ${speaking ? styles.personSpeaking : ''}`}>
       <span className={styles.personAvatar}>
         {player?.photoURL ? (
           <img src={player.photoURL} alt="" />

@@ -10,6 +10,7 @@ import { GameTable } from './components/GameTable'
 import { RoundEndOverlay } from './components/RoundEndOverlay'
 import { ScoreboardOverlay } from './components/ScoreboardOverlay'
 import { VoiceControls } from './voice/VoiceControls'
+import { useVoiceChat } from './voice/useVoiceChat'
 
 interface Props {
   gameId: string
@@ -21,6 +22,9 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
   const [state, dispatch] = useReducer(gameReducer, initialSnapshot, (snapshot) =>
     stateFromSnapshot(snapshot, playerId),
   )
+
+  // Lives here (not in VoiceControls) so the table can glow speaking avatars
+  const voice = useVoiceChat({ gameId, playerId })
 
   const resync = useCallback(async () => {
     try {
@@ -59,8 +63,13 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
 
   return (
     <>
-      <GameTable state={state} onPlay={playCard} onBet={placeBet} />
-      <VoiceControls gameId={gameId} playerId={playerId} players={state.players} />
+      <GameTable
+        state={state}
+        onPlay={playCard}
+        onBet={placeBet}
+        speakingIds={voice.speakingIds}
+      />
+      <VoiceControls voice={voice} players={state.players} />
 
       {state.scoreboard && (
         <ScoreboardOverlay

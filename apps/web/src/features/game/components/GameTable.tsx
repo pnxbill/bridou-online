@@ -13,6 +13,8 @@ interface Props {
   state: GameViewState
   onPlay: (card: HandCard) => void
   onBet: (bet: number) => void
+  /** Players talking in voice chat right now — their avatars glow. */
+  speakingIds?: string[]
 }
 
 /* Felt, seats and played cards share one ellipse (see .felt in the CSS). */
@@ -52,7 +54,7 @@ const initials = (name: string) =>
     .slice(0, 2)
     .join('')
 
-export function GameTable({ state, onPlay, onBet }: Props) {
+export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
   /* px size of the table area — motion deltas are computed from % positions */
   const areaRef = useRef<HTMLDivElement>(null)
   const [area, setArea] = useState({ w: 0, h: 0 })
@@ -186,7 +188,11 @@ export function GameTable({ state, onPlay, onBet }: Props) {
               className={`${styles.seat} ${seat.id === activeId ? styles.seatActive : ''}`}
               style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
             >
-              <div className={`${styles.avatar} ${isBotSeat(seat) ? styles.avatarBot : ''}`}>
+              <div
+                className={`${styles.avatar} ${isBotSeat(seat) ? styles.avatarBot : ''} ${
+                  speakingIds.includes(seat.id) ? styles.avatarSpeaking : ''
+                }`}
+              >
                 {isBotSeat(seat) ? '🤖' : seat.photoURL ? (
                   <img src={seat.photoURL} alt="" />
                 ) : (
@@ -237,7 +243,11 @@ export function GameTable({ state, onPlay, onBet }: Props) {
 
         {me && (
           <div className={styles.mySeat}>
-            <span className={`${styles.myChip} ${myTurn ? styles.myChipTurn : ''}`}>
+            <span
+              className={`${styles.myChip} ${myTurn ? styles.myChipTurn : ''} ${
+                speakingIds.includes(me.id) ? styles.myChipSpeaking : ''
+              }`}
+            >
               {myChipText()}
             </span>
           </div>

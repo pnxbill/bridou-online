@@ -167,6 +167,13 @@
   animation: pulse 1.6s ease-in-out infinite;
 }
 
+/* voice chat: whoever is talking gets a green ring (outline, so it can
+   coexist with the gold turn glow which lives in box-shadow) */
+.avatarSpeaking {
+  outline: 3px solid rgba(52, 211, 153, 0.85);
+  outline-offset: 2px;
+}
+
 @keyframes pulse {
   0%,
   100% {
@@ -291,6 +298,11 @@
   border-color: var(--gold);
   color: var(--gold);
   box-shadow: 0 0 14px rgba(251, 191, 36, 0.2);
+}
+
+.myChipSpeaking {
+  outline: 2px solid rgba(52, 211, 153, 0.85);
+  outline-offset: 2px;
 }
 
 /* ── my area (bottom third, thumb zone) ───────────────── */

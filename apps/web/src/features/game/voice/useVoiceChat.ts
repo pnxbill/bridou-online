@@ -21,6 +21,8 @@ export interface VoiceChat {
   participants: VoiceParticipant[]
   /** How many players are in voice while I'm not — feeds "Join voice (N)". */
   othersInVoice: number
+  /** Players talking right now (may include myself) — drives avatar glows. */
+  speakingIds: string[]
   micMuted: boolean
   deafened: boolean
   join: () => void
@@ -58,10 +60,27 @@ export function useVoiceChat({ gameId, playerId }: Options): VoiceChat {
   const [micMuted, setMicMuted] = useState(false)
   const [deafened, setDeafened] = useState(false)
 
+  const [speakingIds, setSpeakingIds] = useState<string[]>([])
+
   const socketRef = useRef<Socket | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const peersRef = useRef(new Map<string, Peer>())
   const deafenedRef = useRef(false)
+
+  // Voice-activity detection: one AnalyserNode per stream (mine + each peer),
+  // sampled on an interval while connected
+  const audioCtxRef = useRef<AudioContext | null>(null)
+  const analysersRef = useRef(new Map<string, AnalyserNode>())
+  const speakingHoldRef = useRef(new Map<string, number>())
+
+  const watchStream = useCallback((id: string, stream: MediaStream) => {
+    const ctx = (audioCtxRef.current ??= new AudioContext())
+    void ctx.resume().catch(() => {})
+    const analyser = ctx.createAnalyser()
+    analyser.fftSize = 512
+    ctx.createMediaStreamSource(stream).connect(analyser)
+    analysersRef.current.set(id, analyser)
+  }, [])
 
   const updateParticipant = useCallback(
     (id: string, patch: Partial<Omit<VoiceParticipant, 'playerId'>>) => {
@@ -76,6 +95,8 @@ export function useVoiceChat({ gameId, playerId }: Options): VoiceChat {
     const peer = peersRef.current.get(id)
     if (!peer) return
     peersRef.current.delete(id)
+    analysersRef.current.delete(id)
+    speakingHoldRef.current.delete(id)
     peer.pc.onicecandidate = null
     peer.pc.ontrack = null
     peer.pc.onconnectionstatechange = null
@@ -127,6 +148,7 @@ export function useVoiceChat({ gameId, playerId }: Options): VoiceChat {
           // Autoplay was blocked; the joiner clicked to get here, so this is
           // rare — the next play() (e.g. after un-deafening) will succeed.
         })
+        watchStream(peerId, remoteStream)
       }
 
       pc.onconnectionstatechange = () => {
@@ -142,7 +164,7 @@ export function useVoiceChat({ gameId, playerId }: Options): VoiceChat {
 
       return peer
     },
-    [closePeer, playerId, updateParticipant],
+    [closePeer, playerId, updateParticipant, watchStream],
   )
 
   const sendOffer = useCallback(
@@ -211,6 +233,11 @@ export function useVoiceChat({ gameId, playerId }: Options): VoiceChat {
     streamRef.current?.getTracks().forEach((track) => track.stop())
     streamRef.current = null
     deafenedRef.current = false
+    analysersRef.current.clear()
+    speakingHoldRef.current.clear()
+    void audioCtxRef.current?.close().catch(() => {})
+    audioCtxRef.current = null
+    setSpeakingIds([])
     setParticipants([])
     setMicMuted(false)
     setDeafened(false)
@@ -237,6 +264,7 @@ export function useVoiceChat({ gameId, playerId }: Options): VoiceChat {
       return
     }
     streamRef.current = stream
+    watchStream(playerId, stream) // my own voice activity (muted mic reads as silence)
 
     const socket = io(`${getServerUrl()}/voice`, { auth: { gameId, playerId } })
     socketRef.current = socket
@@ -278,7 +306,7 @@ export function useVoiceChat({ gameId, playerId }: Options): VoiceChat {
       // Initial connection failing entirely → surface it; socket.io retries
       if (peersRef.current.size === 0) setStatus((s) => (s === 'joining' ? 'error' : s))
     })
-  }, [closePeer, gameId, handleSignal, playerId, sendOffer, updateParticipant])
+  }, [closePeer, gameId, handleSignal, playerId, sendOffer, updateParticipant, watchStream])
 
   const toggleMic = useCallback(() => {
     const track = streamRef.current?.getAudioTracks()[0]
@@ -296,6 +324,38 @@ export function useVoiceChat({ gameId, playerId }: Options): VoiceChat {
       if (peer.audio) peer.audio.muted = deafenedRef.current
     }
   }, [])
+
+  // Sample every analyser a few times a second; a short hold after the last
+  // loud frame keeps the indicator from flickering between syllables
+  useEffect(() => {
+    if (status !== 'connected') return
+    const buffer = new Uint8Array(512)
+
+    const timer = setInterval(() => {
+      const now = Date.now()
+      const speaking: string[] = []
+
+      for (const [id, analyser] of analysersRef.current) {
+        analyser.getByteTimeDomainData(buffer)
+        let sum = 0
+        for (let i = 0; i < analyser.fftSize; i++) {
+          const deviation = ((buffer[i] ?? 128) - 128) / 128
+          sum += deviation * deviation
+        }
+        const rms = Math.sqrt(sum / analyser.fftSize)
+        if (rms > 0.04) speakingHoldRef.current.set(id, now + 400)
+        if ((speakingHoldRef.current.get(id) ?? 0) > now) speaking.push(id)
+      }
+
+      setSpeakingIds((current) =>
+        current.length === speaking.length && current.every((id, i) => id === speaking[i])
+          ? current
+          : speaking,
+      )
+    }, 150)
+
+    return () => clearInterval(timer)
+  }, [status])
 
   // Show how many friends are already talking while I haven't joined yet
   useEffect(() => {
@@ -324,6 +384,7 @@ export function useVoiceChat({ gameId, playerId }: Options): VoiceChat {
     error,
     participants,
     othersInVoice,
+    speakingIds,
     micMuted,
     deafened,
     join: () => void join(),
