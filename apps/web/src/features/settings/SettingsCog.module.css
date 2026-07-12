@@ -76,6 +76,10 @@
   color: var(--ink-muted);
 }
 
+.headingSpaced {
+  margin-top: 14px;
+}
+
 .options {
   display: flex;
   gap: 8px;
@@ -122,5 +126,42 @@
 
 .optionLabel {
   font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: var(--glass);
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.toggle:hover {
+  border-color: var(--glass-border);
+}
+
+.toggleActive {
+  border-color: var(--gold-soft);
+  background: rgba(251, 191, 36, 0.1);
+  color: var(--gold);
+}
+
+.toggleIcon {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.toggleLabel {
+  font-size: 0.8rem;
   font-weight: 700;
 }

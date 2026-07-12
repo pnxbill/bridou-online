@@ -7,7 +7,16 @@ import { useEffect, useRef, useState } from 'react'
 import { useDeckTheme } from '@/features/settings/deck-theme'
 import { parseCard, winningCardIndex } from '../cards'
 import type { GameViewState } from '../reducer'
-import { playCardSound, playTrickEndSound, playYourTurnSound, unlockGameAudio } from '../sounds'
+import {
+  playBetSound,
+  playCardSound,
+  playDealSound,
+  playRoundOpenSound,
+  playTrickEndSound,
+  playYourBetTurnSound,
+  playYourTurnSound,
+  unlockGameAudio,
+} from '../sounds'
 import { PlayerHand } from './PlayerHand'
 import styles from './GameTable.module.css'
 
@@ -82,14 +91,21 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
   /* where each of my played cards sat in the fan when tapped — the card
      travels from there to its slot instead of popping in at my seat */
   const playOrigins = useRef(new Map<string, DOMRect>())
-  /** Own play already sounded inside the tap gesture — skip the echo from the event. */
+  /** Own play/bet already sounded inside the tap gesture — skip the echo from the event. */
   const localCardSoundPlayed = useRef(false)
+  const localBetSoundPlayed = useRef(false)
   const handlePlay = (card: HandCard, origin?: DOMRect) => {
     unlockGameAudio()
     playCardSound()
     localCardSoundPlayed.current = true
     if (origin) playOrigins.current.set(card.value, origin)
     onPlay(card)
+  }
+  const handleBet = (bet: number) => {
+    unlockGameAudio()
+    playBetSound()
+    localBetSoundPlayed.current = true
+    onBet(bet)
   }
   useEffect(() => {
     for (const value of playOrigins.current.keys()) {
@@ -154,6 +170,8 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
       : null
   const myTurn = activeId === state.myId
   const myPlayTurn = myTurn && !state.betting
+  const myBetTurn = myTurn && state.betting
+  const betsPlaced = state.players.filter((p) => p.bet !== null).length
 
   /* soft chime when it becomes your turn to play a card — skip first paint */
   const wasMyPlayTurn = useRef<boolean | null>(null)
@@ -163,6 +181,48 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
     if (prev === null) return
     if (myPlayTurn && !prev) playYourTurnSound()
   }, [myPlayTurn])
+
+  /* warmer chime when it becomes your turn to bet — skip first paint */
+  const wasMyBetTurn = useRef<boolean | null>(null)
+  useEffect(() => {
+    const prev = wasMyBetTurn.current
+    wasMyBetTurn.current = myBetTurn
+    if (prev === null) return
+    if (myBetTurn && !prev) playYourBetTurnSound()
+  }, [myBetTurn])
+
+  /* soft chip click whenever someone places a bet */
+  const prevBetsPlaced = useRef<number | null>(null)
+  useEffect(() => {
+    const prev = prevBetsPlaced.current
+    prevBetsPlaced.current = betsPlaced
+    if (prev === null) return
+    if (betsPlaced > prev) {
+      if (localBetSoundPlayed.current) {
+        localBetSoundPlayed.current = false
+      } else {
+        playBetSound()
+      }
+    }
+  }, [betsPlaced])
+
+  /* soft accent when a new round opens — skip first paint / resync */
+  const prevRound = useRef<number | null>(null)
+  useEffect(() => {
+    const prev = prevRound.current
+    prevRound.current = state.roundNumber
+    if (prev === null) return
+    if (state.roundNumber !== prev) playRoundOpenSound()
+  }, [state.roundNumber])
+
+  /* soft riffle when cards are dealt into the fan */
+  const prevDealSeq = useRef<number | null>(null)
+  useEffect(() => {
+    const prev = prevDealSeq.current
+    prevDealSeq.current = state.dealSeq
+    if (prev === null) return
+    if (state.dealSeq > prev) playDealSound()
+  }, [state.dealSeq])
 
   const winningIdx = winningCardIndex(state.playedCards, state.trunfo)
   const madeOf = (id: string) => state.madeByPlayer[id] ?? 0
@@ -350,7 +410,7 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
               <div className={styles.betBar}>
                 <div className={styles.betOptions}>
                   {state.availableBets.map((bet) => (
-                    <button key={bet} className={styles.betBtn} onClick={() => onBet(bet)}>
+                    <button key={bet} className={styles.betBtn} onClick={() => handleBet(bet)}>
                       {bet}
                     </button>
                   ))}

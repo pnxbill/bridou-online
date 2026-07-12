@@ -90,7 +90,11 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
         <AbandonedOverlay seats={state.abandoned} players={state.players} />
       )}
       {!state.scoreboard && !state.abandoned.length && state.lastRoundResult && (
-        <RoundEndOverlay key={state.lastRoundResult.round} result={state.lastRoundResult} />
+        <RoundEndOverlay
+          key={state.lastRoundResult.round}
+          result={state.lastRoundResult}
+          playerId={playerId}
+        />
       )}
     </>
   )

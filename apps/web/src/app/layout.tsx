@@ -5,6 +5,7 @@ import { AuthProvider } from '@/features/auth/AuthProvider'
 import { VoiceRoomProvider } from '@/features/game/voice/VoiceRoomProvider'
 import { DeckThemeProvider } from '@/features/settings/deck-theme'
 import { SettingsCog } from '@/features/settings/SettingsCog'
+import { SoundSettingsProvider } from '@/features/settings/sound-settings'
 import './globals.css'
 
 // The card faces (@bridou/cards-ui) are designed around Outfit
@@ -30,10 +31,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className={outfit.className}>
         <AuthProvider>
           <DeckThemeProvider>
-            <VoiceRoomProvider>
-              <SettingsCog />
-              {children}
-            </VoiceRoomProvider>
+            <SoundSettingsProvider>
+              <VoiceRoomProvider>
+                <SettingsCog />
+                {children}
+              </VoiceRoomProvider>
+            </SoundSettingsProvider>
           </DeckThemeProvider>
         </AuthProvider>
       </body>

@@ -3,11 +3,14 @@
 import type { RoundPlayer } from '@bridou/shared'
 import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
+import { playRoundResultSound } from '../sounds'
 import { Confetti } from './Confetti'
 import styles from './Overlays.module.css'
 
 interface Props {
   result: { round: number; bailadores: RoundPlayer[] }
+  /** Local player — sound is personal: clean if you made it, bailou if you didn't. */
+  playerId: string
 }
 
 const initials = (name: string) =>
@@ -22,13 +25,17 @@ const initials = (name: string) =>
  * resolve, then lands loud: BAILOU with the guilty front and center, or a
  * clean-round celebration. Cleared automatically when the next round starts.
  */
-export function RoundEndOverlay({ result }: Props) {
+export function RoundEndOverlay({ result, playerId }: Props) {
   const [visible, setVisible] = useState(false)
+  const iBailou = result.bailadores.some((p) => p.id === playerId)
 
   useEffect(() => {
-    const timer = setTimeout(() => setVisible(true), 1600)
+    const timer = setTimeout(() => {
+      setVisible(true)
+      playRoundResultSound(iBailou ? 'bailou' : 'clean')
+    }, 1600)
     return () => clearTimeout(timer)
-  }, [])
+  }, [iBailou])
 
   if (!visible) return null
 

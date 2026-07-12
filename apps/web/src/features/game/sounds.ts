@@ -9,6 +9,23 @@
 
 let ctx: AudioContext | null = null
 let unlockPromise: Promise<AudioContext | null> | null = null
+let muted = false
+
+/** Wired from SoundSettingsProvider — also readable before React mounts. */
+export const setSoundsMuted = (value: boolean) => {
+  muted = value
+}
+
+export const areSoundsMuted = () => muted
+
+// Prefer the stored preference before the settings provider hydrates.
+if (typeof window !== 'undefined') {
+  try {
+    muted = localStorage.getItem('bridou.soundsMuted') === '1'
+  } catch {
+    // private mode
+  }
+}
 
 const getCtx = (): AudioContext | null => {
   if (typeof window === 'undefined') return null
@@ -23,6 +40,7 @@ const getCtx = (): AudioContext | null => {
 }
 
 const ensureRunning = async (): Promise<AudioContext | null> => {
+  if (muted) return null
   const ac = getCtx()
   if (!ac) return null
   if (ac.state === 'suspended') {
@@ -157,8 +175,8 @@ export const playTrickEndSound = () => {
 }
 
 /**
- * Soft two-note chime when it becomes your turn — brighter than the card
- * tap, still muted so it nudges without nagging.
+ * Soft two-note chime when it becomes your turn to play a card — brighter
+ * than the card tap, still muted so it nudges without nagging.
  */
 export const playYourTurnSound = () => {
   void ensureRunning().then((ac) => {
@@ -181,6 +199,213 @@ export const playYourTurnSound = () => {
       osc.connect(filter).connect(gain).connect(ac.destination)
       osc.start(t + note.at)
       osc.stop(t + note.at + 0.2)
+    }
+  })
+}
+
+/**
+ * Soft lower chime when it's your turn to bet — warmer/darker than the
+ * play-turn cue so the two phases stay distinct.
+ */
+export const playYourBetTurnSound = () => {
+  void ensureRunning().then((ac) => {
+    if (!ac) return
+    const t = ac.currentTime + 0.01
+    const notes = [
+      { freq: 392.0, at: 0, peak: 0.13 }, // G4
+      { freq: 493.88, at: 0.1, peak: 0.11 }, // B4
+    ]
+
+    for (const note of notes) {
+      const osc = ac.createOscillator()
+      const gain = ac.createGain()
+      const filter = ac.createBiquadFilter()
+      osc.type = 'triangle'
+      osc.frequency.setValueAtTime(note.freq, t + note.at)
+      filter.type = 'lowpass'
+      filter.frequency.setValueAtTime(1400, t + note.at)
+      env(gain.gain, note.peak, 0.01, 0.18, t + note.at)
+      osc.connect(filter).connect(gain).connect(ac.destination)
+      osc.start(t + note.at)
+      osc.stop(t + note.at + 0.22)
+    }
+  })
+}
+
+/**
+ * Soft chip-like click when someone places a bet.
+ */
+export const playBetSound = () => {
+  void ensureRunning().then((ac) => {
+    if (!ac) return
+    const t = ac.currentTime + 0.01
+    const jitter = 0.94 + Math.random() * 0.12
+
+    // ceramic/chip body
+    const click = ac.createOscillator()
+    const clickGain = ac.createGain()
+    click.type = 'triangle'
+    click.frequency.setValueAtTime(880 * jitter, t)
+    click.frequency.exponentialRampToValueAtTime(420 * jitter, t + 0.05)
+    env(clickGain.gain, 0.16, 0.002, 0.06, t)
+    click.connect(clickGain).connect(ac.destination)
+    click.start(t)
+    click.stop(t + 0.08)
+
+    // tiny surface noise
+    const noise = ac.createBufferSource()
+    noise.buffer = noiseBuffer(ac, 0.05)
+    const filter = ac.createBiquadFilter()
+    filter.type = 'highpass'
+    filter.frequency.setValueAtTime(2000, t)
+    const noiseGain = ac.createGain()
+    env(noiseGain.gain, 0.08, 0.001, 0.035, t)
+    noise.connect(filter).connect(noiseGain).connect(ac.destination)
+    noise.start(t)
+    noise.stop(t + 0.05)
+  })
+}
+
+/**
+ * Soft card riffle when a hand is dealt — a short burst of felt taps.
+ */
+export const playDealSound = () => {
+  void ensureRunning().then((ac) => {
+    if (!ac) return
+    const t = ac.currentTime + 0.01
+
+    for (let i = 0; i < 5; i++) {
+      const at = t + i * 0.045
+      const jitter = 0.9 + Math.random() * 0.2
+
+      const noise = ac.createBufferSource()
+      noise.buffer = noiseBuffer(ac, 0.06)
+      const filter = ac.createBiquadFilter()
+      filter.type = 'bandpass'
+      filter.frequency.setValueAtTime((700 + i * 80) * jitter, at)
+      filter.Q.setValueAtTime(0.8, at)
+      const noiseGain = ac.createGain()
+      env(noiseGain.gain, 0.07, 0.002, 0.04, at)
+      noise.connect(filter).connect(noiseGain).connect(ac.destination)
+      noise.start(at)
+      noise.stop(at + 0.06)
+
+      const thud = ac.createOscillator()
+      const thudGain = ac.createGain()
+      thud.type = 'sine'
+      thud.frequency.setValueAtTime(150 * jitter, at)
+      thud.frequency.exponentialRampToValueAtTime(90, at + 0.05)
+      env(thudGain.gain, 0.08, 0.002, 0.045, at)
+      thud.connect(thudGain).connect(ac.destination)
+      thud.start(at)
+      thud.stop(at + 0.07)
+    }
+  })
+}
+
+/**
+ * Soft accent when a new round opens (trunfo / betting starts).
+ */
+export const playRoundOpenSound = () => {
+  void ensureRunning().then((ac) => {
+    if (!ac) return
+    const t = ac.currentTime + 0.01
+
+    const osc = ac.createOscillator()
+    const gain = ac.createGain()
+    const filter = ac.createBiquadFilter()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(330, t)
+    osc.frequency.exponentialRampToValueAtTime(440, t + 0.12)
+    filter.type = 'lowpass'
+    filter.frequency.setValueAtTime(1600, t)
+    env(gain.gain, 0.12, 0.015, 0.2, t)
+    osc.connect(filter).connect(gain).connect(ac.destination)
+    osc.start(t)
+    osc.stop(t + 0.24)
+
+    const soft = ac.createOscillator()
+    const softGain = ac.createGain()
+    soft.type = 'triangle'
+    soft.frequency.setValueAtTime(660, t + 0.08)
+    env(softGain.gain, 0.06, 0.01, 0.14, t + 0.08)
+    soft.connect(softGain).connect(ac.destination)
+    soft.start(t + 0.08)
+    soft.stop(t + 0.26)
+  })
+}
+
+/**
+ * Soft cue when the round-result overlay lands — personal to the listener:
+ * `clean` if they made their bet, `bailou` if they missed.
+ */
+export const playRoundResultSound = (kind: 'clean' | 'bailou' = 'clean') => {
+  void ensureRunning().then((ac) => {
+    if (!ac) return
+    const t = ac.currentTime + 0.01
+    const notes =
+      kind === 'clean'
+        ? [
+            { freq: 523.25, at: 0, peak: 0.12 },
+            { freq: 659.25, at: 0.08, peak: 0.11 },
+            { freq: 783.99, at: 0.16, peak: 0.1 },
+          ]
+        : [
+            { freq: 440, at: 0, peak: 0.12 },
+            { freq: 349.23, at: 0.1, peak: 0.11 },
+          ]
+
+    for (const note of notes) {
+      const osc = ac.createOscillator()
+      const gain = ac.createGain()
+      const filter = ac.createBiquadFilter()
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(note.freq, t + note.at)
+      filter.type = 'lowpass'
+      filter.frequency.setValueAtTime(2000, t + note.at)
+      env(gain.gain, note.peak, 0.01, 0.22, t + note.at)
+      osc.connect(filter).connect(gain).connect(ac.destination)
+      osc.start(t + note.at)
+      osc.stop(t + note.at + 0.28)
+    }
+  })
+}
+
+/**
+ * Soft settle when the scoreboard opens — fuller swell for game end.
+ */
+export const playScoreboardSound = (final = false) => {
+  void ensureRunning().then((ac) => {
+    if (!ac) return
+    const t = ac.currentTime + 0.01
+
+    const thud = ac.createOscillator()
+    const thudGain = ac.createGain()
+    thud.type = 'sine'
+    thud.frequency.setValueAtTime(110, t)
+    thud.frequency.exponentialRampToValueAtTime(70, t + 0.2)
+    env(thudGain.gain, final ? 0.18 : 0.12, 0.02, 0.22, t)
+    thud.connect(thudGain).connect(ac.destination)
+    thud.start(t)
+    thud.stop(t + 0.28)
+
+    const notes = final
+      ? [
+          { freq: 392.0, at: 0.06, peak: 0.1 },
+          { freq: 523.25, at: 0.14, peak: 0.11 },
+          { freq: 659.25, at: 0.22, peak: 0.1 },
+        ]
+      : [{ freq: 349.23, at: 0.08, peak: 0.09 }]
+
+    for (const note of notes) {
+      const osc = ac.createOscillator()
+      const gain = ac.createGain()
+      osc.type = 'triangle'
+      osc.frequency.setValueAtTime(note.freq, t + note.at)
+      env(gain.gain, note.peak, 0.015, 0.24, t + note.at)
+      osc.connect(gain).connect(ac.destination)
+      osc.start(t + note.at)
+      osc.stop(t + note.at + 0.3)
     }
   })
 }

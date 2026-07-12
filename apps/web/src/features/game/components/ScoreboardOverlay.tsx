@@ -3,6 +3,8 @@
 import type { ScoreboardEntry } from '@bridou/shared'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+import { playScoreboardSound } from '../sounds'
 import { Confetti } from './Confetti'
 import styles from './Overlays.module.css'
 
@@ -26,6 +28,10 @@ const initials = (name: string) =>
 export function ScoreboardOverlay({ scoreboard, final = false, onClose }: Props) {
   const router = useRouter()
   const champion = scoreboard[0]
+
+  useEffect(() => {
+    playScoreboardSound(final)
+  }, [final])
 
   return (
     <div className={styles.overlay}>

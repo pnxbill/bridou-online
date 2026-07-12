@@ -2,7 +2,9 @@
 
 import { Card as PlayingCard } from '@bridou/cards-ui'
 import { useEffect, useRef, useState } from 'react'
+import { unlockGameAudio } from '@/features/game/sounds'
 import { useDeckTheme, type DeckVariant } from './deck-theme'
+import { useSoundSettings } from './sound-settings'
 import styles from './SettingsCog.module.css'
 
 const OPTIONS: Array<{ value: DeckVariant; label: string }> = [
@@ -11,11 +13,12 @@ const OPTIONS: Array<{ value: DeckVariant; label: string }> = [
 ]
 
 /**
- * App settings — currently just the deck face color. Fixed top-left so it
- * stays reachable on home, lobby and the table without fighting the HUD.
+ * App settings — deck face color + sound mute. Fixed top-left so it stays
+ * reachable on home, lobby and the table without fighting the HUD.
  */
 export function SettingsCog() {
   const { variant, setVariant } = useDeckTheme()
+  const { muted, setMuted } = useSoundSettings()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
@@ -78,6 +81,52 @@ export function SettingsCog() {
               </button>
             ))}
           </div>
+
+          <p className={`${styles.heading} ${styles.headingSpaced}`}>Som</p>
+          <button
+            type="button"
+            className={`${styles.toggle} ${muted ? styles.toggleActive : ''}`}
+            onClick={() => {
+              unlockGameAudio()
+              setMuted(!muted)
+            }}
+            aria-pressed={muted}
+          >
+            <span className={styles.toggleIcon} aria-hidden>
+              {muted ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M11 5 6 9H3v6h3l5 4V5Z"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="m16 9 6 6M22 9l-6 6"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M11 5 6 9H3v6h3l5 4V5Z"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              )}
+            </span>
+            <span className={styles.toggleLabel}>{muted ? 'Sons mutados' : 'Sons ligados'}</span>
+          </button>
         </div>
       )}
     </div>
