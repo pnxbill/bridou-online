@@ -1,4 +1,5 @@
 export * from './cards'
 export * from './game'
 export * from './events'
+export * from './lobby'
 export * from './voice'

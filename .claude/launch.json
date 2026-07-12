@@ -6,6 +6,12 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@bridou/web", "exec", "next", "dev", "-p", "3999"],
       "port": 3999
+    },
+    {
+      "name": "game-server",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@bridou/server", "dev"],
+      "port": 3001
     }
   ]
 }

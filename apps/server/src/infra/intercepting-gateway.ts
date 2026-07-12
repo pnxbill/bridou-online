@@ -1,4 +1,4 @@
-import type { DomainEvent, EventPublisher, PlayerInfo } from '@bridou/shared'
+import type { DomainEvent, EventPublisher, LobbySnapshot } from '@bridou/shared'
 import type { RealtimeGateway } from '../application/ports'
 
 /**
@@ -21,8 +21,8 @@ export class InterceptingGateway implements RealtimeGateway {
     }
   }
 
-  playerJoinedQueue(queueId: string, player: PlayerInfo): void {
-    this.inner.playerJoinedQueue(queueId, player)
+  lobbyUpdated(lobbyId: string, lobby: LobbySnapshot): void {
+    this.inner.lobbyUpdated(lobbyId, lobby)
   }
 
   gameStarted(gameId: string): void {

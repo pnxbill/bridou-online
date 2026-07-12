@@ -1,5 +1,6 @@
 import type {
   GameSnapshot,
+  LobbySnapshot,
   PlayerInfo,
   PlayerPerspective,
   SessionState,
@@ -34,16 +35,25 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
 const post = <T>(path: string, body: object) =>
   request<T>(path, { method: 'POST', body: JSON.stringify(body) })
 
+const lobbyPath = (code: string, action = '') =>
+  `/api/lobbies/${encodeURIComponent(code)}${action}`
+
 export const api = {
-  queue: () =>
-    request<{ queueId: string; leaderId?: string; queue: PlayerInfo[] }>('/api/queue'),
+  createLobby: (user: PlayerInfo) => post<{ lobby: LobbySnapshot }>('/api/lobbies', { user }),
 
-  enterQueue: (user: PlayerInfo) =>
-    post<{ queueId: string; leaderId: string }>('/api/enter-queue', { user }),
+  lobby: (code: string) => request<{ lobby: LobbySnapshot }>(lobbyPath(code)),
 
-  addBot: () => post<{ bot: PlayerInfo }>('/api/add-bot', {}),
+  joinLobby: (code: string, user: PlayerInfo) =>
+    post<{ lobby: LobbySnapshot }>(lobbyPath(code, '/join'), { user }),
 
-  startGame: () => request<{ gameId: string }>('/api/start-game'),
+  leaveLobby: (code: string, playerId: string) =>
+    post<{ lobby: LobbySnapshot }>(lobbyPath(code, '/leave'), { playerId }),
+
+  addBot: (code: string, playerId: string) =>
+    post<{ bot: PlayerInfo }>(lobbyPath(code, '/bots'), { playerId }),
+
+  startGame: (code: string, playerId: string) =>
+    post<{ gameId: string }>(lobbyPath(code, '/start'), { playerId }),
 
   currentGame: (playerId: string) =>
     request<{ gameId: string | null }>(

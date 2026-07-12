@@ -6,7 +6,7 @@ import { createApp, type AppInstance } from '../src/app'
 
 /**
  * Exercises the real contract the web client relies on — REST endpoints,
- * queue events, and the DomainEvent stream with private routing — once per
+ * lobby events, and the DomainEvent stream with private routing — once per
  * transport, since both socket.io and SSE are live until one wins.
  */
 
@@ -14,7 +14,7 @@ type Transport = 'socketio' | 'sse'
 
 class FakeClient {
   events: DomainEvent[] = []
-  queueJoins: unknown[] = []
+  lobbyUpdates: unknown[] = []
   gameStarted = 0
   private socket?: Socket
   private abort?: AbortController
@@ -69,7 +69,7 @@ class FakeClient {
 
   private route(name: string, payload: unknown): void {
     if (name === 'event') this.events.push(payload as DomainEvent)
-    if (name === 'player-entered-queue') this.queueJoins.push(payload)
+    if (name === 'lobby-updated') this.lobbyUpdates.push(payload)
     if (name === 'game-started') this.gameStarted++
   }
 
@@ -133,23 +133,36 @@ describe.each<Transport>(['socketio', 'sse'])('game flow over %s', (transport) =
     await app.close()
   })
 
-  it('queues players and notifies the queue room', async () => {
-    const res = await alice.post('/api/enter-queue', { user: { id: 'alice', name: 'Alice' } })
+  let code: string
+
+  it('opens a lobby, joins by code, and notifies the lobby room', async () => {
+    const res = await alice.post('/api/lobbies', { user: { id: 'alice', name: 'Alice' } })
     expect(res.status).toBe(200)
-    expect(res.data.leaderId).toBe('alice')
-    gameId = res.data.queueId
+    expect(res.data.lobby.leaderId).toBe('alice')
+    code = res.data.lobby.code
+    gameId = res.data.lobby.lobbyId
     await alice.connect(gameId)
 
-    await bob.post('/api/enter-queue', { user: { id: 'bob', name: 'Bob' } })
+    await bob.post(`/api/lobbies/${code}/join`, { user: { id: 'bob', name: 'Bob' } })
     await bob.connect(gameId)
 
-    await waitFor(() => alice.queueJoins.length === 1, 'alice sees bob join')
-    const queue = await alice.get('/api/queue')
-    expect(queue.data.queue.map((p: any) => p.id)).toEqual(['alice', 'bob'])
+    await waitFor(() => alice.lobbyUpdates.length === 1, 'alice sees bob join')
+    expect((alice.lobbyUpdates[0] as any).players.map((p: any) => p.id)).toEqual([
+      'alice',
+      'bob',
+    ])
+    const state = await alice.get(`/api/lobbies/${code}`)
+    expect(state.data.lobby.players.map((p: any) => p.id)).toEqual(['alice', 'bob'])
+
+    const missing = await alice.get('/api/lobbies/ZZZZ2')
+    expect(missing.status).toBe(404)
   })
 
   it('starts the game and streams the round-start events, hands kept private', async () => {
-    await alice.get('/api/start-game')
+    const denied = await bob.post(`/api/lobbies/${code}/start`, { playerId: 'bob' })
+    expect(denied.status).toBe(403)
+
+    await alice.post(`/api/lobbies/${code}/start`, { playerId: 'alice' })
 
     await waitFor(
       () =>

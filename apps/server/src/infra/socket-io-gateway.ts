@@ -1,4 +1,4 @@
-import type { DomainEvent, EventPublisher, PlayerInfo } from '@bridou/shared'
+import type { DomainEvent, EventPublisher, LobbySnapshot } from '@bridou/shared'
 import { isPrivateEvent } from '@bridou/shared'
 import type { Server } from 'socket.io'
 import type { RealtimeGateway } from '../application/ports'
@@ -29,8 +29,8 @@ export class SocketIoGateway implements RealtimeGateway {
     }
   }
 
-  playerJoinedQueue(queueId: string, player: PlayerInfo): void {
-    this.io.to(queueId).emit('player-entered-queue', player)
+  lobbyUpdated(lobbyId: string, lobby: LobbySnapshot): void {
+    this.io.to(lobbyId).emit('lobby-updated', lobby)
   }
 
   gameStarted(gameId: string): void {

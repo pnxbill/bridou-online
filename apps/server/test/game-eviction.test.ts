@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { AbandonmentService } from '../src/application/abandonment'
 import { GAME_EVICTION_TTL_MS, GameEviction } from '../src/application/game-eviction'
 import { GameService } from '../src/application/game-service'
-import { Queue } from '../src/application/queue'
+import { LobbyRegistry } from '../src/application/lobby'
 import type { RealtimeGateway } from '../src/application/ports'
 import type { DomainEvent, PlayerInfo } from '@bridou/shared'
 import { InMemoryGameRepository } from '../src/infra/in-memory-game-repository'
@@ -13,7 +13,7 @@ class RecordingGateway implements RealtimeGateway {
   publisherFor() {
     return { publish: (_event: DomainEvent) => {} }
   }
-  playerJoinedQueue(): void {}
+  lobbyUpdated(): void {}
   gameStarted(): void {}
 }
 
@@ -49,14 +49,14 @@ describe('GameEviction', () => {
     )
     const service = new GameService(
       games,
-      new Queue(),
+      new LobbyRegistry(),
       gateway,
       new AbandonmentService({ games }),
     )
-    const { queueId } = service.joinQueue(player('a'))
-    service.joinQueue(player('b'))
-    gameId = queueId
-    service.startGame()
+    const { code, lobbyId } = service.createLobby(player('a'))
+    service.joinLobby(code, player('b'))
+    gameId = lobbyId
+    service.startGame(code, 'a')
   })
 
   it('keeps the finished game until the TTL elapses', () => {

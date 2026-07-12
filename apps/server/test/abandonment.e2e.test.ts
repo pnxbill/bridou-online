@@ -103,12 +103,13 @@ describe('abandonment over SSE', () => {
   })
 
   it('pauses, announces, hands the seat to the bot and finishes the round', async () => {
-    const res = await alice.post('/api/enter-queue', { user: { id: 'alice', name: 'Alice' } })
-    gameId = res.data.queueId
-    await bob.post('/api/enter-queue', { user: { id: 'bob', name: 'Bob' } })
+    const res = await alice.post('/api/lobbies', { user: { id: 'alice', name: 'Alice' } })
+    gameId = res.data.lobby.lobbyId
+    const code = res.data.lobby.code
+    await bob.post(`/api/lobbies/${code}/join`, { user: { id: 'bob', name: 'Bob' } })
     await alice.connect(gameId)
     await bob.connect(gameId)
-    await fetch(`${baseUrl}/api/start-game`)
+    await alice.post(`/api/lobbies/${code}/start`, { playerId: 'alice' })
 
     // alice (leader) bets, then bob walks away
     await waitFor(() => alice.ofType('bet-requested').length === 1, 'alice asked to bet')

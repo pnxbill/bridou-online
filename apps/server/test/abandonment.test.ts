@@ -3,8 +3,8 @@ import type { Scheduler } from '@bridou/engine'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { AbandonmentService } from '../src/application/abandonment'
 import { GameService } from '../src/application/game-service'
+import { LobbyRegistry } from '../src/application/lobby'
 import { PresenceTracker } from '../src/application/presence'
-import { Queue } from '../src/application/queue'
 import type { RealtimeGateway } from '../src/application/ports'
 import { InMemoryGameRepository } from '../src/infra/in-memory-game-repository'
 import { InterceptingGateway } from '../src/infra/intercepting-gateway'
@@ -16,7 +16,7 @@ class RecordingGateway implements RealtimeGateway {
     return { publish: (event: DomainEvent) => this.events.push({ gameId, event }) }
   }
 
-  playerJoinedQueue(): void {}
+  lobbyUpdated(): void {}
   gameStarted(): void {}
 
   ofType<T extends DomainEvent['type']>(type: T): Extract<DomainEvent, { type: T }>[] {
@@ -77,15 +77,17 @@ describe('abandonment flow', () => {
     const intercepting = new InterceptingGateway(gateway, (g, e) =>
       abandonment.onDomainEvent(g, e),
     )
-    service = new GameService(games, new Queue(), intercepting, abandonment, { scheduler })
+    service = new GameService(games, new LobbyRegistry(), intercepting, abandonment, {
+      scheduler,
+    })
     abandonment.bind({ gateway: intercepting, actions: service })
 
-    const { queueId } = service.joinQueue(player('alice'))
-    service.joinQueue(player('bob'))
-    gameId = queueId
+    const { code, lobbyId } = service.createLobby(player('alice'))
+    service.joinLobby(code, player('bob'))
+    gameId = lobbyId
     presence.connected(gameId, 'alice', 'conn-alice')
     presence.connected(gameId, 'bob', 'conn-bob')
-    service.startGame()
+    service.startGame(code, 'alice')
   })
 
   const disconnectBob = () => {
@@ -166,19 +168,18 @@ describe('abandonment flow', () => {
     expect(gateway.ofType('player-abandoned')).toHaveLength(0)
   })
 
-  it('plays a queue bot from the very first move', () => {
-    // fresh queue: alice + a queue bot
-    const { bot } = service.addBotToQueue()
+  it('plays a lobby bot from the very first move', () => {
+    // fresh lobby: carol + a seated bot (the alice/bob game from beforeEach is separate)
+    const { code, lobbyId: botGameId } = service.createLobby(player('carol'))
+    const { bot } = service.addBotToLobby(code, 'carol')
     expect(bot.isBot).toBe(true)
     expect(bot.name).toBeTruthy()
 
-    // (alice/bob game from beforeEach is separate; start a game on the new queue)
-    const botGameId = service.queueState().queueId
-    service.joinQueue(player('carol'))
     presence.connected(botGameId, 'carol', 'conn-carol')
-    service.startGame()
+    service.startGame(code, 'carol')
 
-    // round 1: the bot is somewhere in the betting order; flush its think timers
+    // round 1: carol (leader) bets first, then the bot is prompted; flush its think timers
+    service.placeBet(botGameId, 'carol', 0)
     scheduler.flushAll()
     const botBet = gateway
       .ofType('player-bet')

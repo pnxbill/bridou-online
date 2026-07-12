@@ -41,20 +41,48 @@ const requireString = (value: unknown, name: string): string => {
 export const createRoutes = (service: GameService): Router => {
   const routes = Router()
 
-  routes.post('/api/enter-queue', (req: Request, res: Response) => {
-    respond(res, () => service.joinQueue(parsePlayerInfo(req.body.user)))
+  routes.post('/api/lobbies', (req: Request, res: Response) => {
+    respond(res, () => ({ lobby: service.createLobby(parsePlayerInfo(req.body.user)) }))
   })
 
-  routes.get('/api/queue', (_req: Request, res: Response) => {
-    respond(res, () => service.queueState())
+  routes.get('/api/lobbies/:code', (req: Request, res: Response) => {
+    respond(res, () => ({ lobby: service.lobbyState(requireString(req.params.code, 'code')) }))
   })
 
-  routes.post('/api/add-bot', (_req: Request, res: Response) => {
-    respond(res, () => service.addBotToQueue())
+  routes.post('/api/lobbies/:code/join', (req: Request, res: Response) => {
+    respond(res, () => ({
+      lobby: service.joinLobby(
+        requireString(req.params.code, 'code'),
+        parsePlayerInfo(req.body.user),
+      ),
+    }))
   })
 
-  routes.get('/api/start-game', (_req: Request, res: Response) => {
-    respond(res, () => ({ gameId: service.startGame().id }))
+  routes.post('/api/lobbies/:code/leave', (req: Request, res: Response) => {
+    respond(res, () => ({
+      lobby: service.leaveLobby(
+        requireString(req.params.code, 'code'),
+        requireString(req.body.playerId, 'playerId'),
+      ),
+    }))
+  })
+
+  routes.post('/api/lobbies/:code/bots', (req: Request, res: Response) => {
+    respond(res, () =>
+      service.addBotToLobby(
+        requireString(req.params.code, 'code'),
+        requireString(req.body.playerId, 'playerId'),
+      ),
+    )
+  })
+
+  routes.post('/api/lobbies/:code/start', (req: Request, res: Response) => {
+    respond(res, () => ({
+      gameId: service.startGame(
+        requireString(req.params.code, 'code'),
+        requireString(req.body.playerId, 'playerId'),
+      ).id,
+    }))
   })
 
   routes.get('/api/current-game', (req: Request, res: Response) => {

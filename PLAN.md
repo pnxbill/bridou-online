@@ -22,7 +22,7 @@ and every step leaves the game playable.
 - [x] socket.io gateway delivering `DomainEvent`s on the `event` channel (legacy event-name mapping removed with the POC)
 - [x] Game-flow e2e pinning the real wire contract (REST + `event` channel + private routing)
 - [x] Queue bots: the leader can seat bots (random names, `isBot` flag rendered everywhere); they play from the first move; table capped at 7 seats
-- [ ] Multiple lobbies (create/join by code) instead of the single global queue
+- [x] Multiple lobbies (create/join by 5-char code, leader-only bots/start, leave with leadership handoff, 2h TTL sweep); `lobby-updated` event replaces `player-entered-queue`
 - [x] Evict finished/abandoned games from memory (TTL after `game-ended`)
 - [ ] Clean REST API v2 designed for the Next.js client (drop legacy naming quirks like `close-score`)
 
@@ -65,15 +65,18 @@ The Qwik app (`src/`) is a POC: port behavior, don't fix it.
 
 ## 5. Data & Persistence
 
-New concern — the old project had no database (mongoose was wired but commented out).
-First decide **what actually needs durability**; active games can stay in memory until then.
+**Decided (2026-07-10):** Postgres on **Neon** (app can stay on Render). Live games
+stay in memory; durable store is an append-only `DomainEvent` log plus finished
+game/player rows — enough for analytics like trump-lead rate. Firebase stays
+auth-only (no Firestore for game history).
 
-- [ ] Decide what to store: finished game results, player stats (wins, bailadas, points history), profiles — vs. what stays ephemeral (queues, active games)
-- [ ] Choose the database (Postgres / Mongo / Firestore — Firebase is already in the stack, worth weighing)
-- [ ] Repository ports for the durable data (same pattern as `GameRepository`; engine stays persistence-free)
-- [ ] Persist finished game results + player stats at `game-ended`
-- [ ] Active-game persistence (Redis snapshot behind `GameRepository`) so games survive server restarts — *optional, after SSE*
-- [ ] Schema/migration tooling if we pick SQL
+- [x] Decide what to store: event log + finished games/players; queues/active games/voice stay ephemeral
+- [x] Choose the database: Postgres on Neon (`DATABASE_URL`); in-memory history when unset
+- [x] Repository ports (`GameHistoryRepository`, `PlayerRepository`) + Drizzle schema/migration
+- [x] Persist events continuously and finalize game rows at `game-ended`
+- [ ] Active-game persistence (Redis snapshot behind `GameRepository`) so games survive server restarts — *optional*
+- [ ] Player profile / stats API (needs Firebase token verify first — see §6)
+- [ ] Materialized rollups for fast profile queries — *optional, after raw event log*
 
 ## 6. Authentication & Security
 
@@ -94,10 +97,10 @@ celebrations. Mobile-first: hand and actions in the thumb zone, the table is the
 - [x] Wire the table design into the real game screen (GameTable replaces BetsBar/Table/Trunfo/BetPicker), header-free full-bleed game route
 - [x] Motion pass v1: played cards enter from their seat, completed trick pauses 1.5s (server-paced via the engine) then flies to the winner; live "ganhando"/"ganhou" tag (turn-ended now carries winnerId)
 - [x] Celebration moments: RoundEndOverlay (BAILOU!/BAILARAM!/NINGUÉM BAILOU with confetti, delayed reveal so the final trick lands first), scoreboard as podium with medals, game-end with crown + champion + confetti (`finished` flag on snapshots), abandoned overlay restyled calm — playground at `/dev/moments`
-- [ ] Motion pass v2: my card travels from the fan to the table, dealing animation at round start
-- [ ] Lobby redesign in the same language (the table filling up as people join)
-- [ ] Home/login as a proper entrance (5-second first impression)
-- [ ] Edge layouts: 6–7 seats on small screens, 6–7 card hands on narrow phones, landscape lock or support decision
+- [x] Motion pass v2: my card travels from the fan to the table (origin measured on tap, `dealSeq` in the reducer), dealing animation at round start (cards fly in from the table side one by one) — playground at `/dev/motion` driving the real GameTable + reducer with scripted events
+- [x] Lobby redesign in the same language (the table filling up as people join) — now at `/mesa/[code]` with the invite panel (code tiles, copy link, WhatsApp, share sheet); fixture at `/dev/lobby`
+- [x] Home/login as a proper entrance: night sky + card fan + felt rim rising from the bottom, header-free route, Google/sentar/voltar states (mockup kept at `/dev/home`)
+- [x] Edge layouts: compact seats/played cards at 5+ opponents (`data-crowded`), fan + bet bar scale down on narrow phones, HUD/hand shrink on short screens, landscape shows a "gire o celular" overlay (portrait-only decided) — fixture at `/dev/edge` renders the real GameTable at the extremes
 
 ## 8. Infra & Tooling
 
@@ -115,7 +118,7 @@ opt in with "Entrar na voz", then mute mic / mute audio / leave as they like.
 - [x] Shared signaling contract (`VoiceSignal`, `VoicePresence` in `@bridou/shared`)
 - [x] Server `/voice` socket.io namespace: roster, peer join/leave, mute broadcast, targeted offer/answer/ICE relay (stamps real `from`); `GET /api/games/:id/voice` for the join-button count
 - [x] Client `useVoiceChat`: getUserMedia, full mesh, glare-free negotiation (joiner offers), mute/deafen, teardown on leave/unmount
-- [x] `VoiceControls` dock on the game screen (join count, mic/audio/leave, roster)
+- [x] `VoiceControls` dock on the game screen and lobby table (join count, mic/audio/leave, roster) — lobby id becomes the game id, so a call started while waiting carries into the match
 - [x] Speaking indicators: AnalyserNode VAD → green ring on table avatars / my chip / voice roster
 - [x] ICE config ready for TURN (`NEXT_PUBLIC_TURN_*` in `.env.example`); STUN-only by default
 - [x] Signaling e2e (`apps/server/test/voice.e2e.test.ts`)

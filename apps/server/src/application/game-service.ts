@@ -1,9 +1,15 @@
 import { Game, GameError, type Scheduler } from '@bridou/engine'
-import type { GameSnapshot, PlayerInfo, PlayerPerspective, SessionState } from '@bridou/shared'
+import type {
+  GameSnapshot,
+  LobbySnapshot,
+  PlayerInfo,
+  PlayerPerspective,
+  SessionState,
+} from '@bridou/shared'
 import { randomUUID } from 'node:crypto'
 import { ForbiddenError, NotFoundError } from './errors'
+import type { Lobby, LobbyRegistry } from './lobby'
 import type { GameRepository, GameSessionMonitor, RealtimeGateway } from './ports'
-import type { Queue } from './queue'
 
 const BOT_NAMES = [
   'Botelho',
@@ -23,58 +29,86 @@ export interface EnterGameResult extends GameSnapshot, PlayerPerspective, Sessio
 export class GameService {
   constructor(
     private readonly games: GameRepository,
-    private readonly queue: Queue,
+    private readonly lobbies: LobbyRegistry,
     private readonly gateway: RealtimeGateway,
     /** Seat control: pause enforcement + abandoned/bot state for snapshots. */
     private readonly sessions: GameSessionMonitor,
-    private readonly options: { scheduler?: Scheduler } = {},
+    private readonly options: {
+      scheduler?: Scheduler
+      /** Fired after the Game is saved, before `game.start()` emits events. */
+      onGameStarted?: (game: Game) => void
+    } = {},
   ) {}
 
-  joinQueue(player: PlayerInfo): { queueId: string; leaderId: string } {
-    this.queue.add(player)
-    this.gateway.playerJoinedQueue(this.queue.id, player)
-    return { queueId: this.queue.id, leaderId: this.queue.leaderId! }
+  /** Opens a new table with the creator in the leader seat. */
+  createLobby(player: PlayerInfo): LobbySnapshot {
+    const lobby = this.lobbies.create()
+    lobby.add(player)
+    return lobby.snapshot()
   }
 
-  /** Seats a bot in the queue — it plays from the game's very first move. */
-  addBotToQueue(): { bot: PlayerInfo } {
-    const taken = new Set(this.queue.players.map((p) => p.name))
+  /** Sit at a table by code. Already seated? Fine — invite links are re-clickable. */
+  joinLobby(code: string, player: PlayerInfo): LobbySnapshot {
+    const lobby = this.getLobby(code)
+    if (!lobby.has(player.id)) {
+      lobby.add(player)
+      this.gateway.lobbyUpdated(lobby.id, lobby.snapshot())
+    }
+    return lobby.snapshot()
+  }
+
+  /** Stand up. Leadership passes to the next seat; a table of bots (or nobody) closes. */
+  leaveLobby(code: string, playerId: string): LobbySnapshot {
+    const lobby = this.getLobby(code)
+    if (lobby.remove(playerId)) {
+      if (lobby.players.every((p) => p.isBot)) {
+        this.lobbies.delete(code)
+      }
+      this.gateway.lobbyUpdated(lobby.id, lobby.snapshot())
+    }
+    return lobby.snapshot()
+  }
+
+  lobbyState(code: string): LobbySnapshot {
+    return this.getLobby(code).snapshot()
+  }
+
+  /** Seats a bot at the table — it plays from the game's very first move. */
+  addBotToLobby(code: string, byPlayerId: string): { bot: PlayerInfo } {
+    const lobby = this.getLobby(code)
+    this.assertLeader(lobby, byPlayerId)
+
+    const taken = new Set(lobby.players.map((p) => p.name))
     const free = BOT_NAMES.filter((name) => !taken.has(name))
     const name = free.length
       ? free[Math.floor(Math.random() * free.length)]!
-      : `Bot ${this.queue.players.length + 1}`
+      : `Bot ${lobby.players.length + 1}`
 
     const bot: PlayerInfo = { id: `bot-${randomUUID()}`, name, isBot: true }
-    this.queue.add(bot)
-    this.gateway.playerJoinedQueue(this.queue.id, bot)
+    lobby.add(bot)
+    this.gateway.lobbyUpdated(lobby.id, lobby.snapshot())
     return { bot }
   }
 
-  queueState(): { queueId: string; leaderId?: string; queue: PlayerInfo[] } {
-    return {
-      queueId: this.queue.id,
-      leaderId: this.queue.leaderId,
-      queue: [...this.queue.players],
-    }
-  }
-
-  startGame(): Game {
-    if (this.queue.players.length < 2) throw new GameError('Required at least 2 players')
-    if (this.queue.players.every((p) => p.isBot)) {
+  startGame(code: string, byPlayerId: string): Game {
+    const lobby = this.getLobby(code)
+    this.assertLeader(lobby, byPlayerId)
+    if (lobby.players.length < 2) throw new GameError('Required at least 2 players')
+    if (lobby.players.every((p) => p.isBot)) {
       throw new GameError('At least one human player is required')
     }
 
-    const gameId = this.queue.id
-    const players = [...this.queue.players]
+    const gameId = lobby.id
+    const players = [...lobby.players]
     const game = new Game(
-      { id: gameId, leaderId: this.queue.leaderId!, players },
+      { id: gameId, leaderId: lobby.leaderId!, players },
       {
         publisher: this.gateway.publisherFor(gameId),
         ...(this.options.scheduler ? { scheduler: this.options.scheduler } : {}),
       },
     )
     this.games.save(game)
-    this.queue.reset()
+    this.lobbies.delete(code)
 
     // Bot seats must be known before the first prompt fires
     this.sessions.registerBotSeats(
@@ -82,6 +116,7 @@ export class GameService {
       players.filter((p) => p.isBot).map((p) => p.id),
     )
 
+    this.options.onGameStarted?.(game)
     this.gateway.gameStarted(gameId)
     game.start()
     return game
@@ -120,6 +155,16 @@ export class GameService {
 
   closeScoreboard(gameId: string): void {
     this.getGame(gameId).closeScoreboard()
+  }
+
+  private getLobby(code: string): Lobby {
+    const lobby = this.lobbies.byCode(code)
+    if (!lobby) throw new NotFoundError('Lobby not found')
+    return lobby
+  }
+
+  private assertLeader(lobby: Lobby, playerId: string): void {
+    if (lobby.leaderId !== playerId) throw new ForbiddenError('Only the leader can do that')
   }
 
   private getGame(gameId: string): Game {

@@ -1,4 +1,4 @@
-import type { EventPublisher, PlayerInfo } from '@bridou/shared'
+import type { EventPublisher, LobbySnapshot } from '@bridou/shared'
 import type { RealtimeGateway } from '../application/ports'
 
 /**
@@ -16,8 +16,8 @@ export class CompositeGateway implements RealtimeGateway {
     }
   }
 
-  playerJoinedQueue(queueId: string, player: PlayerInfo): void {
-    this.gateways.forEach((g) => g.playerJoinedQueue(queueId, player))
+  lobbyUpdated(lobbyId: string, lobby: LobbySnapshot): void {
+    this.gateways.forEach((g) => g.lobbyUpdated(lobbyId, lobby))
   }
 
   gameStarted(gameId: string): void {
