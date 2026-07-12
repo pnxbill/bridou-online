@@ -57,6 +57,14 @@ export interface GameViewState {
    * Empty otherwise.
    */
   opponentHands: Record<string, Card[]>
+  /** Completed tricks this round — powers the per-seat trick history popup. */
+  completedTricks: CompletedTrick[]
+}
+
+/** One finished trick, kept so players can review what already hit the table. */
+export interface CompletedTrick {
+  turn: TurnSnapshot
+  winnerId: string
 }
 
 export type GameAction =
@@ -74,6 +82,16 @@ const countMade = (whoMade: RoundPlayer[]): Record<string, number> =>
     acc[winner.id] = (acc[winner.id] ?? 0) + 1
     return acc
   }, {})
+
+/** Zip completed turns with their winners (same order on the server). */
+export const tricksFromRound = (
+  turns: TurnSnapshot[],
+  whoMade: RoundPlayer[],
+): CompletedTrick[] =>
+  turns.flatMap((turn, i) => {
+    const winnerId = whoMade[i]?.id
+    return winnerId ? [{ turn, winnerId }] : []
+  })
 
 export const stateFromSnapshot = (snapshot: GameEntry, myId = ''): GameViewState => ({
   myId,
@@ -98,6 +116,10 @@ export const stateFromSnapshot = (snapshot: GameEntry, myId = ''): GameViewState
   abandoned: snapshot.abandoned ?? [],
   botSeats: snapshot.botSeats ?? [],
   opponentHands: snapshot.opponentHands ?? {},
+  completedTricks: tricksFromRound(
+    snapshot.currentRound.turns,
+    snapshot.currentRound.whoMade,
+  ),
 })
 
 const applyEvent = (state: GameViewState, event: DomainEvent): GameViewState => {
@@ -120,6 +142,7 @@ const applyEvent = (state: GameViewState, event: DomainEvent): GameViewState => 
         bailadores: [],
         lastRoundResult: null,
         opponentHands: {},
+        completedTricks: [],
       }
     case 'trunfo-set':
       return { ...state, trunfo: event.trunfo }
@@ -180,6 +203,10 @@ const applyEvent = (state: GameViewState, event: DomainEvent): GameViewState => 
           [event.winnerId]: (state.madeByPlayer[event.winnerId] ?? 0) + 1,
         },
         lastTrickWinnerId: event.winnerId,
+        completedTricks: [
+          ...state.completedTricks,
+          { turn: event.turn, winnerId: event.winnerId },
+        ],
       }
     case 'round-ended':
       // the final trick stays on the table (cleared on round-started) so the

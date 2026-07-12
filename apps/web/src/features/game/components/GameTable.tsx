@@ -18,6 +18,7 @@ import {
   unlockGameAudio,
 } from '../sounds'
 import { PlayerHand } from './PlayerHand'
+import { TrickHistoryPopup, type AnchorRect } from './TrickHistoryPopup'
 import styles from './GameTable.module.css'
 
 interface Props {
@@ -78,6 +79,9 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
   /* px size of the table area — motion deltas are computed from % positions */
   const areaRef = useRef<HTMLDivElement>(null)
   const [area, setArea] = useState({ w: 0, h: 0 })
+  /** Seat whose trick history popup is open (null = closed). */
+  const [historyPlayerId, setHistoryPlayerId] = useState<string | null>(null)
+  const [historyAnchor, setHistoryAnchor] = useState<AnchorRect | null>(null)
   useEffect(() => {
     const measure = () => {
       const el = areaRef.current
@@ -227,6 +231,31 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
   const winningIdx = winningCardIndex(state.playedCards, state.trunfo)
   const madeOf = (id: string) => state.madeByPlayer[id] ?? 0
   const isBotSeat = (p: RoundPlayer) => p.isBot || state.botSeats.includes(p.id)
+  const historyPlayer =
+    historyPlayerId === null
+      ? undefined
+      : state.players.find((p) => p.id === historyPlayerId)
+  const historyTricks = historyPlayer
+    ? state.completedTricks
+        .map((trick, i) => ({ trick, roundIndex: i + 1 }))
+        .filter(({ trick }) => trick.winnerId === historyPlayer.id)
+    : []
+  const openHistory = (playerId: string, el: HTMLElement) => {
+    const r = el.getBoundingClientRect()
+    setHistoryAnchor({
+      top: r.top,
+      left: r.left,
+      bottom: r.bottom,
+      right: r.right,
+      width: r.width,
+      height: r.height,
+    })
+    setHistoryPlayerId(playerId)
+  }
+  const closeHistory = () => {
+    setHistoryPlayerId(null)
+    setHistoryAnchor(null)
+  }
 
   /* motion helpers: px delta between two % positions */
   const delta = (from: { x: number; y: number }, to: { x: number; y: number }) => ({
@@ -328,17 +357,20 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
               className={`${styles.seat} ${seat.id === activeId ? styles.seatActive : ''}`}
               style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
             >
-              <div
-                className={`${styles.avatar} ${isBotSeat(seat) ? styles.avatarBot : ''} ${
+              <button
+                type="button"
+                className={`${styles.avatar} ${styles.avatarBtn} ${isBotSeat(seat) ? styles.avatarBot : ''} ${
                   speakingIds.includes(seat.id) ? styles.avatarSpeaking : ''
                 }`}
+                aria-label={`Ver vazas de ${seat.name}`}
+                onClick={(e) => openHistory(seat.id, e.currentTarget)}
               >
                 {isBotSeat(seat) ? '🤖' : seat.photoURL ? (
                   <img src={seat.photoURL} alt="" />
                 ) : (
                   initials(seat.name)
                 )}
-              </div>
+              </button>
               <span className={styles.seatName}>{seat.name}</span>
               {seatChip(seat, seat.id === activeId)}
               {revealed.length > 0 && (
@@ -409,13 +441,16 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
 
         {me && (
           <div className={styles.mySeat}>
-            <span
-              className={`${styles.myChip} ${myTurn ? styles.myChipTurn : ''} ${
+            <button
+              type="button"
+              className={`${styles.myChip} ${styles.myChipBtn} ${myTurn ? styles.myChipTurn : ''} ${
                 speakingIds.includes(me.id) ? styles.myChipSpeaking : ''
               }`}
+              aria-label="Ver suas vazas"
+              onClick={(e) => openHistory(me.id, e.currentTarget)}
             >
               {myChipText()}
-            </span>
+            </button>
             {state.betting && state.availableBets.length > 0 && (
               <div className={styles.betBar}>
                 <div className={styles.betOptions}>
@@ -435,6 +470,16 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
       <div className={styles.myArea}>
         <PlayerHand cards={state.hand} onPlay={handlePlay} dealSeq={state.dealSeq} />
       </div>
+
+      {historyPlayer && historyAnchor && (
+        <TrickHistoryPopup
+          player={historyPlayer}
+          tricks={historyTricks}
+          trunfo={state.trunfo}
+          anchor={historyAnchor}
+          onClose={closeHistory}
+        />
+      )}
     </div>
   )
 }

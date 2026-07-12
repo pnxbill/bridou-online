@@ -152,6 +152,24 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
+.avatarBtn {
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.avatarBtn:hover {
+  border-color: var(--gold-soft);
+}
+
+.avatarBtn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
 .avatar img {
   width: 100%;
   height: 100%;
@@ -310,6 +328,23 @@
   font-size: 0.75rem;
   color: var(--ink-muted);
   white-space: nowrap;
+}
+
+.myChipBtn {
+  cursor: pointer;
+  font: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.myChipBtn:hover {
+  border-color: var(--gold-soft);
+  color: var(--ink);
+}
+
+.myChipBtn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
 }
 
 .myChip b {

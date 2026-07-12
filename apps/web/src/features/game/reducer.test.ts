@@ -204,6 +204,25 @@ describe('blind last round', () => {
     })
     expect(state.hand).toEqual([])
   })
+  it('turn-ended appends the completed trick for history review', () => {
+    const state = apply(base, {
+      type: 'turn-ended',
+      turn: turn(['K-♠️', '3-♠️']),
+      winnerId: 'other',
+    })
+    expect(state.completedTricks).toEqual([
+      { turn: turn(['K-♠️', '3-♠️']), winnerId: 'other' },
+    ])
+  })
+
+  it('round-started clears trick history', () => {
+    const dirty = {
+      ...base,
+      completedTricks: [{ turn: turn(['A-♠️']), winnerId: 'me' }],
+    }
+    const state = apply(dirty, { type: 'round-started', round: roundSnapshot() })
+    expect(state.completedTricks).toEqual([])
+  })
 })
 
 describe('tricks', () => {

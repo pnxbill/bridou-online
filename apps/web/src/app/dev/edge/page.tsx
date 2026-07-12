@@ -72,6 +72,7 @@ function makeState(players: RoundPlayer[], betting: boolean): GameViewState {
     abandoned: [],
     botSeats: [],
     opponentHands: {},
+    completedTricks: [],
   }
 }
 
