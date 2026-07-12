@@ -3,6 +3,7 @@ import type { AddressInfo } from 'node:net'
 import { io as connectSocket, type Socket } from 'socket.io-client'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createApp, type AppInstance } from '../src/app'
+import { fakeTokenVerifier, tokenFor } from './fake-verifier'
 
 /**
  * Exercises the real contract the web client relies on — REST endpoints,
@@ -28,7 +29,7 @@ class FakeClient {
   async connect(gameId: string): Promise<void> {
     if (this.transport === 'socketio') {
       this.socket = connectSocket(this.baseUrl, {
-        auth: { gameId, playerId: this.playerId },
+        auth: { gameId, token: tokenFor(this.playerId) },
       })
       this.socket.onAny((name: string, payload: unknown) => this.route(name, payload))
       await new Promise<void>((resolve) => this.socket!.on('connect', () => resolve()))
@@ -37,7 +38,7 @@ class FakeClient {
 
     this.abort = new AbortController()
     const res = await fetch(
-      `${this.baseUrl}/api/games/${gameId}/events?playerId=${this.playerId}`,
+      `${this.baseUrl}/api/games/${gameId}/events?token=${tokenFor(this.playerId)}`,
       { signal: this.abort.signal },
     )
     expect(res.headers.get('content-type')).toContain('text/event-stream')
@@ -56,14 +57,19 @@ class FakeClient {
   async post(path: string, body: object): Promise<{ status: number; data: any }> {
     const res = await fetch(`${this.baseUrl}${path}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${tokenFor(this.playerId)}`,
+      },
       body: JSON.stringify(body),
     })
     return { status: res.status, data: await res.json() }
   }
 
   async get(path: string): Promise<{ status: number; data: any }> {
-    const res = await fetch(`${this.baseUrl}${path}`)
+    const res = await fetch(`${this.baseUrl}${path}`, {
+      headers: { Authorization: `Bearer ${tokenFor(this.playerId)}` },
+    })
     return { status: res.status, data: await res.json() }
   }
 
@@ -120,7 +126,7 @@ describe.each<Transport>(['socketio', 'sse'])('game flow over %s', (transport) =
   let gameId: string
 
   beforeAll(async () => {
-    app = createApp()
+    app = createApp({ tokenVerifier: fakeTokenVerifier })
     await new Promise<void>((resolve) => app.httpServer.listen(0, resolve))
     baseUrl = `http://localhost:${(app.httpServer.address() as AddressInfo).port}`
     alice = new FakeClient('alice', baseUrl, transport)
@@ -135,15 +141,26 @@ describe.each<Transport>(['socketio', 'sse'])('game flow over %s', (transport) =
 
   let code: string
 
+  it('rejects unauthenticated and badly-authenticated requests', async () => {
+    const anonymous = await fetch(`${baseUrl}/api/lobbies`, { method: 'POST' })
+    expect(anonymous.status).toBe(401)
+
+    const forged = await fetch(`${baseUrl}/api/lobbies`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer not-a-real-token' },
+    })
+    expect(forged.status).toBe(401)
+  })
+
   it('opens a lobby, joins by code, and notifies the lobby room', async () => {
-    const res = await alice.post('/api/lobbies', { user: { id: 'alice', name: 'Alice' } })
+    const res = await alice.post('/api/lobbies', {})
     expect(res.status).toBe(200)
     expect(res.data.lobby.leaderId).toBe('alice')
     code = res.data.lobby.code
     gameId = res.data.lobby.lobbyId
     await alice.connect(gameId)
 
-    await bob.post(`/api/lobbies/${code}/join`, { user: { id: 'bob', name: 'Bob' } })
+    await bob.post(`/api/lobbies/${code}/join`, {})
     await bob.connect(gameId)
 
     await waitFor(() => alice.lobbyUpdates.length === 1, 'alice sees bob join')
@@ -151,6 +168,9 @@ describe.each<Transport>(['socketio', 'sse'])('game flow over %s', (transport) =
       'alice',
       'bob',
     ])
+    // the invite-link lobby view stays public — no token needed
+    const publicState = await fetch(`${baseUrl}/api/lobbies/${code}`)
+    expect(publicState.status).toBe(200)
     const state = await alice.get(`/api/lobbies/${code}`)
     expect(state.data.lobby.players.map((p: any) => p.id)).toEqual(['alice', 'bob'])
 
@@ -159,10 +179,10 @@ describe.each<Transport>(['socketio', 'sse'])('game flow over %s', (transport) =
   })
 
   it('starts the game and streams the round-start events, hands kept private', async () => {
-    const denied = await bob.post(`/api/lobbies/${code}/start`, { playerId: 'bob' })
+    const denied = await bob.post(`/api/lobbies/${code}/start`, {})
     expect(denied.status).toBe(403)
 
-    await alice.post(`/api/lobbies/${code}/start`, { playerId: 'alice' })
+    await alice.post(`/api/lobbies/${code}/start`, {})
 
     await waitFor(
       () =>
@@ -189,30 +209,32 @@ describe.each<Transport>(['socketio', 'sse'])('game flow over %s', (transport) =
   })
 
   it('serves the reconnect snapshot and rejects strangers', async () => {
-    const res = await alice.post('/api/enter-game', { gameId, playerId: 'alice' })
+    const res = await alice.post('/api/enter-game', { gameId })
     expect(res.status).toBe(200)
     expect(res.data.game.currentRound.players).toHaveLength(2)
     expect(res.data.game.availableBets.length).toBeGreaterThan(0)
 
-    const stranger = await alice.post('/api/enter-game', { gameId, playerId: 'nobody' })
+    // a valid token whose uid isn't seated in this game
+    const nobody = new FakeClient('nobody', baseUrl, transport)
+    const stranger = await nobody.post('/api/enter-game', { gameId })
     expect(stranger.status).toBe(403)
-    const missing = await alice.post('/api/enter-game', { gameId: 'nope', playerId: 'alice' })
+    const missing = await alice.post('/api/enter-game', { gameId: 'nope' })
     expect(missing.status).toBe(404)
   })
 
   it('plays a whole round driven by the event stream', async () => {
-    await alice.post('/api/bet', { gameId, playerId: 'alice', bet: 0 })
+    await alice.post('/api/bet', { gameId, bet: 0 })
     await waitFor(() => bob.ofType('bet-requested').length === 1, 'bob asked to bet')
     const bobBets = bob.ofType('bet-requested')[0]!.availableBets
-    await bob.post('/api/bet', { gameId, playerId: 'bob', bet: bobBets[0]! })
+    await bob.post('/api/bet', { gameId, bet: bobBets[0]! })
 
     await waitFor(() => alice.ofType('play-requested').length === 1, 'alice asked to play')
     const aliceCard = alice.ofType('play-requested')[0]!.cards.find((c) => !c.disabled)!
-    await alice.post('/api/play-card', { gameId, playerId: 'alice', card: aliceCard.value })
+    await alice.post('/api/play-card', { gameId, card: aliceCard.value })
 
     await waitFor(() => bob.ofType('play-requested').length === 1, 'bob asked to play')
     const bobCard = bob.ofType('play-requested')[0]!.cards.find((c) => !c.disabled)!
-    await bob.post('/api/play-card', { gameId, playerId: 'bob', card: bobCard.value })
+    await bob.post('/api/play-card', { gameId, card: bobCard.value })
 
     await waitFor(
       () => [alice, bob].every((c) => c.ofType('round-ended').length === 1),

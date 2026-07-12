@@ -36,7 +36,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false)
         if (!firebaseUser) {
           setUser(null)
-          document.cookie = 'uid=; path=/; max-age=0'
           return
         }
         setUser({
@@ -44,9 +43,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           name: firebaseUser.displayName ?? 'Jogador',
           ...(firebaseUser.photoURL ? { photoURL: firebaseUser.photoURL } : {}),
         })
-        // The game page's server component reads this to fetch the snapshot.
-        // Goes away when the server starts verifying Firebase ID tokens (see PLAN.md).
-        document.cookie = `uid=${firebaseUser.uid}; path=/; max-age=86400`
       }),
     [],
   )

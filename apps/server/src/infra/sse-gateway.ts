@@ -1,7 +1,7 @@
 import type { DomainEvent, EventPublisher, LobbySnapshot } from '@bridou/shared'
 import { isPrivateEvent } from '@bridou/shared'
 import type { Request, Response } from 'express'
-import type { RealtimeGateway } from '../application/ports'
+import type { RealtimeGateway, TokenVerifier } from '../application/ports'
 import type { PresenceTracker } from '../application/presence'
 
 /**
@@ -22,9 +22,15 @@ const HEARTBEAT_INTERVAL_MS = 20_000
 
 /**
  * Server-Sent Events transport. Clients subscribe to
- * `GET /api/games/:gameId/events?playerId=…`; the browser's EventSource
- * reconnects automatically, and the client refetches the game snapshot on
- * reconnect, so no event replay is needed (ids are sent anyway).
+ * `GET /api/games/:gameId/events?token=…` (EventSource can't send headers,
+ * so the Firebase ID token rides the query string); the client rebuilds the
+ * EventSource with a fresh token on every reconnect and refetches the game
+ * snapshot, so no event replay is needed (ids are sent anyway).
+ *
+ * No token means a spectator: they join the room for public events (lobby
+ * roster, game-started) but private events and presence are keyed by the
+ * VERIFIED uid, so a spectator can never receive someone's hand or hold
+ * their seat.
  */
 export class SseGateway implements RealtimeGateway {
   private readonly rooms = new Map<string, Set<SseConnection>>()
@@ -43,12 +49,18 @@ export class SseGateway implements RealtimeGateway {
   }
 
   /** Express handler for the event-stream endpoint. */
-  handler() {
-    return (req: Request, res: Response): void => {
+  handler(verifier: TokenVerifier) {
+    return async (req: Request, res: Response): Promise<void> => {
       const gameId = req.params.gameId
-      const playerId = typeof req.query.playerId === 'string' ? req.query.playerId : ''
-      if (!gameId || !playerId) {
-        res.status(400).json({ message: 'Missing gameId or playerId' })
+      if (!gameId) {
+        res.status(400).json({ message: 'Missing gameId' })
+        return
+      }
+
+      const token = typeof req.query.token === 'string' ? req.query.token : ''
+      const player = token ? await verifier.verify(token) : null
+      if (token && !player) {
+        res.status(401).json({ message: 'Unauthorized' })
         return
       }
 
@@ -60,17 +72,18 @@ export class SseGateway implements RealtimeGateway {
       })
       res.write('retry: 2000\n\n')
 
-      const connection: SseConnection = { playerId, res }
+      const connectionId = `sse-${this.nextConnectionId++}`
+      // Server-assigned spectator ids can never collide with a Firebase uid.
+      const connection: SseConnection = { playerId: player?.id ?? connectionId, res }
       const room = this.rooms.get(gameId) ?? new Set()
       room.add(connection)
       this.rooms.set(gameId, room)
-      const connectionId = `sse-${this.nextConnectionId++}`
-      this.presence?.connected(gameId, playerId, connectionId)
+      if (player) this.presence?.connected(gameId, player.id, connectionId)
 
       res.on('close', () => {
         room.delete(connection)
         if (!room.size) this.rooms.delete(gameId)
-        this.presence?.disconnected(connectionId)
+        if (player) this.presence?.disconnected(connectionId)
       })
     }
   }

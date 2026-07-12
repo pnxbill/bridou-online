@@ -57,9 +57,6 @@ export function LobbyClient({ code }: { code: string }) {
     return () => exit(lobbyIdForVoice, user.id)
   }, [seated, user, lobbyIdForVoice, enter, exit])
 
-  // Anonymous viewers still get live roster updates through a spectator id.
-  const [viewerId] = useState(() => `viewer-${Math.random().toString(36).slice(2, 10)}`)
-
   useEffect(() => {
     api
       .lobby(code)
@@ -74,7 +71,9 @@ export function LobbyClient({ code }: { code: string }) {
   useEffect(() => {
     if (!lobbyId) return
 
-    const channel = openChannel(lobbyId, user?.id ?? viewerId, {
+    // Logged-out visitors connect without a token — the server treats them
+    // as spectators and still streams the public roster updates.
+    const channel = openChannel(lobbyId, {
       onEvent: (name, payload) => {
         if (name === 'lobby-updated') setLobby(payload as LobbySnapshot)
         if (name === 'game-started') {
@@ -91,7 +90,8 @@ export function LobbyClient({ code }: { code: string }) {
     })
 
     return () => channel.close()
-  }, [lobbyId, user?.id, viewerId, code, router])
+    // user?.id: reopen with the token once the visitor signs in
+  }, [lobbyId, user?.id, code, router])
 
   const act = async (action: () => Promise<unknown>, fallback: string) => {
     setError('')
@@ -105,7 +105,7 @@ export function LobbyClient({ code }: { code: string }) {
   const sitDown = () =>
     act(async () => {
       if (!user) return
-      const { lobby } = await api.joinLobby(code, user)
+      const { lobby } = await api.joinLobby(code)
       setLobby(lobby)
     }, 'Não foi possível sentar na mesa')
 
@@ -126,15 +126,13 @@ export function LobbyClient({ code }: { code: string }) {
   const standUp = () =>
     act(async () => {
       if (!user) return
-      const { lobby } = await api.leaveLobby(code, user.id)
+      const { lobby } = await api.leaveLobby(code)
       setLobby(lobby)
     }, 'Não foi possível levantar da mesa')
 
-  const addBot = () =>
-    act(() => api.addBot(code, user!.id), 'Não foi possível adicionar o bot')
+  const addBot = () => act(() => api.addBot(code), 'Não foi possível adicionar o bot')
 
-  const startGame = () =>
-    act(() => api.startGame(code, user!.id), 'Não foi possível começar')
+  const startGame = () => act(() => api.startGame(code), 'Não foi possível começar')
 
   if (loading && !lobby) return <p className="hint">Carregando…</p>
 

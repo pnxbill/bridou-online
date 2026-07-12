@@ -67,7 +67,7 @@ export function HomeClient() {
 
     let cancelled = false
     api
-      .currentGame(user.id)
+      .currentGame()
       .then(({ gameId }) => {
         if (!cancelled) setActiveGameId(gameId)
       })
@@ -83,7 +83,7 @@ export function HomeClient() {
   const createTable = async () => {
     if (!user) return
     try {
-      const { lobby } = await api.createLobby(user)
+      const { lobby } = await api.createLobby()
       router.push(`/mesa/${lobby.code}`)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Servidor indisponível')

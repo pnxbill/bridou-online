@@ -19,9 +19,6 @@ export const getServerUrl = (): string => {
   return 'http://localhost:3001'
 }
 
-/** @deprecated Prefer `getServerUrl()` — kept for call sites that only run on the server. */
-export const SERVER_URL = process.env.NEXT_PUBLIC_GAME_SERVER_URL ?? 'http://localhost:3001'
-
 /**
  * ICE servers for the voice chat's WebRTC connections. Public STUN is enough
  * for most home networks; set the NEXT_PUBLIC_TURN_* vars to add a relay for

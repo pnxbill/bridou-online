@@ -2,6 +2,7 @@ import type { DomainEvent } from '@bridou/shared'
 import type { AddressInfo } from 'node:net'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createApp, type AppInstance } from '../src/app'
+import { fakeTokenVerifier, tokenFor } from './fake-verifier'
 
 /**
  * End-to-end abandonment over SSE (which also exercises stream-close
@@ -21,7 +22,7 @@ class SseClient {
 
   async connect(gameId: string): Promise<void> {
     const res = await fetch(
-      `${this.baseUrl}/api/games/${gameId}/events?playerId=${this.playerId}`,
+      `${this.baseUrl}/api/games/${gameId}/events?token=${tokenFor(this.playerId)}`,
       { signal: this.abort.signal },
     )
     void this.read(res.body!)
@@ -38,7 +39,10 @@ class SseClient {
   async post(path: string, body: object): Promise<{ status: number; data: any }> {
     const res = await fetch(`${this.baseUrl}${path}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${tokenFor(this.playerId)}`,
+      },
       body: JSON.stringify(body),
     })
     return { status: res.status, data: await res.json() }
@@ -89,7 +93,10 @@ describe('abandonment over SSE', () => {
   let gameId: string
 
   beforeAll(async () => {
-    app = createApp({ abandonment: { debounceMs: 50, graceMs: 250, botThinkMs: 20 } })
+    app = createApp({
+      abandonment: { debounceMs: 50, graceMs: 250, botThinkMs: 20 },
+      tokenVerifier: fakeTokenVerifier,
+    })
     await new Promise<void>((resolve) => app.httpServer.listen(0, resolve))
     baseUrl = `http://localhost:${(app.httpServer.address() as AddressInfo).port}`
     alice = new SseClient('alice', baseUrl)
@@ -103,27 +110,23 @@ describe('abandonment over SSE', () => {
   })
 
   it('pauses, announces, hands the seat to the bot and finishes the round', async () => {
-    const res = await alice.post('/api/lobbies', { user: { id: 'alice', name: 'Alice' } })
+    const res = await alice.post('/api/lobbies', {})
     gameId = res.data.lobby.lobbyId
     const code = res.data.lobby.code
-    await bob.post(`/api/lobbies/${code}/join`, { user: { id: 'bob', name: 'Bob' } })
+    await bob.post(`/api/lobbies/${code}/join`, {})
     await alice.connect(gameId)
     await bob.connect(gameId)
-    await alice.post(`/api/lobbies/${code}/start`, { playerId: 'alice' })
+    await alice.post(`/api/lobbies/${code}/start`, {})
 
     // alice (leader) bets, then bob walks away
     await waitFor(() => alice.ofType('bet-requested').length === 1, 'alice asked to bet')
-    await alice.post('/api/bet', { gameId, playerId: 'alice', bet: 0 })
+    await alice.post('/api/bet', { gameId, bet: 0 })
     bob.disconnect()
 
     // others are told, and the game is paused meanwhile
     await waitFor(() => alice.ofType('player-abandoned').length === 1, 'abandonment announced')
     expect(alice.ofType('player-abandoned')[0]).toMatchObject({ playerId: 'bob' })
-    const rejected = await alice.post('/api/play-card', {
-      gameId,
-      playerId: 'alice',
-      card: 'A-♠️',
-    })
+    const rejected = await alice.post('/api/play-card', { gameId, card: 'A-♠️' })
     expect(rejected.status).toBe(400)
     expect(rejected.data.message).toContain('paused')
 
@@ -137,13 +140,13 @@ describe('abandonment over SSE', () => {
     // alice plays her card; the bot answers and the round ends
     await waitFor(() => alice.ofType('play-requested').length === 1, 'alice asked to play')
     const card = alice.ofType('play-requested')[0]!.cards.find((c) => !c.disabled)!
-    await alice.post('/api/play-card', { gameId, playerId: 'alice', card: card.value })
+    await alice.post('/api/play-card', { gameId, card: card.value })
 
     await waitFor(() => alice.ofType('round-ended').length === 1, 'round finishes with the bot')
     expect(alice.ofType('card-played').map((e) => e.playerId)).toContain('bob')
 
     // reconnect snapshot reflects the bot seat
-    const snapshot = await alice.post('/api/enter-game', { gameId, playerId: 'alice' })
+    const snapshot = await alice.post('/api/enter-game', { gameId })
     expect(snapshot.data.game.botSeats).toEqual(['bob'])
     expect(snapshot.data.game.abandoned).toEqual([])
   })

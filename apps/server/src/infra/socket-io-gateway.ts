@@ -1,7 +1,7 @@
 import type { DomainEvent, EventPublisher, LobbySnapshot } from '@bridou/shared'
 import { isPrivateEvent } from '@bridou/shared'
 import type { Server } from 'socket.io'
-import type { RealtimeGateway } from '../application/ports'
+import type { RealtimeGateway, TokenVerifier } from '../application/ports'
 import type { PresenceTracker } from '../application/presence'
 import type { ConnectionRegistry } from './connection-registry'
 
@@ -38,23 +38,42 @@ export class SocketIoGateway implements RealtimeGateway {
   }
 }
 
-/** Joins sockets to their game's room and keeps the player→socket map fresh. */
+/**
+ * Joins sockets to their game's room and keeps the player→socket map fresh.
+ * Identity comes from the verified handshake token, mirroring the SSE
+ * endpoint: no token is a spectator (public room events only, no registry
+ * bind, no presence), a bad token is rejected.
+ */
 export const registerConnectionHandlers = (
   io: Server,
   registry: ConnectionRegistry,
-  presence?: PresenceTracker,
+  presence: PresenceTracker | undefined,
+  verifier: TokenVerifier,
 ): void => {
+  io.use((socket, next) => {
+    const { token } = socket.handshake.auth as { token?: string }
+    if (!token) return next()
+    verifier
+      .verify(token)
+      .then((player) => {
+        if (!player) return next(new Error('Unauthorized'))
+        socket.data.playerId = player.id
+        next()
+      })
+      .catch(next)
+  })
+
   io.on('connection', (socket) => {
-    const { gameId, playerId } = socket.handshake.auth as {
-      gameId?: string
-      playerId?: string
-    }
-    if (!gameId || !playerId) {
+    const { gameId } = socket.handshake.auth as { gameId?: string }
+    if (!gameId) {
       socket.disconnect(true)
       return
     }
 
     socket.join(gameId)
+    const playerId = socket.data.playerId as string | undefined
+    if (!playerId) return // spectator
+
     registry.bind(playerId, socket.id)
     presence?.connected(gameId, playerId, socket.id)
 

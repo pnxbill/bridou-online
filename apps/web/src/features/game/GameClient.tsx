@@ -33,7 +33,7 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
 
   const resync = useCallback(async () => {
     try {
-      const { game } = await api.enterGame(gameId, playerId)
+      const { game } = await api.enterGame(gameId)
       dispatch({ type: 'sync', snapshot: game })
     } catch {
       // server unreachable — the channel will retry and call us again
@@ -42,7 +42,6 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
 
   useGameChannel({
     gameId,
-    playerId,
     onEvent: (event) => dispatch({ type: 'apply-event', event }),
     onReconnect: resync,
   })
@@ -51,7 +50,7 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
     if (card.disabled) return
     dispatch({ type: 'lock-hand' })
     try {
-      await api.playCard(gameId, playerId, card.value)
+      await api.playCard(gameId, card.value)
     } catch {
       resync() // rejected play (e.g. wrong suit) — recover the real state
     }
@@ -60,7 +59,7 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
   const placeBet = async (bet: number) => {
     dispatch({ type: 'clear-bets' })
     try {
-      await api.placeBet(gameId, playerId, bet)
+      await api.placeBet(gameId, bet)
     } catch {
       resync()
     }

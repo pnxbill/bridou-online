@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { io, type Socket } from 'socket.io-client'
 import { api } from '@/lib/api'
 import { getIceServers, getServerUrl } from '@/lib/config'
+import { getIdToken } from '@/lib/firebase'
 
 export type VoiceStatus = 'idle' | 'joining' | 'connected' | 'error'
 
@@ -266,7 +267,13 @@ export function useVoiceChat({ gameId, playerId }: Options): VoiceChat {
     streamRef.current = stream
     watchStream(playerId, stream) // my own voice activity (muted mic reads as silence)
 
-    const socket = io(`${getServerUrl()}/voice`, { auth: { gameId, playerId } })
+    // Voice is players-only: the handshake must prove who we are, and the
+    // callback form mints a fresh token on every reconnect attempt.
+    const socket = io(`${getServerUrl()}/voice`, {
+      auth: (cb) => {
+        void getIdToken().then((token) => cb({ gameId, token }))
+      },
+    })
     socketRef.current = socket
 
     socket.on('voice:roster', (roster: VoicePresence[]) => {

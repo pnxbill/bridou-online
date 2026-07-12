@@ -1,5 +1,6 @@
 import type { VoicePresence, VoiceSignal } from '@bridou/shared'
 import type { Server } from 'socket.io'
+import type { TokenVerifier } from '../application/ports'
 
 /**
  * Signaling relay for per-game voice chat, on the `/voice` namespace.
@@ -23,19 +24,29 @@ interface Member {
   micMuted: boolean
 }
 
-export const registerVoiceHandlers = (io: Server): VoiceRooms => {
+export const registerVoiceHandlers = (io: Server, verifier: TokenVerifier): VoiceRooms => {
   const voice = io.of('/voice')
   const rooms = new Map<string, Map<string, Member>>()
 
+  // Voice is players-only: the handshake must carry a valid token, and the
+  // seat is keyed by the VERIFIED uid so nobody can join (or signal) as
+  // someone else.
+  voice.use((socket, next) => {
+    const { gameId, token } = socket.handshake.auth as { gameId?: string; token?: string }
+    if (!gameId || !token) return next(new Error('Unauthorized'))
+    verifier
+      .verify(token)
+      .then((player) => {
+        if (!player) return next(new Error('Unauthorized'))
+        socket.data.playerId = player.id
+        next()
+      })
+      .catch(next)
+  })
+
   voice.on('connection', (socket) => {
-    const { gameId, playerId } = socket.handshake.auth as {
-      gameId?: string
-      playerId?: string
-    }
-    if (!gameId || !playerId) {
-      socket.disconnect(true)
-      return
-    }
+    const { gameId } = socket.handshake.auth as { gameId: string }
+    const playerId = socket.data.playerId as string
 
     let room = rooms.get(gameId)
     if (!room) {

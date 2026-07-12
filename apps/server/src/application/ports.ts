@@ -22,6 +22,15 @@ export interface RealtimeGateway {
   gameStarted(gameId: string): void
 }
 
+/**
+ * Turns a client credential (Firebase ID token) into a trusted identity.
+ * Every transport authenticates through this port; tests inject a fake.
+ */
+export interface TokenVerifier {
+  /** Resolves the verified player, or null when the token is invalid/expired. */
+  verify(token: string): Promise<PlayerInfo | null>
+}
+
 /** Seat control as GameService sees it (implemented by AbandonmentService). */
 export interface GameSessionMonitor {
   /** Throws while the game is paused waiting on an abandoned seat. */

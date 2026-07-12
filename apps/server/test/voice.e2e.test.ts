@@ -3,6 +3,7 @@ import type { AddressInfo } from 'node:net'
 import { io, type Socket } from 'socket.io-client'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { createApp, type AppInstance } from '../src/app'
+import { fakeTokenVerifier, tokenFor } from './fake-verifier'
 
 /**
  * End-to-end voice signaling over the /voice namespace: joining delivers the
@@ -27,7 +28,7 @@ class VoiceClient {
   mutes: { playerId: string; micMuted: boolean }[] = []
 
   constructor(baseUrl: string, gameId: string, playerId: string) {
-    this.socket = io(`${baseUrl}/voice`, { auth: { gameId, playerId } })
+    this.socket = io(`${baseUrl}/voice`, { auth: { gameId, token: tokenFor(playerId) } })
     this.socket.on('voice:roster', (roster: VoicePresence[]) => this.rosters.push(roster))
     this.socket.on('voice:peer-joined', (peer: VoicePresence) => this.joined.push(peer))
     this.socket.on('voice:peer-left', ({ playerId }: { playerId: string }) =>
@@ -53,7 +54,7 @@ describe('voice signaling over /voice', () => {
   }
 
   beforeAll(async () => {
-    app = createApp()
+    app = createApp({ tokenVerifier: fakeTokenVerifier })
     await new Promise<void>((resolve) => app.httpServer.listen(0, resolve))
     baseUrl = `http://localhost:${(app.httpServer.address() as AddressInfo).port}`
   })
@@ -64,6 +65,15 @@ describe('voice signaling over /voice', () => {
 
   afterAll(async () => {
     await app.close()
+  })
+
+  it('refuses handshakes without a valid token', async () => {
+    const socket = io(`${baseUrl}/voice`, { auth: { gameId: 'g0', playerId: 'alice' } })
+    const errors: Error[] = []
+    socket.on('connect_error', (err) => errors.push(err))
+    await waitFor(() => errors.length > 0, 'handshake rejected')
+    expect(errors[0]!.message).toBe('Unauthorized')
+    socket.disconnect()
   })
 
   it('gives the joiner the roster and tells the room who arrived', async () => {
@@ -124,7 +134,9 @@ describe('voice signaling over /voice', () => {
     await waitFor(() => bob.mutes.length === 1, 'bob hears the mute')
     expect(bob.mutes[0]).toEqual({ playerId: 'alice', micMuted: true })
 
-    const res = await fetch(`${baseUrl}/api/games/g3/voice`)
+    const res = await fetch(`${baseUrl}/api/games/g3/voice`, {
+      headers: { Authorization: `Bearer ${tokenFor('alice')}` },
+    })
     const { participants } = (await res.json()) as { participants: VoicePresence[] }
     expect(participants).toEqual(
       expect.arrayContaining([
@@ -146,7 +158,9 @@ describe('voice signaling over /voice', () => {
     alice.socket.disconnect()
     await waitFor(() => !alice.socket.connected, 'alice disconnected')
 
-    const res = await fetch(`${baseUrl}/api/games/g4/voice`)
+    const res = await fetch(`${baseUrl}/api/games/g4/voice`, {
+      headers: { Authorization: `Bearer ${tokenFor('alice')}` },
+    })
     const { participants } = (await res.json()) as { participants: VoicePresence[] }
     expect(participants).toEqual([])
   })
@@ -158,7 +172,9 @@ describe('voice signaling over /voice', () => {
     expect(aliceAgain.rosters[0]).toEqual([]) // she only replaced herself
     await waitFor(() => !alice.socket.connected, 'stale connection dropped')
 
-    const res = await fetch(`${baseUrl}/api/games/g5/voice`)
+    const res = await fetch(`${baseUrl}/api/games/g5/voice`, {
+      headers: { Authorization: `Bearer ${tokenFor('alice')}` },
+    })
     const { participants } = (await res.json()) as { participants: VoicePresence[] }
     expect(participants).toEqual([{ playerId: 'alice', micMuted: false }])
   })

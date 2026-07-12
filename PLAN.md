@@ -75,15 +75,15 @@ auth-only (no Firestore for game history).
 - [x] Repository ports (`GameHistoryRepository`, `PlayerRepository`) + Drizzle schema/migration
 - [x] Persist events continuously and finalize game rows at `game-ended`
 - [ ] Active-game persistence (Redis snapshot behind `GameRepository`) so games survive server restarts — *optional*
-- [ ] Player profile / stats API (needs Firebase token verify first — see §6)
+- [ ] Player profile / stats API (unblocked — §6 token verify shipped)
 - [ ] Materialized rollups for fast profile queries — *optional, after raw event log*
 
 ## 6. Authentication & Security
 
-- [ ] Verify Firebase ID tokens server-side (middleware in `apps/server/http`); stop trusting `playerId` from the request body
-- [ ] Replace hardcoded game-master UID list with roles (env config or Firestore)
-- [ ] Restrict CORS to the real frontend origin (currently `*`)
-- [ ] Move Firebase client config to env vars in the Next.js app
+- [x] Verify Firebase ID tokens server-side (`TokenVerifier` port + jose/JWKS impl, `requireAuth` middleware); identity comes ONLY from the token — `playerId`/`user` removed from every request body. SSE takes `?token=` (no token = spectator: public events only, no presence); socket.io and `/voice` verify the handshake token. Client sends `Authorization: Bearer` automatically and rebuilds SSE connections with a fresh token on reconnect. The `uid` cookie is gone (game snapshot now fetched client-side)
+- [x] Replace hardcoded game-master UID list with roles — obsolete: the list died with the legacy POC; leader-only rules (bots/start) are enforced per-lobby against the verified uid
+- [x] Restrict CORS to the real frontend origin: `WEB_ORIGINS` env allowlist (unset = local dev, any origin)
+- [x] Move Firebase client config to env vars in the Next.js app (all fields overridable, public defaults kept)
 
 ## 7. Design / UX
 

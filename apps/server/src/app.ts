@@ -8,10 +8,15 @@ import { GameHistoryRecorder } from './application/game-history'
 import { GameService } from './application/game-service'
 import { LobbyRegistry } from './application/lobby'
 import { PresenceTracker } from './application/presence'
-import type { GameHistoryRepository, PlayerRepository } from './application/ports'
+import type {
+  GameHistoryRepository,
+  PlayerRepository,
+  TokenVerifier,
+} from './application/ports'
 import { createDb } from './db/client'
 import { CompositeGateway } from './infra/composite-gateway'
 import { ConnectionRegistry } from './infra/connection-registry'
+import { FirebaseTokenVerifier } from './infra/firebase-token-verifier'
 import { InMemoryGameRepository } from './infra/in-memory-game-repository'
 import {
   InMemoryGameHistoryRepository,
@@ -25,6 +30,7 @@ import {
 import { SocketIoGateway, registerConnectionHandlers } from './infra/socket-io-gateway'
 import { SseGateway } from './infra/sse-gateway'
 import { registerVoiceHandlers } from './infra/voice-gateway'
+import { requireAuth } from './http/auth'
 import { createRoutes } from './http/routes'
 
 export interface AppInstance {
@@ -42,6 +48,8 @@ export interface AppOptions {
   players?: PlayerRepository
   /** When set (or via DATABASE_URL), use Postgres instead of in-memory history. */
   databaseUrl?: string
+  /** Override token verification (tests inject a fake; default verifies Firebase ID tokens). */
+  tokenVerifier?: TokenVerifier
 }
 
 /**
@@ -52,10 +60,22 @@ export interface AppOptions {
 export const createApp = (options: AppOptions = {}): AppInstance => {
   const app = express()
   app.use(express.json())
-  app.use(cors())
+
+  // WEB_ORIGINS locks CORS to the real frontend (comma-separated list, set in
+  // production). Unset means local dev: reflect any origin so LAN phones work.
+  const origins = (process.env.WEB_ORIGINS ?? '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+  const corsOrigin = origins.length ? origins : true
+  app.use(cors({ origin: corsOrigin }))
 
   const httpServer = http.createServer(app)
-  const io = new Server(httpServer, { cors: { origin: '*' } })
+  const io = new Server(httpServer, { cors: { origin: corsOrigin } })
+
+  const verifier =
+    options.tokenVerifier ??
+    new FirebaseTokenVerifier(process.env.FIREBASE_PROJECT_ID ?? 'bridou-online')
 
   const games = new InMemoryGameRepository()
   const abandonment = new AbandonmentService({ games, ...options.abandonment })
@@ -86,12 +106,12 @@ export const createApp = (options: AppOptions = {}): AppInstance => {
   // Presence flows in from every transport; abandonment reacts to it
   const registry = new ConnectionRegistry()
   const presence = new PresenceTracker(abandonment)
-  registerConnectionHandlers(io, registry, presence)
+  registerConnectionHandlers(io, registry, presence, verifier)
   const sse = new SseGateway(presence)
 
   // Voice chat: browsers exchange WebRTC signaling through the /voice
   // namespace; the audio itself flows peer-to-peer and never touches us
-  const voiceRooms = registerVoiceHandlers(io)
+  const voiceRooms = registerVoiceHandlers(io, verifier)
 
   // Events flow out through both transports, teed to abandonment, eviction,
   // and durable history (append-only event log + finished-game rows)
@@ -115,11 +135,11 @@ export const createApp = (options: AppOptions = {}): AppInstance => {
   })
   abandonment.bind({ gateway, actions: service })
 
-  app.get('/api/games/:gameId/events', sse.handler())
-  app.get('/api/games/:gameId/voice', (req, res) => {
-    res.json({ participants: voiceRooms.rosterOf(req.params.gameId) })
+  app.get('/api/games/:gameId/events', sse.handler(verifier))
+  app.get('/api/games/:gameId/voice', requireAuth(verifier), (req, res) => {
+    res.json({ participants: voiceRooms.rosterOf(req.params.gameId ?? '') })
   })
-  app.use(createRoutes(service))
+  app.use(createRoutes(service, verifier))
 
   const close = async (): Promise<void> => {
     sse.close()

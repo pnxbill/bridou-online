@@ -3,6 +3,8 @@ import type { PlayerInfo } from '@bridou/shared'
 import { Router, type Request, type Response } from 'express'
 import { ForbiddenError, NotFoundError } from '../application/errors'
 import type { GameService } from '../application/game-service'
+import type { TokenVerifier } from '../application/ports'
+import { requireAuth, type AuthedRequest } from './auth'
 
 const statusFor = (err: unknown): number => {
   if (err instanceof NotFoundError) return 404
@@ -23,14 +25,10 @@ const respond = (res: Response, fn: () => object): void => {
   }
 }
 
-const parsePlayerInfo = (user: unknown): PlayerInfo => {
-  const candidate = user as Partial<PlayerInfo> | undefined
-  if (!candidate?.id || !candidate.name) throw new GameError('Invalid player')
-  return {
-    id: String(candidate.id),
-    name: String(candidate.name),
-    ...(candidate.photoURL ? { photoURL: String(candidate.photoURL) } : {}),
-  }
+/** Identity proven by the bearer token — the only PlayerInfo the API trusts. */
+const player = (req: AuthedRequest): PlayerInfo => {
+  if (!req.player) throw new Error('Route is missing the auth middleware')
+  return req.player
 }
 
 const requireString = (value: unknown, name: string): string => {
@@ -38,91 +36,72 @@ const requireString = (value: unknown, name: string): string => {
   return value
 }
 
-export const createRoutes = (service: GameService): Router => {
+export const createRoutes = (service: GameService, verifier: TokenVerifier): Router => {
   const routes = Router()
+  const auth = requireAuth(verifier)
 
-  routes.post('/api/lobbies', (req: Request, res: Response) => {
-    respond(res, () => ({ lobby: service.createLobby(parsePlayerInfo(req.body.user)) }))
+  routes.post('/api/lobbies', auth, (req: Request, res: Response) => {
+    respond(res, () => ({ lobby: service.createLobby(player(req)) }))
   })
 
+  // Public on purpose: invite links let logged-out friends watch the lobby fill up.
   routes.get('/api/lobbies/:code', (req: Request, res: Response) => {
     respond(res, () => ({ lobby: service.lobbyState(requireString(req.params.code, 'code')) }))
   })
 
-  routes.post('/api/lobbies/:code/join', (req: Request, res: Response) => {
+  routes.post('/api/lobbies/:code/join', auth, (req: Request, res: Response) => {
     respond(res, () => ({
-      lobby: service.joinLobby(
-        requireString(req.params.code, 'code'),
-        parsePlayerInfo(req.body.user),
-      ),
+      lobby: service.joinLobby(requireString(req.params.code, 'code'), player(req)),
     }))
   })
 
-  routes.post('/api/lobbies/:code/leave', (req: Request, res: Response) => {
+  routes.post('/api/lobbies/:code/leave', auth, (req: Request, res: Response) => {
     respond(res, () => ({
-      lobby: service.leaveLobby(
-        requireString(req.params.code, 'code'),
-        requireString(req.body.playerId, 'playerId'),
-      ),
+      lobby: service.leaveLobby(requireString(req.params.code, 'code'), player(req).id),
     }))
   })
 
-  routes.post('/api/lobbies/:code/bots', (req: Request, res: Response) => {
-    respond(res, () =>
-      service.addBotToLobby(
-        requireString(req.params.code, 'code'),
-        requireString(req.body.playerId, 'playerId'),
-      ),
-    )
+  routes.post('/api/lobbies/:code/bots', auth, (req: Request, res: Response) => {
+    respond(res, () => service.addBotToLobby(requireString(req.params.code, 'code'), player(req).id))
   })
 
-  routes.post('/api/lobbies/:code/start', (req: Request, res: Response) => {
+  routes.post('/api/lobbies/:code/start', auth, (req: Request, res: Response) => {
     respond(res, () => ({
-      gameId: service.startGame(
-        requireString(req.params.code, 'code'),
-        requireString(req.body.playerId, 'playerId'),
-      ).id,
+      gameId: service.startGame(requireString(req.params.code, 'code'), player(req).id).id,
     }))
   })
 
-  routes.get('/api/current-game', (req: Request, res: Response) => {
-    respond(res, () => service.currentGame(requireString(req.query.playerId, 'playerId')))
+  routes.get('/api/current-game', auth, (req: Request, res: Response) => {
+    respond(res, () => service.currentGame(player(req).id))
   })
 
-  routes.post('/api/enter-game', (req: Request, res: Response) => {
+  routes.post('/api/enter-game', auth, (req: Request, res: Response) => {
     respond(res, () => ({
-      game: service.enterGame(
-        requireString(req.body.gameId, 'gameId'),
-        requireString(req.body.playerId, 'playerId'),
-      ),
+      game: service.enterGame(requireString(req.body.gameId, 'gameId'), player(req).id),
     }))
   })
 
-  routes.post('/api/bet', (req: Request, res: Response) => {
+  routes.post('/api/bet', auth, (req: Request, res: Response) => {
     respond(res, () => {
       const bet = Number(req.body.bet)
       if (Number.isNaN(bet)) throw new GameError('Missing bet')
-      service.placeBet(
-        requireString(req.body.gameId, 'gameId'),
-        requireString(req.body.playerId, 'playerId'),
-        bet,
-      )
+      service.placeBet(requireString(req.body.gameId, 'gameId'), player(req).id, bet)
       return {}
     })
   })
 
-  routes.post('/api/play-card', (req: Request, res: Response) => {
+  routes.post('/api/play-card', auth, (req: Request, res: Response) => {
     respond(res, () => {
       service.playCard(
         requireString(req.body.gameId, 'gameId'),
-        requireString(req.body.playerId, 'playerId'),
+        player(req).id,
         requireString(req.body.card, 'card'),
       )
       return {}
     })
   })
 
-  routes.get('/api/close-score', (req: Request, res: Response) => {
+  routes.get('/api/close-score', auth, (req: Request, res: Response) => {
     respond(res, () => {
       service.closeScoreboard(requireString(req.query.gameId, 'gameId'))
       return {}
