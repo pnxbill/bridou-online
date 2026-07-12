@@ -91,6 +91,49 @@ const sampleOpponentHands = (
   return hands
 }
 
+/**
+ * Blind last round: opponents' cards are known; sample OUR hidden card from
+ * the remaining deck. Same information asymmetry humans get.
+ */
+const sampleOwnHandBlind = (
+  round: RoundSnapshot,
+  myId: string,
+  opponentHands: Record<string, Card[]>,
+  rng: Rng,
+): Map<string, Card[]> => {
+  const known = new Set<Card>([
+    ...Object.values(opponentHands).flat(),
+    ...allPlayedCards(round),
+    round.trunfo,
+  ])
+  const pool = shuffle(
+    createDeck().filter((c) => !known.has(c)),
+    rng,
+  )
+  const mySize = handSizes(round, myId, 1).get(myId) ?? 1
+  const hands = new Map<string, Card[]>()
+  hands.set(myId, pool.slice(0, mySize))
+  for (const p of round.players) {
+    if (p.id === myId) continue
+    hands.set(p.id, [...(opponentHands[p.id] ?? [])])
+  }
+  return hands
+}
+
+/** Pick the right sampler: normal (hide opponents) vs blind (hide self). */
+const sampleHiddenCards = (
+  round: RoundSnapshot,
+  myId: string,
+  myHand: readonly Card[],
+  opponentHands: Record<string, Card[]> | undefined,
+  rng: Rng,
+): Map<string, Card[]> => {
+  if (opponentHands && Object.keys(opponentHands).length > 0) {
+    return sampleOwnHandBlind(round, myId, opponentHands, rng)
+  }
+  return sampleOpponentHands(round, myId, myHand, rng)
+}
+
 const trickWinnerId = (
   order: string[],
   played: Card[],
@@ -188,7 +231,8 @@ const madeSoFar = (round: RoundSnapshot): Map<string, number> => {
 /**
  * Monte Carlo bot: samples legal deals of the hidden cards, plays each out
  * with the heuristic policy, and picks the bet/card with the best average
- * Bridou round score. Still only sees its own hand + the public snapshot.
+ * Bridou round score. Uses the same view as a human: own hand (or hidden on
+ * the blind round) + public snapshot + revealed opponent hands when blind.
  */
 export const createMonteCarloBot = (options: MonteCarloOptions = {}): BotStrategy => {
   const samples = options.samples ?? 100
@@ -196,13 +240,13 @@ export const createMonteCarloBot = (options: MonteCarloOptions = {}): BotStrateg
 
   return {
     decideBet(view: BetView): number {
-      const { snapshot, playerId, hand, availableBets } = view
+      const { snapshot, playerId, hand, availableBets, opponentHands } = view
       const round = snapshot.currentRound
       const trunfoSuit = cardSuit(round.trunfo)
       const scores = new Map<number, number>(availableBets.map((b) => [b, 0]))
 
       for (let i = 0; i < samples; i++) {
-        const hands = sampleOpponentHands(round, playerId, hand, rng)
+        const hands = sampleHiddenCards(round, playerId, hand, opponentHands, rng)
         for (const bet of availableBets) {
           const seats: SimSeat[] = round.players.map((p) => ({
             id: p.id,
@@ -243,13 +287,13 @@ export const createMonteCarloBot = (options: MonteCarloOptions = {}): BotStrateg
     },
 
     decideCard(view: PlayView): Card {
-      const { snapshot, playerId, playableCards } = view
+      const { snapshot, playerId, playableCards, opponentHands } = view
       const round = snapshot.currentRound
       const turn = round.currentTurn
       const playable = playableCards.filter((c) => !c.disabled).map((c) => c.value)
       if (!playable.length) throw new Error('Bot was asked to play with no playable cards')
 
-      // Single legal card — no need to sample
+      // Single legal card — no need to sample (includes blind `HIDDEN_CARD`)
       if (playable.length === 1) return playable[0]!
 
       const trunfoSuit = cardSuit(round.trunfo)
@@ -259,9 +303,10 @@ export const createMonteCarloBot = (options: MonteCarloOptions = {}): BotStrateg
       const order = turn?.players.map((p) => p.id) ?? round.players.map((p) => p.id)
       const alreadyPlayed = turn?.playedCards ?? []
       const scores = new Map<Card, number>(playable.map((c) => [c, 0]))
+      const myHand = playableCards.map((c) => c.value)
 
       for (let i = 0; i < samples; i++) {
-        const hands = sampleOpponentHands(round, playerId, playableCards.map((c) => c.value), rng)
+        const hands = sampleHiddenCards(round, playerId, myHand, opponentHands, rng)
 
         for (const card of playable) {
           // Rebuild seats from this sample; apply our candidate card first

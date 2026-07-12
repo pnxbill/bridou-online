@@ -75,6 +75,57 @@ describe('start', () => {
   })
 })
 
+describe('blind last round', () => {
+  it('hides each player\'s own card and reveals everyone else\'s', () => {
+    const { round, publisher, players } = makeRound({ roundNumber: 13, playerCount: 3 })
+    round.start()
+
+    expect(round.isBlind).toBe(true)
+    expect(players.every((p) => p.cards.length === 1)).toBe(true)
+
+    const dealt = publisher.ofType('cards-dealt')
+    expect(dealt).toHaveLength(3)
+    dealt.forEach((event) => {
+      expect(event.cards).toEqual(['hidden'])
+    })
+
+    const reveals = publisher.ofType('opponent-hands')
+    expect(reveals).toHaveLength(3)
+    for (const event of reveals) {
+      const others = players.filter((p) => p.id !== event.playerId)
+      expect(Object.keys(event.hands).sort()).toEqual(others.map((p) => p.id).sort())
+      for (const other of others) {
+        expect(event.hands[other.id]).toEqual(other.cards)
+      }
+      expect(event.hands[event.playerId]).toBeUndefined()
+    }
+  })
+
+  it('resolves a HIDDEN_CARD play to the player\'s real card', () => {
+    const { round, publisher, players } = makeRound({ roundNumber: 13, playerCount: 2 })
+    round.start()
+    round.placeBet('p1', 0)
+    round.placeBet('p2', 0)
+
+    const real = players[0]!.cards[0]!
+    round.playCard('p1', 'hidden')
+    expect(publisher.last('card-played')).toMatchObject({
+      playerId: 'p1',
+      card: real,
+    })
+    expect(players[0]!.cards).toEqual([])
+  })
+
+  it('does not emit opponent-hands on normal 1-card round 1', () => {
+    const { round, publisher } = makeRound({ roundNumber: 1, playerCount: 3 })
+    round.start()
+    expect(publisher.ofType('opponent-hands')).toHaveLength(0)
+    publisher.ofType('cards-dealt').forEach((event) => {
+      expect(event.cards[0]).not.toBe('hidden')
+    })
+  })
+})
+
 describe('betting', () => {
   it('offers 0..cards to everyone except the last bettor', () => {
     const { round } = makeRound({ roundNumber: 3, playerCount: 3 })

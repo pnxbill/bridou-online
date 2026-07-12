@@ -1,24 +1,29 @@
 import {
+  HIDDEN_CARD,
   cardSuit,
+  isBlindRound,
   rankValue,
   type Card,
   type GameSnapshot,
   type HandCard,
 } from '@bridou/shared'
+import { createDeck } from './deck'
 
 /**
  * Everything a bot may look at when deciding. Built ONLY from the public
- * game snapshot plus the seat's own perspective — the same information a
- * human player's screen has. Other players' hands are structurally absent
- * from these types, so a strategy cannot cheat.
+ * game snapshot plus the seat's client perspective — the same information a
+ * human player's screen has. On the blind last round the seat's own cards
+ * are `HIDDEN_CARD` and `opponentHands` reveals everyone else.
  */
 export interface BetView {
   playerId: string
   snapshot: GameSnapshot
-  /** The seat's own hand. */
+  /** The seat's own hand (may be `HIDDEN_CARD` placeholders on the blind round). */
   hand: Card[]
   /** Legal bets right now (never empty when asked to bet). */
   availableBets: number[]
+  /** Blind round only: other seats' remaining cards. */
+  opponentHands?: Record<string, Card[]>
 }
 
 export interface PlayView {
@@ -26,6 +31,8 @@ export interface PlayView {
   snapshot: GameSnapshot
   /** The seat's own hand with unplayable cards disabled (never all disabled when asked to play). */
   playableCards: HandCard[]
+  /** Blind round only: other seats' remaining cards. */
+  opponentHands?: Record<string, Card[]>
 }
 
 export interface BotStrategy {
@@ -141,12 +148,42 @@ export const heuristicPickBet = (args: {
 }
 
 /**
+ * Blind last round: own card unknown, opponents' cards known. Average the
+ * win chance of every card still in the deck, then snap to a legal bet.
+ */
+export const heuristicPickBlindBet = (args: {
+  opponentHands: Record<string, Card[]>
+  trunfo: Card
+  numOfPlayers: number
+  availableBets: number[]
+}): number => {
+  const known = new Set<Card>([args.trunfo, ...Object.values(args.opponentHands).flat()])
+  const pool = createDeck().filter((c) => !known.has(c))
+  if (!pool.length) return snapBet(0, args.availableBets)
+
+  const trunfoSuit = cardSuit(args.trunfo)
+  const expected =
+    pool.reduce((acc, card) => acc + winChance(card, trunfoSuit, args.numOfPlayers, 1), 0) /
+    pool.length
+  return snapBet(Math.round(expected), args.availableBets)
+}
+
+/**
  * A rule-abiding heuristic player. Bets its expected trick count; then plays
  * to land EXACTLY on its bet — hunting tricks while short, ducking once made.
+ * On the blind round it never peeks at its own card.
  */
 export const createHeuristicBot = (): BotStrategy => ({
   decideBet(view: BetView): number {
     const round = view.snapshot.currentRound
+    if (isBlindRound(round.currentRoundNumber)) {
+      return heuristicPickBlindBet({
+        opponentHands: view.opponentHands ?? {},
+        trunfo: round.trunfo,
+        numOfPlayers: round.numOfPlayers,
+        availableBets: view.availableBets,
+      })
+    }
     return heuristicPickBet({
       hand: view.hand,
       trunfoSuit: cardSuit(round.trunfo),
@@ -162,6 +199,9 @@ export const createHeuristicBot = (): BotStrategy => ({
     const turn = round.currentTurn
     const playable = playableCards.filter((c) => !c.disabled).map((c) => c.value)
     if (!playable.length) throw new Error('Bot was asked to play with no playable cards')
+
+    // Blind round: only the hidden slot is playable — server resolves the real card.
+    if (playable.every((c) => c === HIDDEN_CARD)) return HIDDEN_CARD
 
     const me = round.players.find((p) => p.id === playerId)
     const made = round.whoMade.filter((w) => w.id === playerId).length

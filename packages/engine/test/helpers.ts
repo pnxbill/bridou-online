@@ -60,7 +60,27 @@ export const makeRoundPlayer = (id: string, cards: string[]): RoundPlayerState =
 })
 
 /** Anything bots can act on — a Game or a single Round. */
-type Actor = Pick<Game, 'placeBet' | 'playCard'>
+type Actor = Pick<Game, 'placeBet' | 'playCard'> & {
+  clientPerspective?: Game['clientPerspective']
+  maskHandForClient?: import('../src/round').Round['maskHandForClient']
+  getPlayableCards?: import('../src/round').Round['getPlayableCards']
+  opponentHandsFor?: import('../src/round').Round['opponentHandsFor']
+  snapshot?: Game['snapshot']
+}
+
+const clientViewFor = (actor: Actor, playerId: string) => {
+  if (actor.clientPerspective) return actor.clientPerspective(playerId)
+  // Round-only fixtures: mirror Game.clientPerspective
+  const playable =
+    actor.maskHandForClient && actor.getPlayableCards
+      ? actor.maskHandForClient(actor.getPlayableCards(playerId))
+      : []
+  return {
+    playableCards: playable,
+    availableBets: [] as number[],
+    opponentHands: actor.opponentHandsFor?.(playerId),
+  }
+}
 
 /** Strategies per seat; seats without one answer pseudo-randomly. */
 export interface DriverOptions {
@@ -88,21 +108,25 @@ export const drivePendingRequests = (
     ]
 
     if (event.type === 'bet-requested') {
+      const view = clientViewFor(game, event.playerId)
       const bet = strategy
         ? strategy.decideBet({
             playerId: event.playerId,
-            snapshot: (game as Game).snapshot(),
-            hand: (game as Game).perspective(event.playerId).playableCards.map((c) => c.value),
+            snapshot: game.snapshot!(),
+            hand: view.playableCards.map((c) => c.value),
             availableBets: event.availableBets,
+            opponentHands: view.opponentHands,
           })
         : event.availableBets[Math.floor(rng() * event.availableBets.length)]!
       game.placeBet(event.playerId, bet)
     } else if (event.type === 'play-requested') {
+      const view = clientViewFor(game, event.playerId)
       const card = strategy
         ? strategy.decideCard({
             playerId: event.playerId,
-            snapshot: (game as Game).snapshot(),
+            snapshot: game.snapshot!(),
             playableCards: event.cards,
+            opponentHands: view.opponentHands,
           })
         : event.cards.filter((c) => !c.disabled)[
             Math.floor(rng() * event.cards.filter((c) => !c.disabled).length)

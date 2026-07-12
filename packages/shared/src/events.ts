@@ -17,6 +17,8 @@ export type DomainEvent =
   | { type: 'round-ended'; bailadores: RoundPlayer[] }
   // private, per-player
   | { type: 'cards-dealt'; playerId: string; cards: Card[] }
+  /** Blind round only: everyone else's cards, never the viewer's. */
+  | { type: 'opponent-hands'; playerId: string; hands: Record<string, Card[]> }
   | { type: 'bet-requested'; playerId: string; availableBets: number[] }
   | { type: 'play-requested'; playerId: string; cards: HandCard[] }
   // betting
@@ -39,13 +41,14 @@ export type DomainEventType = DomainEvent['type']
 
 const PRIVATE_EVENTS: ReadonlySet<DomainEventType> = new Set([
   'cards-dealt',
+  'opponent-hands',
   'bet-requested',
   'play-requested',
 ])
 
 export type PrivateEvent = Extract<
   DomainEvent,
-  { type: 'cards-dealt' | 'bet-requested' | 'play-requested' }
+  { type: 'cards-dealt' | 'opponent-hands' | 'bet-requested' | 'play-requested' }
 >
 
 export const isPrivateEvent = (event: DomainEvent): event is PrivateEvent =>

@@ -1,5 +1,5 @@
 import type { HandCard as LibHandCard, Rank, Suit } from '@bridou/cards-ui'
-import { cardRank, cardSuit, rankValue, type Card, type HandCard } from '@bridou/shared'
+import { HIDDEN_CARD, cardRank, cardSuit, rankValue, type Card, type HandCard } from '@bridou/shared'
 
 /** Engine cards are `"A-♠️"` strings; the card components want rank + suit names. */
 const SUIT_BY_EMOJI: Record<string, Suit> = {
@@ -23,12 +23,24 @@ export const parseCard = (card: Card): CardParts => {
 export const toLibCard = (
   card: HandCard,
   variant: LibHandCard['variant'] = 'dark',
-): LibHandCard => ({
-  id: card.value,
-  ...parseCard(card.value),
-  disabled: card.disabled,
-  variant,
-})
+): LibHandCard => {
+  if (card.value === HIDDEN_CARD) {
+    return {
+      id: HIDDEN_CARD,
+      rank: 'A',
+      suit: 'spades',
+      faceUp: false,
+      disabled: card.disabled,
+      variant,
+    }
+  }
+  return {
+    id: card.value,
+    ...parseCard(card.value),
+    disabled: card.disabled,
+    variant,
+  }
+}
 
 const beats = (challenger: Card, incumbent: Card, ledSuit: string, trunfoSuit: string): boolean => {
   const cSuit = cardSuit(challenger)

@@ -160,6 +160,52 @@ describe('betting', () => {
   })
 })
 
+describe('blind last round', () => {
+  const base = { ...stateFromSnapshot(snapshot({ currentRoundNumber: 13 })), myId: 'me' }
+
+  it('opponent-hands fills the table; cards-dealt stays hidden', () => {
+    let state = apply(base, {
+      type: 'round-started',
+      round: roundSnapshot({ currentRoundNumber: 13, cardsForEachPlayer: 1 }),
+    })
+    state = apply(state, { type: 'cards-dealt', playerId: 'me', cards: ['hidden'] })
+    state = apply(state, {
+      type: 'opponent-hands',
+      playerId: 'me',
+      hands: { other: ['K-♥️'] },
+    })
+    expect(state.hand).toEqual([{ value: 'hidden', disabled: true }])
+    expect(state.opponentHands).toEqual({ other: ['K-♥️'] })
+  })
+
+  it('card-played clears my hidden slot and the opponent reveal', () => {
+    let state = apply(base, {
+      type: 'round-started',
+      round: roundSnapshot({ currentRoundNumber: 13, cardsForEachPlayer: 1 }),
+    })
+    state = {
+      ...state,
+      hand: [{ value: 'hidden', disabled: false }],
+      opponentHands: { other: ['K-♥️'] },
+    }
+    state = apply(state, {
+      type: 'card-played',
+      playerId: 'other',
+      card: 'K-♥️',
+      playedCards: ['K-♥️'],
+    })
+    expect(state.opponentHands).toEqual({})
+
+    state = apply(state, {
+      type: 'card-played',
+      playerId: 'me',
+      card: 'A-♠️',
+      playedCards: ['K-♥️', 'A-♠️'],
+    })
+    expect(state.hand).toEqual([])
+  })
+})
+
 describe('tricks', () => {
   const base = stateFromSnapshot(snapshot())
 

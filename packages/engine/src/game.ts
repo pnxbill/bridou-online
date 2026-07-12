@@ -122,11 +122,32 @@ export class Game {
     }
   }
 
-  /** What `playerId` sees and may do right now (their hand, their bets). */
+  /** What `playerId` sees and may do right now (their hand, their bets).
+   * Real card values — for tests / engine internals only. Bots and humans
+   * must use `clientPerspective` so the blind round stays fair. */
   perspective(playerId: string): PlayerPerspective {
     return {
       playableCards: this.currentRound.getPlayableCards(playerId),
       availableBets: this.currentRound.getAvailableBets(playerId),
+    }
+  }
+
+  /**
+   * Human client view: on the blind round, own cards are `HIDDEN_CARD` and
+   * `opponentHands` reveals everyone else's remaining cards.
+   */
+  clientPerspective(playerId: string): PlayerPerspective {
+    const playableCards = this.currentRound.maskHandForClient(
+      this.currentRound.getPlayableCards(playerId),
+    )
+    const availableBets = this.currentRound.getAvailableBets(playerId)
+    if (!this.currentRound.isBlind) {
+      return { playableCards, availableBets }
+    }
+    return {
+      playableCards,
+      availableBets,
+      opponentHands: this.currentRound.opponentHandsFor(playerId),
     }
   }
 

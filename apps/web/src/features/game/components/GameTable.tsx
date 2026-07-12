@@ -265,7 +265,7 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
       if (myTurn)
         return (
           <>
-            <b>Você</b> · quantas faz?
+            <b>Você</b> · {Object.keys(state.opponentHands).length ? 'cego · quantas faz?' : 'quantas faz?'}
           </>
         )
       return (
@@ -277,7 +277,7 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
     return (
       <>
         <b>Você</b> · fez {madeOf(me.id)}/{me.bet ?? 0}
-        {myTurn && ' · sua vez'}
+        {myTurn && (Object.keys(state.opponentHands).length ? ' · cego · sua vez' : ' · sua vez')}
       </>
     )
   }
@@ -321,6 +321,7 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
 
         {opponents.map((seat) => {
           const pos = seatPos.get(seat.id)!
+          const revealed = state.opponentHands[seat.id] ?? []
           return (
             <div
               key={seat.id}
@@ -340,6 +341,15 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
               </div>
               <span className={styles.seatName}>{seat.name}</span>
               {seatChip(seat, seat.id === activeId)}
+              {revealed.length > 0 && (
+                <div className={styles.seatHand} aria-label={`cartas de ${seat.name}`}>
+                  {revealed.map((card) => (
+                    <div key={card} className={styles.seatCard}>
+                      <PlayingCard id={`opp-${seat.id}-${card}`} {...parseCard(card)} variant={variant} />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )
         })}

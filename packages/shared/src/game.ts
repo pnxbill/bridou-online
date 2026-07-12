@@ -5,6 +5,12 @@ export const MAX_PLAYERS = 7
 export const MAX_CARDS_PER_PLAYER = 7
 export const TOTAL_ROUNDS = 13
 
+/** Wire placeholder for a player's own card on the last (blind) round. */
+export const HIDDEN_CARD = 'hidden'
+
+/** Last round: you see everyone else's card, not your own. */
+export const isBlindRound = (roundNumber: number): boolean => roundNumber === TOTAL_ROUNDS
+
 export interface PlayerInfo {
   id: string
   name: string
@@ -63,6 +69,11 @@ export interface GameSnapshot {
 export interface PlayerPerspective {
   playableCards: HandCard[]
   availableBets: number[]
+  /**
+   * Other players' hands on the blind (last) round only. Empty/absent otherwise.
+   * Never includes the viewer's own cards.
+   */
+  opponentHands?: Record<string, Card[]>
 }
 
 /** A seat whose player left: the game is paused until `resumeAt` (epoch ms). */

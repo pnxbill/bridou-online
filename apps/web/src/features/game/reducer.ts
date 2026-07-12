@@ -7,6 +7,7 @@ import type {
   ScoreboardEntry,
   TurnSnapshot,
 } from '@bridou/shared'
+import { HIDDEN_CARD, isBlindRound } from '@bridou/shared'
 import type { GameEntry } from '@/lib/api'
 
 /** Everything the game screen needs, derived purely from snapshot + events. */
@@ -51,6 +52,11 @@ export interface GameViewState {
   abandoned: AbandonedSeat[]
   /** Seats currently played by the bot. */
   botSeats: string[]
+  /**
+   * Blind (last) round: other players' remaining cards, keyed by player id.
+   * Empty otherwise.
+   */
+  opponentHands: Record<string, Card[]>
 }
 
 export type GameAction =
@@ -91,6 +97,7 @@ export const stateFromSnapshot = (snapshot: GameEntry, myId = ''): GameViewState
   gameOver: snapshot.finished ?? false,
   abandoned: snapshot.abandoned ?? [],
   botSeats: snapshot.botSeats ?? [],
+  opponentHands: snapshot.opponentHands ?? {},
 })
 
 const applyEvent = (state: GameViewState, event: DomainEvent): GameViewState => {
@@ -112,6 +119,7 @@ const applyEvent = (state: GameViewState, event: DomainEvent): GameViewState => 
         lastTrickWinnerId: null,
         bailadores: [],
         lastRoundResult: null,
+        opponentHands: {},
       }
     case 'trunfo-set':
       return { ...state, trunfo: event.trunfo }
@@ -121,6 +129,8 @@ const applyEvent = (state: GameViewState, event: DomainEvent): GameViewState => 
         hand: event.cards.map((value) => ({ value, disabled: true })),
         dealSeq: state.dealSeq + 1,
       }
+    case 'opponent-hands':
+      return { ...state, opponentHands: event.hands }
     case 'bet-requested':
       return { ...state, availableBets: event.availableBets }
     case 'play-requested':
@@ -139,17 +149,27 @@ const applyEvent = (state: GameViewState, event: DomainEvent): GameViewState => 
         currentTurn: event.turn,
         playedCards: event.turn.playedCards,
       }
-    case 'card-played':
+    case 'card-played': {
+      const opponentHands = { ...state.opponentHands }
+      if (opponentHands[event.playerId]) {
+        const remaining = opponentHands[event.playerId]!.filter((c) => c !== event.card)
+        if (remaining.length) opponentHands[event.playerId] = remaining
+        else delete opponentHands[event.playerId]
+      }
       return {
         ...state,
         playedCards: event.playedCards,
+        opponentHands,
         // my own play leaves my hand immediately (the server only refreshes
-        // the hand on the next prompt)
+        // the hand on the next prompt). Blind round: remove the hidden slot.
         hand:
           event.playerId === state.myId
-            ? state.hand.filter((c) => c.value !== event.card)
+            ? state.hand.filter((c) =>
+                isBlindRound(state.roundNumber) ? c.value !== HIDDEN_CARD : c.value !== event.card,
+              )
             : state.hand,
       }
+    }
     case 'turn-ended':
       return {
         ...state,
@@ -168,6 +188,7 @@ const applyEvent = (state: GameViewState, event: DomainEvent): GameViewState => 
         ...state,
         bailadores: event.bailadores,
         lastRoundResult: { round: state.roundNumber, bailadores: event.bailadores },
+        opponentHands: {},
       }
     case 'scoreboard-shown':
       return { ...state, scoreboard: event.scoreboard, bailadores: [], lastRoundResult: null }

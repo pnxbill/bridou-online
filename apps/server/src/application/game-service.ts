@@ -135,7 +135,7 @@ export class GameService {
 
     return {
       ...game.snapshot(),
-      ...game.perspective(playerId),
+      ...game.clientPerspective(playerId),
       ...this.sessions.sessionState(gameId),
       time: Date.now(),
     }

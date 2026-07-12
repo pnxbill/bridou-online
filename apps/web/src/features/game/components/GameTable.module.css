@@ -231,6 +231,27 @@
   }
 }
 
+/* Blind round: face-up cards revealed at each opponent seat */
+.seatHand {
+  display: flex;
+  gap: 2px;
+  margin-top: 2px;
+  justify-content: center;
+}
+
+.seatCard {
+  width: 36px;
+  height: 50px;
+  overflow: hidden;
+  border-radius: 6px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+}
+
+.seatCard :global(.card) {
+  transform: scale(0.36);
+  transform-origin: top left;
+}
+
 /* played cards sit between the seat and the table center */
 
 .played {

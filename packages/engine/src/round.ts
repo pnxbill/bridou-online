@@ -1,5 +1,7 @@
 import {
+  HIDDEN_CARD,
   MAX_CARDS_PER_PLAYER,
+  isBlindRound,
   type Card,
   type EventPublisher,
   type HandCard,
@@ -52,6 +54,10 @@ export class Round {
     this.deps = deps
   }
 
+  get isBlind(): boolean {
+    return isBlindRound(this.roundNumber)
+  }
+
   /** Shuffles, deals, reveals the trunfo and asks the first player for a bet. */
   start(): void {
     const deck = shuffle(createDeck(), this.deps.rng)
@@ -67,13 +73,45 @@ export class Round {
     publisher.publish({ type: 'round-started', round: this.snapshot() })
     publisher.publish({ type: 'trunfo-set', trunfo: this.trunfo })
     this.players.forEach((player) => {
-      publisher.publish({ type: 'cards-dealt', playerId: player.id, cards: [...player.cards] })
+      // Blind round: own card stays face-down on the wire; everyone else's is revealed.
+      publisher.publish({
+        type: 'cards-dealt',
+        playerId: player.id,
+        cards: this.isBlind ? player.cards.map(() => HIDDEN_CARD) : [...player.cards],
+      })
+      if (this.isBlind) {
+        publisher.publish({
+          type: 'opponent-hands',
+          playerId: player.id,
+          hands: this.opponentHandsFor(player.id),
+        })
+      }
     })
     publisher.publish({
       type: 'bet-requested',
       playerId: this.currentPlayer.id,
       availableBets: this.getAvailableBets(this.currentPlayer.id),
     })
+  }
+
+  /** Other players' remaining cards — for the blind round only. */
+  opponentHandsFor(viewerId: string): Record<string, Card[]> {
+    if (!this.isBlind) return {}
+    const hands: Record<string, Card[]> = {}
+    for (const player of this.players) {
+      if (player.id === viewerId || player.cards.length === 0) continue
+      hands[player.id] = [...player.cards]
+    }
+    return hands
+  }
+
+  /**
+   * Client-facing hand: real values normally, `HIDDEN_CARD` placeholders on
+   * the blind round so the viewer never learns their own card from the wire.
+   */
+  maskHandForClient(cards: HandCard[]): HandCard[] {
+    if (!this.isBlind) return cards
+    return cards.map((c) => ({ value: HIDDEN_CARD, disabled: c.disabled }))
   }
 
   get currentPlayer(): RoundPlayerState {
@@ -112,17 +150,32 @@ export class Round {
   playCard(playerId: string, card: Card): void {
     if (!this.currentTurn) throw new GameError('No turn in progress')
     const turn = this.currentTurn
+    const resolved = this.resolvePlayCard(playerId, card)
 
-    turn.playCard(playerId, card)
+    turn.playCard(playerId, resolved)
     this.deps.publisher.publish({
       type: 'card-played',
       playerId,
-      card,
+      card: resolved,
       playedCards: [...turn.playedCards],
     })
 
     if (turn.isComplete) this.endTurn(turn)
     else this.requestPlay(turn)
+  }
+
+  /**
+   * On the blind round the client only has `HIDDEN_CARD` — resolve it to the
+   * player's real (only) remaining card server-side.
+   */
+  private resolvePlayCard(playerId: string, card: Card): Card {
+    if (card !== HIDDEN_CARD) return card
+    if (!this.isBlind) throw new GameError("Can't play a hidden card")
+    const player = this.players.find((p) => p.id === playerId)
+    if (!player || player.cards.length !== 1) {
+      throw new GameError('No hidden card to play')
+    }
+    return player.cards[0]!
   }
 
   /**
@@ -147,7 +200,8 @@ export class Round {
   /**
    * The given player's hand with unplayable cards disabled. Outside their
    * turn (or while betting) the whole hand is disabled — this is also how a
-   * reconnecting client recovers its cards.
+   * reconnecting client recovers its cards. Always real values (bots need them);
+   * use `maskHandForClient` / `clientPerspective` for human clients.
    */
   getPlayableCards(playerId: string): HandCard[] {
     const isCurrentTurnPlayer =
@@ -189,7 +243,7 @@ export class Round {
     this.deps.publisher.publish({
       type: 'play-requested',
       playerId: turn.currentPlayer.id,
-      cards: turn.getPlayableCards(),
+      cards: this.maskHandForClient(turn.getPlayableCards()),
     })
   }
 

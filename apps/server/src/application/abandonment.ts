@@ -34,7 +34,7 @@ interface Deps extends AbandonmentConfig {
 /**
  * Owns seat control: watches presence, pauses the game while someone is in
  * their grace period, hands abandoned seats to the bot, and gives them back
- * on rejoin. The bot only sees `snapshot()` + `perspective()` — the same
+ * on rejoin. The bot only sees `snapshot()` + `clientPerspective()` — the same
  * information a human player has — and acts through the normal use-cases.
  */
 export class AbandonmentService implements PresenceListener {
@@ -180,11 +180,14 @@ export class AbandonmentService implements PresenceListener {
       if (round.betting) {
         const current = round.currentPlayer
         if (!bots.has(current.id)) return
+        // Same client perspective humans get — no peeking at own blind card.
+        const view = game.clientPerspective(current.id)
         const bet = this.bot.decideBet({
           playerId: current.id,
           snapshot: game.snapshot(),
-          hand: game.perspective(current.id).playableCards.map((c) => c.value),
-          availableBets: round.getAvailableBets(current.id),
+          hand: view.playableCards.map((c) => c.value),
+          availableBets: view.availableBets,
+          opponentHands: view.opponentHands,
         })
         this.actions.placeBet(gameId, current.id, bet)
         return
@@ -194,10 +197,12 @@ export class AbandonmentService implements PresenceListener {
       if (!turn || turn.isComplete) return
       const current = turn.currentPlayer
       if (!bots.has(current.id)) return
+      const view = game.clientPerspective(current.id)
       const card = this.bot.decideCard({
         playerId: current.id,
         snapshot: game.snapshot(),
-        playableCards: game.perspective(current.id).playableCards,
+        playableCards: view.playableCards,
+        opponentHands: view.opponentHands,
       })
       this.actions.playCard(gameId, current.id, card)
     } catch (err) {

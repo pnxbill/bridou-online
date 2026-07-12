@@ -170,6 +170,50 @@ describe('decideCard', () => {
   })
 })
 
+describe('blind last round', () => {
+  it('plays HIDDEN_CARD when that is the only playable slot', () => {
+    const players = [player('bot', 1), player('a', 0)]
+    const card = bot.decideCard({
+      playerId: 'bot',
+      snapshot: {
+        ...snapshot({
+          players,
+          cardsForEachPlayer: 1,
+          currentTurn: turn([], players),
+          betting: false,
+        }),
+        currentRoundNumber: 13,
+        currentRound: {
+          ...snapshot({ players, cardsForEachPlayer: 1, currentTurn: turn([], players), betting: false })
+            .currentRound,
+          currentRoundNumber: 13,
+        },
+      },
+      playableCards: [{ value: 'hidden', disabled: false }],
+      opponentHands: { a: ['K-♥️'] },
+    })
+    expect(card).toBe('hidden')
+  })
+
+  it('blind bet stays legal and ducks against a revealed ace of trunfo', () => {
+    const snap = snapshot({
+      trunfo: '2-♣️',
+      cardsForEachPlayer: 1,
+      players: [player('bot', null), player('a', null)],
+    })
+    snap.currentRoundNumber = 13
+    snap.currentRound.currentRoundNumber = 13
+    const bet = bot.decideBet({
+      playerId: 'bot',
+      snapshot: snap,
+      hand: ['hidden'],
+      availableBets: [0, 1],
+      opponentHands: { a: ['A-♣️'] },
+    })
+    expect(bet).toBe(0)
+  })
+})
+
 describe('bot strength', () => {
   it('beats random players on average over many games', () => {
     const botTotals: number[] = []

@@ -56,18 +56,25 @@ export default function MomentsDevPage() {
       </p>
 
       {moment === 'bailou' && (
-        <RoundEndOverlay key="1" result={{ round: 5, bailadores: [player('Carol', 2, 0)] }} />
+        <RoundEndOverlay
+          key="1"
+          playerId="Carol"
+          result={{ round: 5, bailadores: [player('Carol', 2, 0)] }}
+        />
       )}
       {moment === 'bailaram' && (
         <RoundEndOverlay
           key="2"
+          playerId="Ana"
           result={{
             round: 7,
             bailadores: [player('Rafa', 1, 3), player('Bot Marley', 0, 1, true)],
           }}
         />
       )}
-      {moment === 'ninguem' && <RoundEndOverlay key="3" result={{ round: 4, bailadores: [] }} />}
+      {moment === 'ninguem' && (
+        <RoundEndOverlay key="3" playerId="Ana" result={{ round: 4, bailadores: [] }} />
+      )}
       {moment === 'placar' && (
         <ScoreboardOverlay scoreboard={SCOREBOARD} onClose={() => setMoment('none')} />
       )}
