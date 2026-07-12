@@ -20,11 +20,14 @@ export const parseCard = (card: Card): CardParts => {
   return { rank: cardRank(card) as Rank, suit }
 }
 
-export const toLibCard = (card: HandCard): LibHandCard => ({
+export const toLibCard = (
+  card: HandCard,
+  variant: LibHandCard['variant'] = 'dark',
+): LibHandCard => ({
   id: card.value,
   ...parseCard(card.value),
   disabled: card.disabled,
-  variant: 'dark',
+  variant,
 })
 
 const beats = (challenger: Card, incumbent: Card, ledSuit: string, trunfoSuit: string): boolean => {

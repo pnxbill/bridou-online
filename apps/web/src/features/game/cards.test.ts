@@ -24,6 +24,10 @@ describe('toLibCard', () => {
       variant: 'dark',
     })
   })
+
+  it('accepts a deck face variant', () => {
+    expect(toLibCard({ value: 'A-♠️', disabled: false }, 'light').variant).toBe('light')
+  })
 })
 
 describe('winningCardIndex', () => {

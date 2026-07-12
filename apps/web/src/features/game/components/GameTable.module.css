@@ -33,7 +33,8 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 12px 14px 0;
+  /* leave room for the fixed settings cog (top-left) */
+  padding: 12px 14px 0 60px;
   z-index: 5;
 }
 
@@ -273,7 +274,7 @@
   left: 50%;
   top: 88%;
   transform: translate(-50%, -50%);
-  z-index: 5;
+  z-index: 7;
 }
 
 .myChip {
@@ -305,37 +306,38 @@
   outline-offset: 2px;
 }
 
-/* ── my area (bottom third, thumb zone) ───────────────── */
-
-.myArea {
-  position: relative;
-  padding-bottom: 6px;
-  z-index: 6;
-}
-
+/* One row under the name chip — shrinks to fit, never wraps. */
 .betBar {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 8px);
+  transform: translateX(-50%);
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 16px 4px;
+  justify-content: center;
+  max-width: min(92vw, 440px);
 }
 
 .betOptions {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
+  gap: clamp(4px, 1.2vw, 8px);
+  padding: 6px 8px;
+  border-radius: 14px;
+  background: rgba(11, 17, 32, 0.45);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(6px);
 }
 
 .betBtn {
-  width: 52px;
-  height: 52px;
+  flex: 0 0 auto;
+  width: clamp(32px, 9vw, 44px);
+  height: clamp(32px, 9vw, 44px);
   border-radius: 50%;
   border: 2px solid var(--gold-soft);
-  background: rgba(251, 191, 36, 0.08);
+  background: rgba(251, 191, 36, 0.12);
   color: var(--ink);
-  font-size: 1.15rem;
+  font-size: clamp(0.85rem, 2.8vw, 1.05rem);
   font-weight: 800;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -344,5 +346,140 @@
 .betBtn:hover {
   border-color: var(--gold);
   background: rgba(251, 191, 36, 0.18);
-  transform: translateY(-3px);
+  transform: translateY(-2px);
+}
+
+/* ── my area (bottom third, thumb zone) ───────────────── */
+
+.myArea {
+  position: relative;
+  padding-bottom: 6px;
+  z-index: 6;
+}
+
+/* ── edge layouts ─────────────────────────────────────── */
+
+/* crowded table (5+ opponents): tighter seats so 7 players fit the arc
+   without clipping at the screen edges */
+.tableArea[data-crowded] .seat {
+  width: 62px;
+  gap: 2px;
+}
+
+.tableArea[data-crowded] .avatar {
+  width: 36px;
+  height: 36px;
+  font-size: 0.8rem;
+}
+
+.tableArea[data-crowded] .avatarBot {
+  font-size: 1.05rem;
+}
+
+.tableArea[data-crowded] .seatName {
+  font-size: 0.62rem;
+  max-width: 62px;
+}
+
+.tableArea[data-crowded] .seatBet {
+  font-size: 0.58rem;
+  padding: 1px 6px;
+}
+
+.tableArea[data-crowded] .played {
+  width: 50px;
+  height: 70px;
+  margin-left: -25px;
+  margin-top: -35px;
+}
+
+.tableArea[data-crowded] .played :global(.card) {
+  transform: scale(0.5);
+}
+
+/* narrow phones: the 7-card fan is 340px wide — scale it to fit.
+   (transform only: the reserved layout height must not change) */
+@media (max-width: 390px) {
+  .myArea :global(.hand) {
+    transform: scale(0.9);
+    transform-origin: bottom center;
+  }
+}
+
+@media (max-width: 350px) {
+  .myArea :global(.hand) {
+    transform: scale(0.78);
+  }
+}
+
+/* short screens: give the felt its space back (the Hand hardcodes
+   height: 220px inline, hence the !important) */
+@media (max-height: 640px) {
+  .myArea :global(.hand) {
+    height: 160px !important;
+  }
+
+  .roundChip {
+    padding: 6px 10px;
+  }
+
+  .roundValue {
+    font-size: 0.85rem;
+  }
+
+  .trunfoCard {
+    width: 36px;
+    height: 51px;
+  }
+
+  .trunfoCard :global(.card) {
+    transform: scale(0.36);
+  }
+}
+
+/* landscape phones: the table is designed portrait — ask for a rotate
+   instead of shipping a broken sideways layout */
+.rotateOverlay {
+  display: none;
+}
+
+@media (orientation: landscape) and (max-height: 480px) {
+  .rotateOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: rgba(7, 11, 22, 0.94);
+    backdrop-filter: blur(6px);
+  }
+}
+
+.rotateIcon {
+  font-size: 2.4rem;
+  animation: rotatePhone 2s ease-in-out infinite;
+}
+
+@keyframes rotatePhone {
+  0%,
+  25% {
+    transform: rotate(90deg);
+  }
+  60%,
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.rotateText {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.rotateSub {
+  font-size: 0.75rem;
+  color: var(--ink-muted);
 }

@@ -52,12 +52,12 @@ const HAND_BETTING: HandCard[] = HAND_PLAYING.map((c) => ({ ...c, disabled: true
 const TABLE = { cx: 50, cy: 46 }
 
 const seatAngle = (index: number, count: number) => {
-  const start = 183
-  const end = 357
+  const start = 130
+  const end = 410 // 50° + 360 — wrap past east through the top
   return ((start + ((end - start) * (index + 0.5)) / count) * Math.PI) / 180
 }
 
-/** Positions along the top arc of the table rim, left → right. */
+/** Positions along the rim left → right, using the sides as well as the top. */
 const seatPosition = (index: number, count: number) => {
   const angle = seatAngle(index, count)
   return {

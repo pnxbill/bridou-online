@@ -5,7 +5,10 @@
  * Local changes: 'use client' directive; disabled cards can't be selected or
  * clicked (no vibration either) but stay draggable for hand organization —
  * they also sit slightly lower in the fan, while playable cards keep the
- * gold glow (drop shadows stay stripped inside the fan).
+ * gold glow (drop shadows stay stripped inside the fan). Cards mount flying
+ * in from above (the table side) so staggered deals read as dealing, and
+ * each card carries `data-card-id` so the app can measure where a card sat
+ * on screen when it was played.
  */
 import React from 'react'
 import { Card, type CardProps } from './Card'
@@ -125,6 +128,7 @@ export const Hand: React.FC<HandProps> = ({
             key={key}
             value={card}
             layout // Explicit layout prop
+            data-card-id={card.id}
             onDragStart={() => handleDragStart(card.id)}
             onDragEnd={handleDragEnd}
             style={{
@@ -135,7 +139,7 @@ export const Hand: React.FC<HandProps> = ({
               transformOrigin: 'bottom center',
               borderRadius: '8px',
             }}
-            initial={{ opacity: 0, scale: 0.5, y: 50 }}
+            initial={{ opacity: 0, scale: 0.5, y: -140 }}
             whileDrag={{
               scale: 1.1 * baseScale,
               zIndex: 999,

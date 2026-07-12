@@ -108,6 +108,19 @@ describe('round lifecycle', () => {
     ])
   })
 
+  it('bumps dealSeq on every deal so the UI animates each one', () => {
+    let state = apply(base, { type: 'cards-dealt', playerId: 'me', cards: ['A-♠️'] })
+    expect(state.dealSeq).toBe(1)
+    state = apply(state, { type: 'cards-dealt', playerId: 'me', cards: ['2-♥️', '3-♣️'] })
+    expect(state.dealSeq).toBe(2)
+  })
+
+  it('a resync keeps dealSeq — reconnecting is not a new deal', () => {
+    const dealt = apply(base, { type: 'cards-dealt', playerId: 'me', cards: ['A-♠️'] })
+    const state = gameReducer(dealt, { type: 'sync', snapshot: snapshot() })
+    expect(state.dealSeq).toBe(1)
+  })
+
   it('round-ended surfaces the result but keeps the final trick on the table', () => {
     const state = apply(
       { ...base, playedCards: ['A-♠️'] },

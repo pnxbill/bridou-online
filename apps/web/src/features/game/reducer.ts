@@ -22,6 +22,11 @@ export interface GameViewState {
   betting: boolean
   /** My hand, with unplayable cards disabled. */
   hand: HandCard[]
+  /**
+   * Bumps on every `cards-dealt` — lets the hand run its dealing animation
+   * exactly once per deal (and never on resync, which preserves it).
+   */
+  dealSeq: number
   /** Bets I may place right now (empty when it's not my turn to bet). */
   availableBets: number[]
   playedCards: Card[]
@@ -73,6 +78,7 @@ export const stateFromSnapshot = (snapshot: GameEntry, myId = ''): GameViewState
   cardsForEachPlayer: snapshot.currentRound.cardsForEachPlayer,
   betting: snapshot.currentRound.betting,
   hand: snapshot.playableCards,
+  dealSeq: 0,
   availableBets: snapshot.availableBets,
   playedCards: snapshot.currentRound.currentTurn?.playedCards ?? [],
   currentTurn: snapshot.currentRound.currentTurn,
@@ -110,7 +116,11 @@ const applyEvent = (state: GameViewState, event: DomainEvent): GameViewState => 
     case 'trunfo-set':
       return { ...state, trunfo: event.trunfo }
     case 'cards-dealt':
-      return { ...state, hand: event.cards.map((value) => ({ value, disabled: true })) }
+      return {
+        ...state,
+        hand: event.cards.map((value) => ({ value, disabled: true })),
+        dealSeq: state.dealSeq + 1,
+      }
     case 'bet-requested':
       return { ...state, availableBets: event.availableBets }
     case 'play-requested':
@@ -204,7 +214,8 @@ export const gameReducer = (state: GameViewState, action: GameAction): GameViewS
     case 'apply-event':
       return applyEvent(state, action.event)
     case 'sync':
-      return stateFromSnapshot(action.snapshot, state.myId)
+      // keep dealSeq: a resync (reconnect, rejected play) is not a new deal
+      return { ...stateFromSnapshot(action.snapshot, state.myId), dealSeq: state.dealSeq }
     case 'lock-hand':
       return { ...state, hand: state.hand.map((c) => ({ ...c, disabled: true })) }
     case 'clear-bets':
