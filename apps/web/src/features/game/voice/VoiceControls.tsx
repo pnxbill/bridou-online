@@ -1,14 +1,14 @@
 'use client'
 
-import type { RoundPlayer } from '@bridou/shared'
+import type { PlayerInfo } from '@bridou/shared'
 import type { VoiceChat, VoiceParticipant } from './useVoiceChat'
 import styles from './VoiceControls.module.css'
 
 interface Props {
-  /** Owned by GameClient so the table can also react to voice state. */
+  /** Owned above the dock (game/lobby) so seats can also react to voice state. */
   voice: VoiceChat
-  /** Seats of the current round — used to show names/photos in the roster. */
-  players: RoundPlayer[]
+  /** Seated players — used to show names/photos in the roster. */
+  players: PlayerInfo[]
 }
 
 /**
@@ -107,7 +107,7 @@ function Person({
   speaking,
 }: {
   participant: VoiceParticipant
-  player?: RoundPlayer
+  player?: PlayerInfo
   speaking: boolean
 }) {
   const name = player?.name ?? participant.playerId

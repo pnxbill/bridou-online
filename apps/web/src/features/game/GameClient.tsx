@@ -1,7 +1,7 @@
 'use client'
 
 import type { HandCard } from '@bridou/shared'
-import { useCallback, useReducer } from 'react'
+import { useCallback, useEffect, useReducer } from 'react'
 import { api, type GameEntry } from '@/lib/api'
 import { gameReducer, stateFromSnapshot } from './reducer'
 import { useGameChannel } from './useGameChannel'
@@ -10,7 +10,7 @@ import { GameTable } from './components/GameTable'
 import { RoundEndOverlay } from './components/RoundEndOverlay'
 import { ScoreboardOverlay } from './components/ScoreboardOverlay'
 import { VoiceControls } from './voice/VoiceControls'
-import { useVoiceChat } from './voice/useVoiceChat'
+import { useVoiceRoom } from './voice/VoiceRoomProvider'
 
 interface Props {
   gameId: string
@@ -23,8 +23,13 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
     stateFromSnapshot(snapshot, playerId),
   )
 
-  // Lives here (not in VoiceControls) so the table can glow speaking avatars
-  const voice = useVoiceChat({ gameId, playerId })
+  // Shared with the lobby so joining voice at the table carries into the game
+  // (lobby id becomes the game id).
+  const { voice, enter, exit } = useVoiceRoom()
+  useEffect(() => {
+    enter(gameId, playerId)
+    return () => exit(gameId, playerId)
+  }, [gameId, playerId, enter, exit])
 
   const resync = useCallback(async () => {
     try {

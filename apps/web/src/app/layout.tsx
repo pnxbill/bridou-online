@@ -2,6 +2,9 @@ import type { Metadata, Viewport } from 'next'
 import { Outfit } from 'next/font/google'
 import type { ReactNode } from 'react'
 import { AuthProvider } from '@/features/auth/AuthProvider'
+import { VoiceRoomProvider } from '@/features/game/voice/VoiceRoomProvider'
+import { DeckThemeProvider } from '@/features/settings/deck-theme'
+import { SettingsCog } from '@/features/settings/SettingsCog'
 import './globals.css'
 
 // The card faces (@bridou/cards-ui) are designed around Outfit
@@ -25,7 +28,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR">
       <body className={outfit.className}>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <DeckThemeProvider>
+            <VoiceRoomProvider>
+              <SettingsCog />
+              {children}
+            </VoiceRoomProvider>
+          </DeckThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   )

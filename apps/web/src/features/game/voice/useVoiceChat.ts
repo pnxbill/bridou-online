@@ -245,7 +245,7 @@ export function useVoiceChat({ gameId, playerId }: Options): VoiceChat {
   }, [closePeer])
 
   const join = useCallback(async () => {
-    if (socketRef.current) return
+    if (!gameId || !playerId || socketRef.current) return
     setStatus('joining')
     setError(null)
 
@@ -359,7 +359,10 @@ export function useVoiceChat({ gameId, playerId }: Options): VoiceChat {
 
   // Show how many friends are already talking while I haven't joined yet
   useEffect(() => {
-    if (status !== 'idle') return
+    if (!gameId || status !== 'idle') {
+      setOthersInVoice(0)
+      return
+    }
     let cancelled = false
     const poll = () =>
       api
@@ -376,8 +379,14 @@ export function useVoiceChat({ gameId, playerId }: Options): VoiceChat {
     }
   }, [gameId, status])
 
-  // Leaving the game page hangs up
-  useEffect(() => leave, [leave])
+  // Room id changed (or unbound) — drop any live mesh for the old room
+  const prevRoom = useRef({ gameId, playerId })
+  useEffect(() => {
+    const prev = prevRoom.current
+    prevRoom.current = { gameId, playerId }
+    if (prev.gameId === gameId && prev.playerId === playerId) return
+    if (prev.gameId) leave()
+  }, [gameId, playerId, leave])
 
   return {
     status,
