@@ -74,7 +74,7 @@ auth-only (no Firestore for game history).
 - [x] Choose the database: Postgres on Neon (`DATABASE_URL`); in-memory history when unset
 - [x] Repository ports (`GameHistoryRepository`, `PlayerRepository`) + Drizzle schema/migration
 - [x] Persist events continuously and finalize game rows at `game-ended`
-- [ ] Active-game persistence (Redis snapshot behind `GameRepository`) so games survive server restarts — *optional*
+- [x] Active-game persistence so games survive server restarts: `DurableGameRepository` (write-through cache) behind `GameRepository`, backed by a `GameStateStore` (Postgres in prod, in-memory for tests). Economical two-table model — the churning current round is one small upserted row (`game_current`), each finished round written once (`game_round_results`); persisted at settle points (bet/trick/scoreboard), so a crash replays at most the current trick. `Game.toState/fromState/resume` rebuild the engine and re-arm dropped timers; abandonment reconciles seat control on reload. (Postgres, not Redis — no extra infra.)
 - [ ] Player profile / stats API (unblocked — §6 token verify shipped)
 - [ ] Materialized rollups for fast profile queries — *optional, after raw event log*
 

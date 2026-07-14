@@ -1,12 +1,52 @@
 import type { DomainEvent, EventPublisher, LobbySnapshot, PlayerInfo, SessionState, ScoreboardEntry } from '@bridou/shared'
-import type { Game } from '@bridou/engine'
+import type { CompletedRoundResult, CurrentRoundState, Game } from '@bridou/engine'
 
 export interface GameRepository {
   get(gameId: string): Game | undefined
   save(game: Game): void
   delete(gameId: string): void
-  /** Unfinished game the player is seated in, if any. */
+  /** Unfinished game the player is seated in, if any (from the in-memory cache). */
   findActiveByPlayerId(playerId: string): Game | undefined
+  /**
+   * Load a game into the cache from durable storage if it isn't already there
+   * (used after a restart). No-op for the in-memory repository. Call before a
+   * sync `get` on the reconnect paths.
+   */
+  hydrate?(gameId: string): Promise<Game | undefined>
+  /** Durable lookup of a player's active game id, for reconnect after a restart. */
+  findActivePlayerGameId?(playerId: string): Promise<string | null>
+}
+
+/** The mutable per-game row: the churning current round plus session state. */
+export interface StoredGameCurrent {
+  gameId: string
+  leaderId: string
+  currentRoundNumber: number
+  scoreboardShowing: boolean
+  playerOrder: PlayerInfo[]
+  currentRound: CurrentRoundState | null
+  botSeats: string[]
+}
+
+/**
+ * Storage mechanism behind the durable game repository — the dumb read/write
+ * half, with the caching/rehydration policy living in the repository. Postgres
+ * in production; an in-memory implementation makes restart behavior testable.
+ */
+export interface GameStateStore {
+  upsertCurrent(row: StoredGameCurrent): Promise<void>
+  /** Write a finished round's result. Idempotent — the same round is written once. */
+  insertRoundResult(
+    gameId: string,
+    roundNumber: number,
+    results: CompletedRoundResult['results'],
+  ): Promise<void>
+  load(
+    gameId: string,
+  ): Promise<{ current: StoredGameCurrent; results: CompletedRoundResult[] } | null>
+  delete(gameId: string): Promise<void>
+  /** The game id an unfinished player is seated in, if any (durable lookup). */
+  findGameIdByPlayer(playerId: string): Promise<string | null>
 }
 
 /**

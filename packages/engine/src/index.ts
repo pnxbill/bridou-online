@@ -7,4 +7,11 @@ export { createDeck, shuffle } from './deck'
 export { GameError } from './errors'
 export { systemScheduler, type Rng, type Scheduler } from './ports'
 export { toRoundPlayer, type RoundPlayerState } from './player'
+export type {
+  CompletedRoundResult,
+  CurrentRoundState,
+  GameState,
+  RoundPlayerData,
+  TurnState,
+} from './state'
 

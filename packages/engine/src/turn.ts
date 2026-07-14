@@ -1,6 +1,7 @@
 import { cardSuit, rankValue, type Card, type HandCard, type TurnSnapshot } from '@bridou/shared'
 import { GameError } from './errors'
 import { toRoundPlayer, type RoundPlayerState } from './player'
+import type { TurnState } from './state'
 
 /**
  * One trick. Players are in play order: the player at index
@@ -15,6 +16,36 @@ export class Turn {
   constructor({ players, trunfo }: { players: RoundPlayerState[]; trunfo: Card }) {
     this.players = players
     this.trunfo = trunfo
+  }
+
+  toState(): TurnState {
+    return {
+      playerIds: this.players.map((p) => p.id),
+      suit: this.suit,
+      playedCards: [...this.playedCards],
+    }
+  }
+
+  /**
+   * Rebuilds a turn from persisted state. `roundPlayers` are the round's own
+   * player objects — the turn must share them (playing a card mutates the
+   * player's hand through this reference), so we resolve ids against them
+   * rather than building new objects.
+   */
+  static fromState(
+    state: TurnState,
+    trunfo: Card,
+    roundPlayers: Map<string, RoundPlayerState>,
+  ): Turn {
+    const players = state.playerIds.map((id) => {
+      const player = roundPlayers.get(id)
+      if (!player) throw new GameError(`Unknown player in turn: ${id}`)
+      return player
+    })
+    const turn = new Turn({ players, trunfo })
+    turn.suit = state.suit
+    turn.playedCards = [...state.playedCards]
+    return turn
   }
 
   get currentPlayer(): RoundPlayerState {

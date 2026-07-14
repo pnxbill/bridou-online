@@ -10,14 +10,18 @@ import { LobbyRegistry } from './application/lobby'
 import { PresenceTracker } from './application/presence'
 import type {
   GameHistoryRepository,
+  GameRepository,
+  GameStateStore,
   PlayerRepository,
   TokenVerifier,
 } from './application/ports'
 import { createDb } from './db/client'
 import { CompositeGateway } from './infra/composite-gateway'
 import { ConnectionRegistry } from './infra/connection-registry'
+import { DurableGameRepository } from './infra/durable-game-repository'
 import { FirebaseTokenVerifier } from './infra/firebase-token-verifier'
 import { InMemoryGameRepository } from './infra/in-memory-game-repository'
+import { PostgresGameStateStore } from './infra/postgres-game-store'
 import {
   InMemoryGameHistoryRepository,
   InMemoryPlayerRepository,
@@ -50,7 +54,23 @@ export interface AppOptions {
   databaseUrl?: string
   /** Override token verification (tests inject a fake; default verifies Firebase ID tokens). */
   tokenVerifier?: TokenVerifier
+  /**
+   * Durable live-game storage. Tests inject an in-memory store (shared across
+   * app instances to simulate a restart); production uses Postgres when a DB is
+   * configured. Unset with no DB means games live only in memory.
+   */
+  gameStore?: GameStateStore
 }
+
+/** Events after which the current game state is worth persisting (consistent settle points). */
+const PERSIST_TRIGGERS = new Set<string>([
+  'bet-requested',
+  'turn-started',
+  'scoreboard-shown',
+  'scoreboard-hidden',
+  'bot-took-over',
+  'player-rejoined',
+])
 
 /**
  * Composition root: wires the engine, use-cases and transports together.
@@ -77,25 +97,35 @@ export const createApp = (options: AppOptions = {}): AppInstance => {
     options.tokenVerifier ??
     new FirebaseTokenVerifier(process.env.FIREBASE_PROJECT_ID ?? 'bridou-online')
 
-  const games = new InMemoryGameRepository()
+  const databaseUrl = options.databaseUrl ?? process.env.DATABASE_URL
+  let closeDb: (() => Promise<void>) | undefined
+  let db: ReturnType<typeof createDb>['db'] | undefined
+  if (databaseUrl) {
+    const created = createDb(databaseUrl)
+    db = created.db
+    closeDb = async () => {
+      await created.client.end({ timeout: 5 })
+    }
+  }
+
+  // Live games survive a restart when there's durable storage (an injected store
+  // or Postgres); otherwise they live only in memory (fine for local play).
+  const gameStore = options.gameStore ?? (db ? new PostgresGameStateStore(db) : undefined)
+  const games: GameRepository = gameStore
+    ? new DurableGameRepository(gameStore)
+    : new InMemoryGameRepository()
+
   const abandonment = new AbandonmentService({ games, ...options.abandonment })
   const eviction = new GameEviction({ games })
 
-  const databaseUrl = options.databaseUrl ?? process.env.DATABASE_URL
-  let closeDb: (() => Promise<void>) | undefined
   let historyRepo: GameHistoryRepository
   let playerRepo: PlayerRepository
-
   if (options.history && options.players) {
     historyRepo = options.history
     playerRepo = options.players
-  } else if (databaseUrl) {
-    const { db, client } = createDb(databaseUrl)
+  } else if (db) {
     historyRepo = new PostgresGameHistoryRepository(db)
     playerRepo = new PostgresPlayerRepository(db)
-    closeDb = async () => {
-      await client.end({ timeout: 5 })
-    }
   } else {
     historyRepo = new InMemoryGameHistoryRepository()
     playerRepo = new InMemoryPlayerRepository()
@@ -121,6 +151,11 @@ export const createApp = (options: AppOptions = {}): AppInstance => {
       abandonment.onDomainEvent(gameId, event)
       eviction.onDomainEvent(gameId, event)
       historyRecorder.onDomainEvent(gameId, event)
+      // Persist the live game at consistent settle points so it survives a restart.
+      if (PERSIST_TRIGGERS.has(event.type)) {
+        const game = games.get(gameId)
+        if (game) games.save(game)
+      }
     },
   )
 
@@ -135,6 +170,16 @@ export const createApp = (options: AppOptions = {}): AppInstance => {
   })
   abandonment.bind({ gateway, actions: service })
 
+  // A rehydrated game emits through the live gateway, carries its bot seats, and
+  // hands reconnection back to abandonment (wired here — these deps exist now).
+  if (games instanceof DurableGameRepository) {
+    games.bind({
+      publisherFor: (id) => gateway.publisherFor(id),
+      botSeatsOf: (id) => abandonment.sessionState(id).botSeats,
+      onRehydrate: (game, botSeats) => abandonment.reconcileAfterLoad(game, botSeats),
+    })
+  }
+
   app.get('/api/games/:gameId/events', sse.handler(verifier))
   app.get('/api/games/:gameId/voice', requireAuth(verifier), (req, res) => {
     res.json({ participants: voiceRooms.rosterOf(req.params.gameId ?? '') })
@@ -144,6 +189,7 @@ export const createApp = (options: AppOptions = {}): AppInstance => {
   const close = async (): Promise<void> => {
     sse.close()
     io.close()
+    if (games instanceof DurableGameRepository) await games.flush()
     await closeDb?.()
     await new Promise<void>((resolve) => httpServer.close(() => resolve()))
   }

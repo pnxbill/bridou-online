@@ -9,7 +9,8 @@ import {
   timestamp,
   uniqueIndex,
 } from 'drizzle-orm/pg-core'
-import type { DomainEvent, ScoreboardEntry } from '@bridou/shared'
+import type { CompletedRoundResult, CurrentRoundState } from '@bridou/engine'
+import type { DomainEvent, PlayerInfo, ScoreboardEntry } from '@bridou/shared'
 
 export const players = pgTable('players', {
   id: text('id').primaryKey(),
@@ -60,4 +61,30 @@ export const gameEvents = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex('game_events_game_id_seq_idx').on(t.gameId, t.seq)],
+)
+
+/**
+ * Live-game state for restart durability. One mutable row per active game holds
+ * the in-progress round; finished rounds live write-once in gameRoundResults.
+ * Both are dropped when the game ends (analytics tables above keep the record).
+ */
+export const gameCurrent = pgTable('game_current', {
+  gameId: text('game_id').primaryKey(),
+  leaderId: text('leader_id').notNull(),
+  currentRoundNumber: integer('current_round_number').notNull(),
+  scoreboardShowing: boolean('scoreboard_showing').notNull().default(false),
+  playerOrder: jsonb('player_order').$type<PlayerInfo[]>().notNull(),
+  currentRound: jsonb('current_round').$type<CurrentRoundState | null>(),
+  botSeats: jsonb('bot_seats').$type<string[]>().notNull().default([]),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const gameRoundResults = pgTable(
+  'game_round_results',
+  {
+    gameId: text('game_id').notNull(),
+    roundNumber: integer('round_number').notNull(),
+    results: jsonb('results').$type<CompletedRoundResult['results']>().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.gameId, t.roundNumber] })],
 )

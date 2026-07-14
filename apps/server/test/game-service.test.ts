@@ -142,11 +142,11 @@ describe('GameService', () => {
     expect(gateway.published.some(({ event }) => event.type === 'round-started')).toBe(true)
   })
 
-  it('gives an entering player the snapshot plus their private perspective', () => {
+  it('gives an entering player the snapshot plus their private perspective', async () => {
     const { code } = lobbyWith('a', 'b')
     const game = service.startGame(code, 'a')
 
-    const result = service.enterGame(game.id, 'a')
+    const result = await service.enterGame(game.id, 'a')
 
     expect(result.id).toBe(game.id)
     expect(result.leaderId).toBe('a')
@@ -156,40 +156,45 @@ describe('GameService', () => {
     expect(JSON.stringify(result.currentRound)).not.toContain('"cards"')
   })
 
-  it('rejects strangers and unknown games', () => {
+  it('rejects strangers and unknown games', async () => {
     const { code } = lobbyWith('a', 'b')
     const game = service.startGame(code, 'a')
 
-    expect(() => service.enterGame(game.id, 'stranger')).toThrow("You're not in this game")
-    expect(() => service.enterGame('nope', 'a')).toThrow('Game not found')
+    await expect(service.enterGame(game.id, 'stranger')).rejects.toThrow("You're not in this game")
+    await expect(service.enterGame('nope', 'a')).rejects.toThrow('Game not found')
   })
 
-  it('finds the active game for a seated player', () => {
-    expect(service.currentGame('a')).toEqual({ gameId: null })
+  it('finds the active game for a seated player', async () => {
+    expect(await service.currentGame('a')).toEqual({ gameId: null })
 
     const { code } = lobbyWith('a', 'b')
     const game = service.startGame(code, 'a')
 
-    expect(service.currentGame('a')).toEqual({ gameId: game.id })
-    expect(service.currentGame('b')).toEqual({ gameId: game.id })
-    expect(service.currentGame('stranger')).toEqual({ gameId: null })
+    expect(await service.currentGame('a')).toEqual({ gameId: game.id })
+    expect(await service.currentGame('b')).toEqual({ gameId: game.id })
+    expect(await service.currentGame('stranger')).toEqual({ gameId: null })
   })
 
-  it('routes bets and plays into the engine', () => {
+  it('routes bets and plays into the engine', async () => {
     const { code } = lobbyWith('a', 'b')
     const game = service.startGame(code, 'a')
 
     service.placeBet(game.id, 'a', 0)
     expect(() => service.placeBet(game.id, 'a', 0)).toThrow('Not your turn')
 
-    const lastBets = service.enterGame(game.id, 'b').availableBets
+    const lastBets = (await service.enterGame(game.id, 'b')).availableBets
     expect(lastBets.length).toBeGreaterThan(0)
     service.placeBet(game.id, 'b', lastBets[0]!)
 
     // betting done — someone now has a playable card
-    const playable = ['a', 'b']
-      .map((id) => ({ id, cards: service.enterGame(game.id, id).playableCards }))
-      .find(({ cards }) => cards.some((c) => !c.disabled))!
+    const playable = (
+      await Promise.all(
+        ['a', 'b'].map(async (id) => ({
+          id,
+          cards: (await service.enterGame(game.id, id)).playableCards,
+        })),
+      )
+    ).find(({ cards }) => cards.some((c) => !c.disabled))!
     expect(playable).toBeDefined()
 
     service.playCard(game.id, playable.id, playable.cards[0]!.value)

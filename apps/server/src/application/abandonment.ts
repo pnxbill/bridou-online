@@ -3,6 +3,7 @@ import {
   createMonteCarloBot,
   systemScheduler,
   type BotStrategy,
+  type Game,
   type Scheduler,
 } from '@bridou/engine'
 import type { DomainEvent, SessionState } from '@bridou/shared'
@@ -95,6 +96,24 @@ export class AbandonmentService implements PresenceListener {
       })),
       botSeats: [...(this.botSeats.get(gameId) ?? [])],
     }
+  }
+
+  /**
+   * Restore seat control for a game just reloaded from storage after a restart.
+   * Bot seats are re-registered (they have no human to reconnect); every human
+   * seat with nobody currently connected starts a grace period, so a player who
+   * doesn't come back is replaced by the bot — while anyone who reconnects
+   * cancels their own grace via the usual presence path.
+   */
+  reconcileAfterLoad(game: Game, botSeats: string[]): void {
+    this.registerBotSeats(game.id, botSeats)
+    const bots = new Set(botSeats)
+    for (const player of game.players) {
+      if (bots.has(player.id) || this.online.has(`${game.id}:${player.id}`)) continue
+      this.playerOffline(game.id, player.id)
+    }
+    // A bot whose turn it already is should act immediately.
+    this.actIfBotTurn(game.id)
   }
 
   playerOnline(gameId: string, playerId: string): void {

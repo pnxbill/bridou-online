@@ -95,7 +95,7 @@ describe('abandonment flow', () => {
     scheduler.flush() // debounce timer fires → abandonment declared
   }
 
-  it('declares abandonment after the debounce and pauses the game', () => {
+  it('declares abandonment after the debounce and pauses the game', async () => {
     disconnectBob()
 
     const abandoned = gateway.ofType('player-abandoned')
@@ -103,7 +103,7 @@ describe('abandonment flow', () => {
     expect(abandoned[0]).toMatchObject({ playerId: 'bob', resumeAt: 1_000_000 + GRACE })
 
     expect(() => service.placeBet(gameId, 'alice', 0)).toThrow('Game is paused')
-    expect(service.enterGame(gameId, 'alice').abandoned).toHaveLength(1)
+    expect((await service.enterGame(gameId, 'alice')).abandoned).toHaveLength(1)
   })
 
   it('ignores short blips: reconnect within the debounce emits nothing', () => {
@@ -115,7 +115,7 @@ describe('abandonment flow', () => {
     expect(() => service.placeBet(gameId, 'alice', 0)).not.toThrow()
   })
 
-  it('returns the seat when the player comes back during grace', () => {
+  it('returns the seat when the player comes back during grace', async () => {
     disconnectBob()
     presence.connected(gameId, 'bob', 'conn-bob-2')
 
@@ -125,10 +125,10 @@ describe('abandonment flow', () => {
     // the pending takeover timer must be stale now
     scheduler.flushAll()
     expect(gateway.ofType('bot-took-over')).toHaveLength(0)
-    expect(service.enterGame(gameId, 'alice').botSeats).toEqual([])
+    expect((await service.enterGame(gameId, 'alice')).botSeats).toEqual([])
   })
 
-  it('hands the seat to the bot when the grace expires, and the bot finishes the round', () => {
+  it('hands the seat to the bot when the grace expires, and the bot finishes the round', async () => {
     // alice (leader) bets first, then bob disconnects
     service.placeBet(gameId, 'alice', 0)
     disconnectBob()
@@ -147,17 +147,17 @@ describe('abandonment flow', () => {
     scheduler.flushAll()
 
     expect(gateway.ofType('round-ended')).toHaveLength(1)
-    expect(service.enterGame(gameId, 'alice').botSeats).toEqual(['bob'])
+    expect((await service.enterGame(gameId, 'alice')).botSeats).toEqual(['bob'])
   })
 
-  it('gives the seat back to a returning player after a bot takeover', () => {
+  it('gives the seat back to a returning player after a bot takeover', async () => {
     disconnectBob()
     scheduler.flush() // grace → takeover
     expect(gateway.ofType('bot-took-over')).toHaveLength(1)
 
     presence.connected(gameId, 'bob', 'conn-bob-2')
     expect(gateway.ofType('player-rejoined')).toHaveLength(1)
-    expect(service.enterGame(gameId, 'bob').botSeats).toEqual([])
+    expect((await service.enterGame(gameId, 'bob')).botSeats).toEqual([])
   })
 
   it('ignores disconnects that have no game (queue page, strangers)', () => {
@@ -168,7 +168,7 @@ describe('abandonment flow', () => {
     expect(gateway.ofType('player-abandoned')).toHaveLength(0)
   })
 
-  it('plays a lobby bot from the very first move', () => {
+  it('plays a lobby bot from the very first move', async () => {
     // fresh lobby: carol + a seated bot (the alice/bob game from beforeEach is separate)
     const { code, lobbyId: botGameId } = service.createLobby(player('carol'))
     const { bot } = service.addBotToLobby(code, 'carol')
@@ -187,12 +187,12 @@ describe('abandonment flow', () => {
     expect(botBet).toBeDefined()
 
     // snapshot marks the seat as bot for reconnecting clients
-    const entry = service.enterGame(botGameId, 'carol')
+    const entry = await service.enterGame(botGameId, 'carol')
     expect(entry.botSeats).toContain(bot.id)
     expect(entry.currentRound.players.find((p) => p.id === bot.id)?.isBot).toBe(true)
   })
 
-  it('keeps the game paused until every abandoned seat is resolved', () => {
+  it('keeps the game paused until every abandoned seat is resolved', async () => {
     presence.disconnected('conn-alice')
     presence.disconnected('conn-bob')
     scheduler.flush() // both debounces fire
@@ -203,8 +203,58 @@ describe('abandonment flow', () => {
 
     scheduler.flushAll() // bob's grace expires → bot seat → game resumes
     expect(gateway.ofType('bot-took-over')).toHaveLength(1)
-    const state = service.enterGame(gameId, 'alice')
+    const state = await service.enterGame(gameId, 'alice')
     expect(state.abandoned).toEqual([])
     expect(state.botSeats).toEqual(['bob'])
+  })
+})
+
+describe('abandonment reconciliation after a reload', () => {
+  it('restores bot seats and gives absent humans grace, sparing reconnected ones', () => {
+    // A game already in the repo, as if just rehydrated after a restart.
+    const games = new InMemoryGameRepository()
+    const bootstrap = new AbandonmentService({ games, scheduler: new ManualScheduler() })
+    const seed = new GameService(
+      games,
+      new LobbyRegistry(),
+      new InterceptingGateway(new RecordingGateway(), (g, e) => bootstrap.onDomainEvent(g, e)),
+      bootstrap,
+      { scheduler: new ManualScheduler() },
+    )
+    const { code, lobbyId } = seed.createLobby(player('alice'))
+    seed.joinLobby(code, player('bob'))
+    const { bot } = seed.addBotToLobby(code, 'alice')
+    seed.startGame(code, 'alice')
+    const game = games.get(lobbyId)!
+
+    // Fresh wiring with empty session maps — the "restarted" server.
+    const gateway = new RecordingGateway()
+    const scheduler = new ManualScheduler()
+    const abandonment = new AbandonmentService({
+      games,
+      scheduler,
+      now: () => 2_000_000,
+      debounceMs: DEBOUNCE,
+      graceMs: GRACE,
+    })
+    const intercepting = new InterceptingGateway(gateway, (g, e) => abandonment.onDomainEvent(g, e))
+    const service = new GameService(games, new LobbyRegistry(), intercepting, abandonment, {
+      scheduler,
+    })
+    abandonment.bind({ gateway: intercepting, actions: service })
+    const presence = new PresenceTracker(abandonment)
+
+    // alice reconnects before reconciliation; bob does not.
+    presence.connected(lobbyId, 'alice', 'conn-alice-2')
+    abandonment.reconcileAfterLoad(game, [bot.id])
+
+    // the bot seat is known again immediately
+    expect(abandonment.sessionState(lobbyId).botSeats).toContain(bot.id)
+
+    scheduler.flushAll()
+    const abandoned = gateway.ofType('player-abandoned').map((e) => e.playerId)
+    expect(abandoned).toContain('bob') // absent → grace → taken over
+    expect(abandoned).not.toContain('alice') // reconnected → spared
+    expect(abandonment.sessionState(lobbyId).botSeats).toContain('bob')
   })
 })

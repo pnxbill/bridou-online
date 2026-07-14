@@ -13,9 +13,9 @@ const statusFor = (err: unknown): number => {
   return 500
 }
 
-const respond = (res: Response, fn: () => object): void => {
+const respond = async (res: Response, fn: () => object | Promise<object>): Promise<void> => {
   try {
-    res.status(200).json({ message: 'ok', ...fn() })
+    res.status(200).json({ message: 'ok', ...(await fn()) })
   } catch (err) {
     const status = statusFor(err)
     if (status === 500) console.error(err)
@@ -76,8 +76,8 @@ export const createRoutes = (service: GameService, verifier: TokenVerifier): Rou
   })
 
   routes.post('/api/enter-game', auth, (req: Request, res: Response) => {
-    respond(res, () => ({
-      game: service.enterGame(requireString(req.body.gameId, 'gameId'), player(req).id),
+    respond(res, async () => ({
+      game: await service.enterGame(requireString(req.body.gameId, 'gameId'), player(req).id),
     }))
   })
 

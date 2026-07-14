@@ -9,9 +9,21 @@ import {
 } from '@bridou/shared'
 import { createDeck, shuffle } from './deck'
 import { GameError } from './errors'
-import { toRoundPlayer, type RoundPlayerState } from './player'
+import {
+  fromRoundPlayerData,
+  toRoundPlayer,
+  toRoundPlayerData,
+  type RoundPlayerState,
+} from './player'
 import type { Rng, Scheduler } from './ports'
+import type { CompletedRoundResult, CurrentRoundState } from './state'
 import { Turn } from './turn'
+
+const resolve = (byId: Map<string, RoundPlayerState>, id: string): RoundPlayerState => {
+  const player = byId.get(id)
+  if (!player) throw new GameError(`Unknown player: ${id}`)
+  return player
+}
 
 /** Completed tricks stay on the table this long before the next one starts. */
 export const TRICK_RESOLUTION_MS = 1500
@@ -56,6 +68,73 @@ export class Round {
 
   get isBlind(): boolean {
     return isBlindRound(this.roundNumber)
+  }
+
+  toState(): CurrentRoundState {
+    return {
+      roundNumber: this.roundNumber,
+      players: this.players.map(toRoundPlayerData),
+      trunfo: this.trunfo,
+      betting: this.betting,
+      currentPlayerIndex: this.currentPlayerIndex,
+      turns: this.turns.map((t) => t.toState()),
+      currentTurn: this.currentTurn?.toState() ?? null,
+      whoMadeIds: this.whoMade.map((p) => p.id),
+      bailadoresIds: this.bailadores.map((p) => p.id),
+    }
+  }
+
+  /** Rebuilds the in-progress round in full so play resumes card-for-card. */
+  static fromState(state: CurrentRoundState, deps: RoundDeps): Round {
+    const players = state.players.map(fromRoundPlayerData)
+    const round = new Round({ roundNumber: state.roundNumber, players }, deps)
+    round.trunfo = state.trunfo
+    round.betting = state.betting
+    round.currentPlayerIndex = state.currentPlayerIndex
+
+    // The turn must share the round's player objects (playing a card mutates a
+    // hand through that reference), so resolve turn players against these.
+    const byId = new Map(players.map((p) => [p.id, p]))
+    round.turns = state.turns.map((t) => Turn.fromState(t, state.trunfo, byId))
+    round.currentTurn = state.currentTurn
+      ? Turn.fromState(state.currentTurn, state.trunfo, byId)
+      : null
+    round.whoMade = state.whoMadeIds.map((id) => resolve(byId, id))
+    round.bailadores = state.bailadoresIds.map((id) => resolve(byId, id))
+    return round
+  }
+
+  /**
+   * Rebuilds a finished round from its slim result — only points/bet/made are
+   * kept, since a completed round contributes nothing but its scoreboard total.
+   * `roster` supplies player metadata (name/photo) by id.
+   */
+  static fromResult(
+    result: CompletedRoundResult,
+    roster: Map<string, RoundPlayerState>,
+    deps: RoundDeps,
+  ): Round {
+    const players = result.results.map((r) => {
+      const base = roster.get(r.id)
+      if (!base) throw new GameError(`Unknown player in round result: ${r.id}`)
+      return { ...base, cards: [], bet: r.bet, made: r.made, points: r.points }
+    })
+    const round = new Round({ roundNumber: result.roundNumber, players }, deps)
+    round.betting = false
+    return round
+  }
+
+  /** The finished round's contribution to the scoreboard (see CompletedRoundResult). */
+  toResult(): CompletedRoundResult {
+    return {
+      roundNumber: this.roundNumber,
+      results: this.players.map((p) => ({
+        id: p.id,
+        bet: p.bet,
+        made: p.made,
+        points: p.points,
+      })),
+    }
   }
 
   /** Shuffles, deals, reveals the trunfo and asks the first player for a bet. */
@@ -118,6 +197,23 @@ export class Round {
     const player = this.players[this.currentPlayerIndex]
     if (!player) throw new GameError('No current player')
     return player
+  }
+
+  /** Every trick has been played and scored. */
+  get isComplete(): boolean {
+    return this.turns.length === this.cardsForEachPlayer
+  }
+
+  /**
+   * After a reload, re-arm the between-tricks pause if one was pending: the
+   * current trick is finished but it wasn't the last, so a `startTurn` was
+   * scheduled and lost with the process. Mid-trick (someone still to play) or
+   * a fully-complete round need no action here.
+   */
+  resume(): void {
+    if (this.currentTurn?.isComplete && !this.isComplete) {
+      this.deps.scheduler.schedule(() => this.startTurn(), TRICK_RESOLUTION_MS)
+    }
   }
 
   /** Last trick's winner leads the next one; the first player leads trick one. */

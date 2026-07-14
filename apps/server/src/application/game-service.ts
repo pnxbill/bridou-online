@@ -123,13 +123,19 @@ export class GameService {
   }
 
   /** Active unfinished game for this player, if any (for home-screen reconnect). */
-  currentGame(playerId: string): { gameId: string | null } {
-    const game = this.games.findActiveByPlayerId(playerId)
-    return { gameId: game?.id ?? null }
+  async currentGame(playerId: string): Promise<{ gameId: string | null }> {
+    let game = this.games.findActiveByPlayerId(playerId)
+    if (!game && this.games.findActivePlayerGameId) {
+      // Not in memory — after a restart it may still be durable.
+      const gameId = await this.games.findActivePlayerGameId(playerId)
+      if (gameId) game = await this.games.hydrate?.(gameId)
+    }
+    return { gameId: game && !game.finished ? game.id : null }
   }
 
   /** Full state for a (re)connecting player: snapshot + what they may do now. */
-  enterGame(gameId: string, playerId: string): EnterGameResult {
+  async enterGame(gameId: string, playerId: string): Promise<EnterGameResult> {
+    await this.games.hydrate?.(gameId) // reload from storage if the server restarted
     const game = this.getGame(gameId)
     if (!game.hasPlayer(playerId)) throw new ForbiddenError("You're not in this game")
 
