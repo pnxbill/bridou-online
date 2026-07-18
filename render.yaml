@@ -6,7 +6,7 @@ services:
     runtime: node
     plan: free
     branch: feature/revamp
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @bridou/server build
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @bridou/server build
     startCommand: node apps/server/dist/main.js
     envVars:
       - key: FIREBASE_PROJECT_ID
