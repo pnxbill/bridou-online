@@ -105,7 +105,7 @@ celebrations. Mobile-first: hand and actions in the thumb zone, the table is the
 ## 8. Infra & Tooling
 
 - [x] CI: GitHub Actions running typecheck, all tests and the web build on every push
-- [ ] Decide deployment target for server + web (the old `pem/` setup is stale — the committed key should be rotated/removed then)
+- [x] Decide deployment target for server + web: server LIVE on Render free (`https://bridou-server.onrender.com`, region virginia, auto-deploy from `feature/revamp`, deployed via API — dashboard repo picker is broken for this account; repo made public so Render can fetch it) + Neon `sa-east-1` (migrated, store smoke-tested). Old pem key removed from the tree but exposed in public history — treat as burned. Web on Vercel still pending (`NEXT_PUBLIC_GAME_SERVER_URL`, then `WEB_ORIGINS` + Firebase authorized domain)
 - [x] Production build pipeline for `apps/server` (tsup → `dist/main.js`; `pnpm start` runs `node dist/main.js`)
 - [x] Remove dead artifacts: `adaptors/`, `server/`, `types/`, `public/`, root env/eslint/vite configs
 

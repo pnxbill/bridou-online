@@ -12,6 +12,7 @@ node_modules
 .env
 .env.*
 !.env.example
+.render-api-key
 
 # Cache
 .cache
