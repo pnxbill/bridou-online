@@ -1,0 +1,17 @@
+# Render Blueprint: game server (apps/server). Web lives on Vercel.
+# DATABASE_URL and WEB_ORIGINS are set in the Render dashboard (sync: false).
+services:
+  - type: web
+    name: bridou-server
+    runtime: node
+    plan: free
+    branch: feature/revamp
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @bridou/server build
+    startCommand: node apps/server/dist/main.js
+    envVars:
+      - key: FIREBASE_PROJECT_ID
+        value: bridou-online
+      - key: DATABASE_URL
+        sync: false
+      - key: WEB_ORIGINS
+        sync: false

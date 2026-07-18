@@ -38,11 +38,17 @@ CREATE TABLE IF NOT EXISTS "game_events" (
   "created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
-ALTER TABLE "game_players" ADD CONSTRAINT "game_players_game_id_games_id_fk"
-  FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE cascade ON UPDATE no action;
+DO $$ BEGIN
+  ALTER TABLE "game_players" ADD CONSTRAINT "game_players_game_id_games_id_fk"
+    FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
-ALTER TABLE "game_events" ADD CONSTRAINT "game_events_game_id_games_id_fk"
-  FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE cascade ON UPDATE no action;
+DO $$ BEGIN
+  ALTER TABLE "game_events" ADD CONSTRAINT "game_events_game_id_games_id_fk"
+    FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 CREATE UNIQUE INDEX IF NOT EXISTS "game_events_game_id_seq_idx" ON "game_events" USING btree ("game_id","seq");
 
