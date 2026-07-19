@@ -23,6 +23,7 @@ export const parseCard = (card: Card): CardParts => {
 export const toLibCard = (
   card: HandCard,
   variant: LibHandCard['variant'] = 'dark',
+  trumpSuit?: Suit,
 ): LibHandCard => {
   if (card.value === HIDDEN_CARD) {
     return {
@@ -34,10 +35,12 @@ export const toLibCard = (
       variant,
     }
   }
+  const parts = parseCard(card.value)
   return {
     id: card.value,
-    ...parseCard(card.value),
+    ...parts,
     disabled: card.disabled,
+    trump: parts.suit === trumpSuit,
     variant,
   }
 }

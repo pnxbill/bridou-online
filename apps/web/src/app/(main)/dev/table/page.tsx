@@ -194,7 +194,7 @@ export default function TableMockupPage() {
         )}
 
         <div className={styles.handWrap}>
-          <PlayerHand cards={hand} onPlay={() => {}} />
+          <PlayerHand cards={hand} trunfo="7-♥️" onPlay={() => {}} />
         </div>
       </div>
 

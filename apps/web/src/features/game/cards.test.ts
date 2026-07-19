@@ -21,12 +21,18 @@ describe('toLibCard', () => {
       rank: 'K',
       suit: 'hearts',
       disabled: true,
+      trump: false,
       variant: 'dark',
     })
   })
 
   it('accepts a deck face variant', () => {
     expect(toLibCard({ value: 'A-♠️', disabled: false }, 'light').variant).toBe('light')
+  })
+
+  it('flags cards of the trump suit', () => {
+    expect(toLibCard({ value: 'K-♥️', disabled: false }, 'dark', 'hearts').trump).toBe(true)
+    expect(toLibCard({ value: 'K-♠️', disabled: false }, 'dark', 'hearts').trump).toBe(false)
   })
 })
 

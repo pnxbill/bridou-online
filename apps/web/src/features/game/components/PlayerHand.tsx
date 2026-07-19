@@ -1,13 +1,15 @@
 'use client'
 
 import { Hand, type HandCard as LibHandCard } from '@bridou/cards-ui'
-import type { HandCard } from '@bridou/shared'
+import type { Card, HandCard } from '@bridou/shared'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useDeckTheme } from '@/features/settings/deck-theme'
-import { orderHand, toLibCard } from '../cards'
+import { orderHand, parseCard, toLibCard } from '../cards'
 
 interface Props {
   cards: HandCard[]
+  /** The trump card, so hand cards of that suit get a trump badge. */
+  trunfo: Card | null
   /** `origin` is where the card sat on screen when tapped — feeds the fan-to-table motion. */
   onPlay: (card: HandCard, origin?: DOMRect) => void
   /** Bumps once per deal — triggers the card-by-card dealing animation. */
@@ -23,7 +25,7 @@ const DEAL_STAGGER_MS = 130
  * lifted card again to play it. When a new round is dealt the cards land
  * in the fan one by one, flying in from the table side.
  */
-export function PlayerHand({ cards, onPlay, dealSeq = 0 }: Props) {
+export function PlayerHand({ cards, trunfo, onPlay, dealSeq = 0 }: Props) {
   const { variant } = useDeckTheme()
   const [arrangement, setArrangement] = useState<string[]>([])
   const [selected, setSelected] = useState<string | null>(null)
@@ -44,9 +46,13 @@ export function PlayerHand({ cards, onPlay, dealSeq = 0 }: Props) {
     return () => clearTimeout(timer)
   }, [revealed, cards.length])
 
+  const trumpSuit = useMemo(() => (trunfo ? parseCard(trunfo).suit : undefined), [trunfo])
   const ordered = useMemo(() => orderHand(cards, arrangement), [cards, arrangement])
   const visible = revealed >= ordered.length ? ordered : ordered.slice(0, revealed)
-  const libCards = useMemo(() => visible.map((c) => toLibCard(c, variant)), [visible, variant])
+  const libCards = useMemo(
+    () => visible.map((c) => toLibCard(c, variant, trumpSuit)),
+    [visible, variant, trumpSuit],
+  )
 
   // Keep the Hand mounted even when empty so its fixed height still
   // reserves the thumb zone — otherwise the table flexes into that space.

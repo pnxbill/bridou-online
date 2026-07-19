@@ -431,7 +431,7 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
                 <PlayingCard id={card} {...parseCard(card)} variant={variant} />
                 {winning && (
                   <span className={styles.winnerTag}>
-                    {trickComplete ? 'ganhou!' : 'ganhando'}
+                    {trickComplete ? 'fez!' : 'fazendo'}
                   </span>
                 )}
               </motion.div>
@@ -468,7 +468,12 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
 
       {/* thumb zone: hand */}
       <div className={styles.myArea}>
-        <PlayerHand cards={state.hand} onPlay={handlePlay} dealSeq={state.dealSeq} />
+        <PlayerHand
+          cards={state.hand}
+          trunfo={state.trunfo}
+          onPlay={handlePlay}
+          dealSeq={state.dealSeq}
+        />
       </div>
 
       {historyPlayer && historyAnchor && (

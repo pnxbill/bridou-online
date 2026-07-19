@@ -49,7 +49,7 @@ export default function CardsDevPage() {
           {lastPlayed ? `Jogou: ${lastPlayed}` : 'Toque para selecionar, toque de novo para jogar.'}
         </p>
         <div className="table" style={{ minHeight: 260 }}>
-          <PlayerHand cards={hand} onPlay={(card) => setLastPlayed(card.value)} />
+          <PlayerHand cards={hand} trunfo="A-♠️" onPlay={(card) => setLastPlayed(card.value)} />
         </div>
       </section>
     </div>
