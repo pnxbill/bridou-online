@@ -94,7 +94,7 @@ export default function TableMockupPage() {
       <div className={styles.hud}>
         <div className={styles.roundChip}>
           <span className={styles.roundLabel}>Rodada 3</span>
-          <span className={styles.roundValue}>Vaza 1/3</span>
+          <span className={styles.roundValue}>Feita 1/3</span>
         </div>
         <div className={styles.trunfo}>
           <span className={styles.trunfoLabel}>Trunfo</span>

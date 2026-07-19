@@ -4,12 +4,19 @@ import { Card as PlayingCard } from '@bridou/cards-ui'
 import { useEffect, useRef, useState } from 'react'
 import { unlockGameAudio } from '@/features/game/sounds'
 import { useDeckTheme, type DeckVariant } from './deck-theme'
+import { useHandOrder, type HandOrderPrefs } from './hand-order'
 import { useSoundSettings } from './sound-settings'
 import styles from './SettingsCog.module.css'
 
 const OPTIONS: Array<{ value: DeckVariant; label: string }> = [
   { value: 'dark', label: 'Escuro' },
   { value: 'light', label: 'Claro' },
+]
+
+const HAND_ORDER_TOGGLES: Array<{ key: keyof HandOrderPrefs; icon: string; label: string }> = [
+  { key: 'bySuit', icon: '♠♠', label: 'Agrupar por naipe' },
+  { key: 'byStrength', icon: '↑', label: 'Ordenar por força' },
+  { key: 'trumpsLast', icon: '★', label: 'Trunfos no fim' },
 ]
 
 /**
@@ -19,6 +26,7 @@ const OPTIONS: Array<{ value: DeckVariant; label: string }> = [
 export function SettingsCog() {
   const { variant, setVariant } = useDeckTheme()
   const { muted, setMuted } = useSoundSettings()
+  const { prefs, setPrefs } = useHandOrder()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
@@ -81,6 +89,25 @@ export function SettingsCog() {
               </button>
             ))}
           </div>
+
+          <p className={`${styles.heading} ${styles.headingSpaced}`}>Organizar cartas</p>
+          <div className={styles.toggleGroup}>
+            {HAND_ORDER_TOGGLES.map((toggle) => (
+              <button
+                key={toggle.key}
+                type="button"
+                className={`${styles.toggle} ${prefs[toggle.key] ? styles.toggleActive : ''}`}
+                onClick={() => setPrefs({ ...prefs, [toggle.key]: !prefs[toggle.key] })}
+                aria-pressed={prefs[toggle.key]}
+              >
+                <span className={styles.toggleIcon} aria-hidden>
+                  {toggle.icon}
+                </span>
+                <span className={styles.toggleLabel}>{toggle.label}</span>
+              </button>
+            ))}
+          </div>
+          <p className={styles.hint}>Aplicado quando as cartas são dadas</p>
 
           <p className={`${styles.heading} ${styles.headingSpaced}`}>Som</p>
           <button

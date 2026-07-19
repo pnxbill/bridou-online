@@ -67,17 +67,19 @@ export function TrickHistoryPopup({ player, tricks, trunfo, anchor, onClose }: P
         ref={panelRef}
         className={styles.panel}
         role="dialog"
-        aria-label={`Vazas de ${player.name}`}
+        aria-label={`Feitas de ${player.name}`}
         style={pos ? { top: pos.top, left: pos.left } : { top: anchor.bottom + GAP, left: anchor.left }}
         onClick={(e) => e.stopPropagation()}
       >
         <header className={styles.header}>
           <h2 className={styles.title}>{player.name}</h2>
-          <span className={styles.count}>{tricks.length}</span>
+          <span className={styles.count}>
+            fez <b>{tricks.length}</b>/{player.bet ?? 0}
+          </span>
         </header>
 
         {tricks.length === 0 ? (
-          <p className={styles.empty}>Nenhuma vaza</p>
+          <p className={styles.empty}>Nenhuma feita</p>
         ) : (
           <ul className={styles.tricks}>
             {tricks.map(({ trick, roundIndex }) => {

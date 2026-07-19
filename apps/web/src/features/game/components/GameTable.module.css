@@ -45,7 +45,7 @@
   padding: 8px 14px;
   background: var(--glass);
   border: 1px solid var(--glass-border);
-  border-radius: 14px;
+  border-radius: 6px;
   backdrop-filter: blur(8px);
 }
 
@@ -287,23 +287,19 @@
   transform-origin: top left;
 }
 
+.played :global(.card) {
+  transition: filter 0.3s ease;
+}
+
 .playedWinning :global(.card) {
   box-shadow:
     0 0 0 2px var(--gold),
     0 0 18px var(--gold-soft) !important;
 }
 
-.winnerTag {
-  position: absolute;
-  left: 50%;
-  bottom: -16px;
-  transform: translateX(-50%);
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  color: var(--gold);
-  text-transform: uppercase;
-  white-space: nowrap;
+/* the winning card stays lit — everything else on the table recedes */
+.playedDimmed :global(.card) {
+  filter: brightness(0.55) saturate(0.8);
 }
 
 /* my seat chip on the near rim */

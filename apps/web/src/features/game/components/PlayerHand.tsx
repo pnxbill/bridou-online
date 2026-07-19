@@ -4,7 +4,8 @@ import { Hand, type HandCard as LibHandCard } from '@bridou/cards-ui'
 import type { Card, HandCard } from '@bridou/shared'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useDeckTheme } from '@/features/settings/deck-theme'
-import { orderHand, parseCard, toLibCard } from '../cards'
+import { useHandOrder } from '@/features/settings/hand-order'
+import { orderHand, parseCard, sortHand, toLibCard } from '../cards'
 
 interface Props {
   cards: HandCard[]
@@ -27,9 +28,24 @@ const DEAL_STAGGER_MS = 130
  */
 export function PlayerHand({ cards, trunfo, onPlay, dealSeq = 0 }: Props) {
   const { variant } = useDeckTheme()
-  const [arrangement, setArrangement] = useState<string[]>([])
+  const { prefs } = useHandOrder()
+  // lazy init: a page refresh mounts straight into a mid-round hand (no
+  // cards-dealt event fires), so the toggles must apply here too
+  const [arrangement, setArrangement] = useState<string[]>(() =>
+    sortHand(cards, prefs, trunfo).map((c) => c.value),
+  )
   const [selected, setSelected] = useState<string | null>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
+
+  // hand-order prefs load from localStorage a tick after mount (SSR starts
+  // with the "none" default) — re-apply once they arrive, unless the player
+  // has already dragged a card into a manual arrangement.
+  const userArranged = useRef(false)
+  useEffect(() => {
+    if (userArranged.current) return
+    setArrangement(sortHand(cards, prefs, trunfo).map((c) => c.value))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefs])
 
   // Dealing: reveal cards one at a time. Infinity = not dealing, show all.
   const [revealed, setRevealed] = useState(Infinity)
@@ -39,6 +55,10 @@ export function PlayerHand({ cards, trunfo, onPlay, dealSeq = 0 }: Props) {
     // flashes fully fanned for a frame before the deal starts
     prevSeq.current = dealSeq
     setRevealed(0)
+    // apply the player's organization toggles to the freshly dealt hand;
+    // manual drags afterwards overwrite this arrangement as before
+    setArrangement(sortHand(cards, prefs, trunfo).map((c) => c.value))
+    userArranged.current = false
   }
   useEffect(() => {
     if (revealed >= cards.length) return
@@ -72,6 +92,7 @@ export function PlayerHand({ cards, trunfo, onPlay, dealSeq = 0 }: Props) {
   }
 
   const handleReorder = (newOrder: LibHandCard[]) => {
+    userArranged.current = true
     setArrangement(newOrder.map((c) => c.id))
   }
 

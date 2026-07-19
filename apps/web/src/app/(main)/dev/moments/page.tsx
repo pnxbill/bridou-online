@@ -52,7 +52,7 @@ export default function MomentsDevPage() {
         ))}
       </div>
       <p className="hint" style={{ textAlign: 'left' }}>
-        O overlay de fim de rodada aparece após 1,6s (tempo da última vaza).
+        O overlay de fim de rodada aparece após 1,6s (tempo da última feita).
       </p>
 
       {moment === 'bailou' && (

@@ -129,6 +129,18 @@
   font-weight: 700;
 }
 
+.toggleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hint {
+  margin: 6px 2px 0;
+  font-size: 0.62rem;
+  color: var(--ink-muted);
+}
+
 .toggle {
   display: flex;
   align-items: center;

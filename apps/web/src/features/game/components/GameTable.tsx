@@ -323,9 +323,12 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
       {/* top HUD */}
       <div className={styles.hud}>
         <div className={styles.roundChip}>
-          <span className={styles.roundLabel}>Rodada {state.roundNumber}</span>
+          <span className={styles.roundLabel}>
+            Rodada {state.roundNumber} · {state.cardsForEachPlayer}{' '}
+            {state.cardsForEachPlayer === 1 ? 'carta' : 'cartas'}
+          </span>
           <span className={styles.roundValue}>
-            Vaza {Math.min(state.turnsCompleted + 1, state.cardsForEachPlayer)}/
+            Feita {Math.min(state.turnsCompleted + 1, state.cardsForEachPlayer)}/
             {state.cardsForEachPlayer}
           </span>
         </div>
@@ -362,7 +365,7 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
                 className={`${styles.avatar} ${styles.avatarBtn} ${isBotSeat(seat) ? styles.avatarBot : ''} ${
                   speakingIds.includes(seat.id) ? styles.avatarSpeaking : ''
                 }`}
-                aria-label={`Ver vazas de ${seat.name}`}
+                aria-label={`Ver feitas de ${seat.name}`}
                 onClick={(e) => openHistory(seat.id, e.currentTarget)}
               >
                 {isBotSeat(seat) ? '🤖' : seat.photoURL ? (
@@ -406,10 +409,11 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
             const exit = winnerSeat ? delta(winnerSeat, slot) : { x: 0, y: 0 }
             const tilt = -7 + (i * 14) / Math.max(1, state.playedCards.length - 1 || 1)
             const winning = i === winningIdx
+            const dimmed = !winning && state.playedCards.length > 1
             return (
               <motion.div
                 key={card}
-                className={`${styles.played} ${winning ? styles.playedWinning : ''}`}
+                className={`${styles.played} ${winning ? styles.playedWinning : ''} ${dimmed ? styles.playedDimmed : ''}`}
                 style={{ left: `${slot.x}%`, top: `${slot.y}%`, zIndex: winning ? 4 : 3 }}
                 initial={{
                   x: enter.x,
@@ -429,11 +433,6 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
                 transition={{ type: 'spring', stiffness: 260, damping: 22 }}
               >
                 <PlayingCard id={card} {...parseCard(card)} variant={variant} />
-                {winning && (
-                  <span className={styles.winnerTag}>
-                    {trickComplete ? 'fez!' : 'fazendo'}
-                  </span>
-                )}
               </motion.div>
             )
           })}
@@ -446,7 +445,7 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
               className={`${styles.myChip} ${styles.myChipBtn} ${myTurn ? styles.myChipTurn : ''} ${
                 speakingIds.includes(me.id) ? styles.myChipSpeaking : ''
               }`}
-              aria-label="Ver suas vazas"
+              aria-label="Ver suas feitas"
               onClick={(e) => openHistory(me.id, e.currentTarget)}
             >
               {myChipText()}

@@ -1,5 +1,6 @@
 import type { HandCard as LibHandCard, Rank, Suit } from '@bridou/cards-ui'
 import { HIDDEN_CARD, cardRank, cardSuit, rankValue, type Card, type HandCard } from '@bridou/shared'
+import type { HandOrderPrefs } from '@/features/settings/hand-order'
 
 /** Engine cards are `"A-♠️"` strings; the card components want rank + suit names. */
 const SUIT_BY_EMOJI: Record<string, Suit> = {
@@ -75,6 +76,41 @@ export const winningCardIndex = (playedCards: Card[], trunfo: Card): number => {
  * have dragged keep their chosen positions, anything new keeps server order.
  * The server never knows about hand order — it's pure presentation.
  */
+/**
+ * Auto-arrangement applied when a round is dealt, per the player's
+ * organization toggles. Pure presentation — a stable sort of the dealt hand,
+ * so with every toggle off (or a blind-round hidden card) nothing moves.
+ */
+export const sortHand = (
+  cards: HandCard[],
+  prefs: HandOrderPrefs,
+  trunfo: Card | null,
+): HandCard[] => {
+  if (!prefs.bySuit && !prefs.byStrength && !prefs.trumpsLast) return cards
+  if (cards.some((c) => c.value === HIDDEN_CARD)) return cards
+  const trunfoSuit = trunfo ? cardSuit(trunfo) : null
+  /* suits keep their first-appearance order in the dealt hand */
+  const suitOrder: string[] = []
+  for (const c of cards) {
+    const suit = cardSuit(c.value)
+    if (!suitOrder.includes(suit)) suitOrder.push(suit)
+  }
+  return [...cards].sort((a, b) => {
+    const suitA = cardSuit(a.value)
+    const suitB = cardSuit(b.value)
+    if (prefs.trumpsLast && trunfoSuit && suitA !== suitB) {
+      const trumpA = suitA === trunfoSuit ? 1 : 0
+      const trumpB = suitB === trunfoSuit ? 1 : 0
+      if (trumpA !== trumpB) return trumpA - trumpB
+    }
+    if (prefs.bySuit && suitA !== suitB) {
+      return suitOrder.indexOf(suitA) - suitOrder.indexOf(suitB)
+    }
+    if (prefs.byStrength) return rankValue(a.value) - rankValue(b.value)
+    return 0
+  })
+}
+
 export const orderHand = (cards: HandCard[], order: string[]): HandCard[] => {
   const byValue = new Map(cards.map((c) => [c.value, c]))
   const arranged = order.map((value) => byValue.get(value)).filter((c): c is HandCard => !!c)

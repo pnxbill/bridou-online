@@ -1,6 +1,6 @@
 'use client'
 
-import type { HandCard } from '@bridou/shared'
+import { HIDDEN_CARD, type HandCard } from '@bridou/shared'
 import { useCallback, useEffect, useReducer } from 'react'
 import { api, type GameEntry } from '@/lib/api'
 import { gameReducer, stateFromSnapshot } from './reducer'
@@ -48,7 +48,13 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
 
   const playCard = async (card: HandCard) => {
     if (card.disabled) return
-    dispatch({ type: 'lock-hand' })
+    // blind round: we don't know our own card, so it can't be drawn on the
+    // table optimistically — just freeze the hand until the server confirms
+    if (card.value === HIDDEN_CARD) {
+      dispatch({ type: 'lock-hand' })
+    } else {
+      dispatch({ type: 'optimistic-play', card: card.value })
+    }
     try {
       await api.playCard(gameId, card.value)
     } catch {

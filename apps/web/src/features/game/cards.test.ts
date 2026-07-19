@@ -1,5 +1,7 @@
+import { HIDDEN_CARD } from '@bridou/shared'
 import { describe, expect, it } from 'vitest'
-import { orderHand, parseCard, toLibCard, winningCardIndex } from './cards'
+import { DEFAULT_HAND_ORDER } from '@/features/settings/hand-order'
+import { orderHand, parseCard, sortHand, toLibCard, winningCardIndex } from './cards'
 
 describe('parseCard', () => {
   it('maps engine card strings to rank + suit names', () => {
@@ -55,6 +57,65 @@ describe('winningCardIndex', () => {
   it('the leader wins until someone beats them', () => {
     expect(winningCardIndex(['Q-♣️'], trunfo)).toBe(0)
     expect(winningCardIndex(['Q-♣️', '2-♣️'], trunfo)).toBe(0)
+  })
+})
+
+describe('sortHand', () => {
+  const hand = (...values: string[]) => values.map((value) => ({ value, disabled: false }))
+  const values = (cards: Array<{ value: string }>) => cards.map((c) => c.value)
+  const trunfo = '7-♦️'
+  const prefs = (overrides: Partial<typeof DEFAULT_HAND_ORDER>) => ({
+    ...DEFAULT_HAND_ORDER,
+    ...overrides,
+  })
+
+  const dealt = hand('K-♠️', '2-♥️', '4-♦️', 'A-♠️', 'Q-♥️', '3-♠️')
+
+  it('keeps the dealt order when every toggle is off (the default)', () => {
+    expect(sortHand(dealt, DEFAULT_HAND_ORDER, trunfo)).toBe(dealt)
+  })
+
+  it('groups suits in their first-appearance order', () => {
+    expect(values(sortHand(dealt, prefs({ bySuit: true }), trunfo))).toEqual([
+      'K-♠️',
+      'A-♠️',
+      '3-♠️',
+      '2-♥️',
+      'Q-♥️',
+      '4-♦️',
+    ])
+  })
+
+  it('orders weakest → strongest across suits', () => {
+    expect(values(sortHand(hand('K-♠️', '2-♥️', 'A-♦️', '4-♣️'), prefs({ byStrength: true }), trunfo))).toEqual([
+      '2-♥️',
+      '4-♣️',
+      'K-♠️',
+      'A-♦️',
+    ])
+  })
+
+  it('pushes trumps to the end, keeping dealt order otherwise', () => {
+    expect(values(sortHand(dealt, prefs({ trumpsLast: true }), trunfo))).toEqual([
+      'K-♠️',
+      '2-♥️',
+      'A-♠️',
+      'Q-♥️',
+      '3-♠️',
+      '4-♦️',
+    ])
+  })
+
+  it('combines all three: suit groups, strength inside them, trumps last', () => {
+    const cards = hand('K-♠️', '2-♥️', '4-♦️', 'A-♠️', 'Q-♥️', '2-♦️')
+    expect(
+      values(sortHand(cards, prefs({ bySuit: true, byStrength: true, trumpsLast: true }), trunfo)),
+    ).toEqual(['K-♠️', 'A-♠️', '2-♥️', 'Q-♥️', '2-♦️', '4-♦️'])
+  })
+
+  it('leaves a blind-round hidden hand alone', () => {
+    const blind = [{ value: HIDDEN_CARD, disabled: false }]
+    expect(sortHand(blind, prefs({ bySuit: true, byStrength: true }), trunfo)).toBe(blind)
   })
 })
 

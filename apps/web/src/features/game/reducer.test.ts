@@ -319,6 +319,37 @@ describe('optimistic UI actions', () => {
     expect(state.hand.every((c) => c.disabled)).toBe(true)
   })
 
+  it('optimistic-play puts the card on the table and freezes the rest of the hand', () => {
+    const withHand = apply(base, {
+      type: 'play-requested',
+      playerId: 'me',
+      cards: [
+        { value: 'A-♠️', disabled: false },
+        { value: 'K-♥️', disabled: false },
+      ],
+    })
+    const state = gameReducer(withHand, { type: 'optimistic-play', card: 'A-♠️' })
+    expect(state.playedCards).toEqual(['A-♠️'])
+    expect(state.hand).toEqual([{ value: 'K-♥️', disabled: true }])
+  })
+
+  it('the server confirmation after an optimistic play changes nothing visible', () => {
+    const withHand = apply(base, {
+      type: 'play-requested',
+      playerId: 'me',
+      cards: [{ value: 'A-♠️', disabled: false }],
+    })
+    const optimistic = gameReducer(withHand, { type: 'optimistic-play', card: 'A-♠️' })
+    const confirmed = apply(optimistic, {
+      type: 'card-played',
+      playerId: 'me',
+      card: 'A-♠️',
+      playedCards: ['A-♠️'],
+    })
+    expect(confirmed.playedCards).toEqual(['A-♠️'])
+    expect(confirmed.hand).toEqual([])
+  })
+
   it('clear-bets hides the bet buttons', () => {
     const state = gameReducer(base, { type: 'clear-bets' })
     expect(state.availableBets).toEqual([])

@@ -73,6 +73,12 @@ export type GameAction =
   | { type: 'sync'; snapshot: GameEntry }
   /** Optimistic UI: freeze the hand while a play is in flight. */
   | { type: 'lock-hand' }
+  /**
+   * Optimistic UI: the tapped card leaves the hand and lands on the table
+   * immediately; the server's `card-played` confirms it (same values), and a
+   * rejection resyncs the real state.
+   */
+  | { type: 'optimistic-play'; card: Card }
   /** Optimistic UI: hide bet buttons while a bet is in flight. */
   | { type: 'clear-bets' }
 
@@ -266,6 +272,16 @@ export const gameReducer = (state: GameViewState, action: GameAction): GameViewS
       return { ...stateFromSnapshot(action.snapshot, state.myId), dealSeq: state.dealSeq }
     case 'lock-hand':
       return { ...state, hand: state.hand.map((c) => ({ ...c, disabled: true })) }
+    case 'optimistic-play':
+      return {
+        ...state,
+        playedCards: state.playedCards.includes(action.card)
+          ? state.playedCards
+          : [...state.playedCards, action.card],
+        hand: state.hand
+          .filter((c) => c.value !== action.card)
+          .map((c) => ({ ...c, disabled: true })),
+      }
     case 'clear-bets':
       return { ...state, availableBets: [] }
   }
