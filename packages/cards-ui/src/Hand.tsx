@@ -111,8 +111,9 @@ export const Hand: React.FC<HandProps> = ({
         const yOffset = arcOffset + (card.disabled ? 16 : 0)
         const zOffset = index * 10 // Ascending z-index: Rightmost cards are closer to camera
 
-        // Dynamic margin calculation
-        let marginLeft = index === 0 ? '0' : '-60px'
+        // Dynamic margin calculation — 32px of each covered card stays
+        // visible (enough for its corner index + trump stripe)
+        let marginLeft = index === 0 ? '0' : '-56px'
         if (isDraggingAny && isFineTuning && draggingIndex !== -1) {
           // Expand space around the dragged card
           if (index === draggingIndex || index === draggingIndex + 1) {
@@ -137,7 +138,7 @@ export const Hand: React.FC<HandProps> = ({
               position: 'relative',
               listStyle: 'none',
               transformOrigin: 'bottom center',
-              borderRadius: '8px',
+              borderRadius: '6px',
             }}
             initial={{ opacity: 0, scale: 0.5, y: -140 }}
             whileDrag={{

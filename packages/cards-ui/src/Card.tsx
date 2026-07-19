@@ -6,6 +6,10 @@
  * (clickable and not disabled) get a gold glow matching the card back's
  * accent; disabled cards fade via CSS filters (brightness/saturation) —
  * never opacity, which would let the felt bleed through the dark gradient.
+ * `trump` prop tags a card as the trumpsuit — a small corner badge so the
+ * player can spot their trumps at a glance. Redesigned cut: 88×140 (slimmer
+ * than bridge, was 100×140 poker), 6px corners, 1px edge + inner "filete"
+ * frame line — wrappers that scale the card assume this base size.
  */
 import React from 'react'
 
@@ -19,6 +23,8 @@ export interface CardProps {
   faceUp?: boolean
   /** Unplayable right now: dimmed and not clickable (still draggable in a Hand). */
   disabled?: boolean
+  /** This card belongs to the trump suit — shows a small corner badge. */
+  trump?: boolean
   onClick?: () => void
   className?: string
   style?: React.CSSProperties
@@ -44,6 +50,7 @@ export const Card: React.FC<CardProps> = ({
   rank,
   faceUp = true,
   disabled = false,
+  trump = false,
   onClick,
   className = '',
   style,
@@ -57,14 +64,14 @@ export const Card: React.FC<CardProps> = ({
     if (baseColor === 'black') {
       finalColor = '#e2e8f0' // Soft slate for black suits in dark mode
     } else {
-      finalColor = '#fca5a5' // Soft coral red
+      finalColor = '#e11d48' // Deep carmine — elegant against the dark slate
     }
   } else {
     // Light mode premium colors
     if (baseColor === 'black') {
       finalColor = '#1e293b' // Slate 800
     } else {
-      finalColor = '#dc2626' // Red 600
+      finalColor = '#b91c1c' // Deep print red on the cream face
     }
   }
 
@@ -78,14 +85,18 @@ export const Card: React.FC<CardProps> = ({
     : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
 
   const baseStyles: React.CSSProperties = {
-    width: '100px',
+    // Slimmer than a bridge deck (0.63 ratio) — the old 5:7 poker cut read
+    // squat on the phone fan. Height is the layout anchor everywhere
+    // (wrappers scale from it), so only the width changed.
+    width: '88px',
     height: '140px',
-    backgroundColor: isDark ? '#1e293b' : '#fdfbf7', // Dark slate or warm cream
+    backgroundColor: isDark ? '#0e1520' : '#fdfbf7', // Dark slate or warm cream
     background: isDark
-      ? 'linear-gradient(135deg, #334155 0%, #1e293b 100%)' // Lighter, more visible gradient
+      ? 'linear-gradient(135deg, rgb(51, 65, 85) 0%, #0e1520 100%)'
       : 'linear-gradient(135deg, #fffbf0 0%, #f0f0f0 100%)',
-    borderRadius: '12px',
-    border: `2px solid ${isPlayable ? 'rgba(251, 191, 36, 0.75)' : restingBorder}`,
+    // Near a real card's corner (~5.5% of width) — 12px read as a UI button
+    borderRadius: '6px',
+    border: `1px solid ${isPlayable ? 'rgba(251, 191, 36, 0.85)' : restingBorder}`,
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
@@ -114,7 +125,7 @@ export const Card: React.FC<CardProps> = ({
       radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%),
       repeating-linear-gradient(45deg, rgba(251, 191, 36, 0.05) 0px, rgba(251, 191, 36, 0.05) 2px, transparent 2px, transparent 8px)
     `,
-    border: '2px solid #fbbf24', // Gold border
+    border: '1.5px solid #fbbf24', // Gold border
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -142,12 +153,43 @@ export const Card: React.FC<CardProps> = ({
 
   return (
     <div className={`card card-face ${className}`} style={baseStyles} onClick={handleClick}>
+      {/* Inner frame ("filete") — the thin printed border of European decks.
+          Faint gold on the dark deck, soft slate on the light one. */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          inset: '4px',
+          borderRadius: '3px',
+          border: `1px solid ${isDark ? 'rgba(251, 191, 36, 0.16)' : 'rgba(30, 41, 59, 0.12)'}`,
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Trump marker — the left edge of the filete lights up gold, so it
+          stays visible even when cards overlap in the fan. */}
+      {trump && (
+        <div
+          aria-label="trump"
+          style={{
+            position: 'absolute',
+            top: '4px',
+            bottom: '4px',
+            left: '4px',
+            width: '3px',
+            borderRadius: '2px',
+            background: 'linear-gradient(180deg, #fde68a 0%, #fbbf24 50%, #d97706 100%)',
+            boxShadow: '0 0 5px rgba(251, 191, 36, 0.7)',
+          }}
+        />
+      )}
+
       {/* Top Left Corner */}
       <div
         style={{
           position: 'absolute',
-          top: '8px',
-          left: '8px',
+          top: '9px',
+          left: '9px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -155,13 +197,13 @@ export const Card: React.FC<CardProps> = ({
         }}
       >
         <div style={{ fontSize: '1.2rem', fontWeight: '700', letterSpacing: '-0.5px' }}>{rank}</div>
-        <div style={{ fontSize: '0.9rem', marginTop: '2px' }}>{suitSymbols[suit]}</div>
+        <div style={{ fontSize: '0.85rem', marginTop: '2px' }}>{suitSymbols[suit]}</div>
       </div>
 
       {/* Center Content */}
       <div
         style={{
-          fontSize: '3rem',
+          fontSize: '2.7rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -176,8 +218,8 @@ export const Card: React.FC<CardProps> = ({
       <div
         style={{
           position: 'absolute',
-          bottom: '8px',
-          right: '8px',
+          bottom: '9px',
+          right: '9px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -186,7 +228,7 @@ export const Card: React.FC<CardProps> = ({
         }}
       >
         <div style={{ fontSize: '1.2rem', fontWeight: '700', letterSpacing: '-0.5px' }}>{rank}</div>
-        <div style={{ fontSize: '0.9rem', marginTop: '2px' }}>{suitSymbols[suit]}</div>
+        <div style={{ fontSize: '0.85rem', marginTop: '2px' }}>{suitSymbols[suit]}</div>
       </div>
     </div>
   )

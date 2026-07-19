@@ -75,8 +75,9 @@
   color: var(--gold);
 }
 
+/* scaled card wrappers: width = scale × 88 (card base), height = scale × 140 */
 .trunfoCard {
-  width: 44px;
+  width: 39px;
   height: 62px;
   filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.25));
 }
@@ -258,7 +259,7 @@
 }
 
 .seatCard {
-  width: 36px;
+  width: 32px;
   height: 50px;
   overflow: hidden;
   border-radius: 6px;
@@ -274,9 +275,9 @@
 
 .played {
   position: absolute;
-  width: 58px;
+  width: 51px;
   height: 81px;
-  margin-left: -29px;
+  margin-left: -25px;
   margin-top: -40px;
   z-index: 3;
 }
@@ -284,7 +285,6 @@
 .played :global(.card) {
   transform: scale(0.58);
   transform-origin: top left;
-  border-radius: 10px;
 }
 
 .playedWinning :global(.card) {
@@ -443,9 +443,9 @@
 }
 
 .tableArea[data-crowded] .played {
-  width: 50px;
+  width: 44px;
   height: 70px;
-  margin-left: -25px;
+  margin-left: -22px;
   margin-top: -35px;
 }
 
@@ -453,7 +453,7 @@
   transform: scale(0.5);
 }
 
-/* narrow phones: the 7-card fan is 340px wide — scale it to fit.
+/* narrow phones: the 7-card fan is 280px wide — scale it to fit.
    (transform only: the reserved layout height must not change) */
 @media (max-width: 390px) {
   .myArea :global(.hand) {
@@ -484,7 +484,7 @@
   }
 
   .trunfoCard {
-    width: 36px;
+    width: 32px;
     height: 51px;
   }
 

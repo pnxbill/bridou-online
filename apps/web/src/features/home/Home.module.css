@@ -108,7 +108,7 @@
   position: absolute;
   left: 50%;
   top: 54%;
-  width: 100px;
+  width: 88px;
   height: 140px;
   transform-origin: 50% 130%;
   transform: translate(-50%, -50%) rotate(var(--rot)) translateY(var(--lift));
