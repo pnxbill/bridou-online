@@ -101,11 +101,24 @@ celebrations. Mobile-first: hand and actions in the thumb zone, the table is the
 - [x] Lobby redesign in the same language (the table filling up as people join) — now at `/mesa/[code]` with the invite panel (code tiles, copy link, WhatsApp, share sheet); fixture at `/dev/lobby`
 - [x] Home/login as a proper entrance: night sky + card fan + felt rim rising from the bottom, header-free route, Google/sentar/voltar states (mockup kept at `/dev/home`)
 - [x] Edge layouts: compact seats/played cards at 5+ opponents (`data-crowded`), fan + bet bar scale down on narrow phones, HUD/hand shrink on short screens, landscape shows a "gire o celular" overlay (portrait-only decided) — fixture at `/dev/edge` renders the real GameTable at the extremes
+- [x] Browser-tab favicon: gold spade on a navy squircle (the crowning A♠ of the home fan), `apps/web/src/app/icon.svg` — replaces the leftover Qwik logo; Next App Router serves it automatically
+
+### PWA — installable "add to home screen" (planned)
+
+Goal: friends open the Vercel URL once, tap **Add to Home Screen**, and Bridou launches full-screen from a home-screen icon like a native app — no store, no install friction. Brand it with the same gold-spade mark as the favicon.
+
+- [ ] App icons from the spade mark: PNG `192×192` + `512×512` (any + maskable). The favicon `icon.svg` has the spade near the squircle edge, so bake a **maskable** variant with ~20% safe padding and a full-bleed navy background (no rounded corners / gold border — the OS applies its own mask) so Android's circle/squircle crop doesn't clip it
+- [ ] Apple touch icon: `apps/web/src/app/apple-icon.png` (180×180, navy background, no transparency — iOS ignores the manifest icons for the home screen)
+- [ ] Web app manifest via `apps/web/src/app/manifest.ts`: `name` "Bridou Online", `short_name` "Bridou", `display: 'standalone'`, `start_url: '/'`, `theme_color: '#0b1120'`, `background_color: '#0b1120'` (matches the existing `viewport.themeColor`), `orientation: 'portrait'`, `lang: 'pt-BR'`, the icon set above
+- [ ] `metadata.appleWebApp` in `layout.tsx` (`capable: true`, `statusBarStyle: 'black-translucent'`, `title: 'Bridou'`) so iOS launches standalone with the dark status bar over the felt
+- [ ] Service worker for Android's install prompt (needs a `fetch` handler): minimal offline app-shell SW — cache the entrypoint + static assets, network-first for `/api` and SSE (never cache realtime). iOS add-to-home works without it, so keep it lean. Consider `@serwist/next` or a hand-rolled SW registered client-side
+- [ ] Verify installability: Chrome DevTools → Application → Manifest (no errors, icons resolve, "installable"), then a real add-to-home on both an Android phone and an iPhone — confirm the gold-spade icon, full-screen standalone launch, and that a live game still works from the installed shell
+- [ ] Optional: a subtle in-app "adicione à tela inicial" hint (deferred `beforeinstallprompt` on Android; a one-time Safari share-sheet tip on iOS) — only if friends don't discover it on their own
 
 ## 8. Infra & Tooling
 
 - [x] CI: GitHub Actions running typecheck, all tests and the web build on every push
-- [x] Decide deployment target for server + web: server LIVE on Render free (`https://bridou-server.onrender.com`, region virginia, auto-deploy from `feature/revamp`, deployed via API — dashboard repo picker is broken for this account; repo made public so Render can fetch it) + Neon `sa-east-1` (migrated, store smoke-tested). Old pem key removed from the tree but exposed in public history — treat as burned. Web on Vercel still pending (`NEXT_PUBLIC_GAME_SERVER_URL`, then `WEB_ORIGINS` + Firebase authorized domain)
+- [x] Decide deployment target for server + web: **both LIVE** — server on Render free (`https://bridou-server.onrender.com`, region virginia, deployed via API since the dashboard repo picker is broken for this account; repo made public so Render can fetch it) + Neon `sa-east-1` (migrated, store smoke-tested) + web on Vercel (`https://bridou-web.vercel.app`, root `apps/web`, `NEXT_PUBLIC_GAME_SERVER_URL` set, `WEB_ORIGINS` + Firebase authorized domain wired). Both auto-deploy from **`main`** (`feature/revamp` was merged in; Render + Vercel now build main, so a merge is the release signal). Old pem key removed from the tree but exposed in public history — treat as burned
 - [x] Production build pipeline for `apps/server` (tsup → `dist/main.js`; `pnpm start` runs `node dist/main.js`)
 - [x] Remove dead artifacts: `adaptors/`, `server/`, `types/`, `public/`, root env/eslint/vite configs
 

@@ -5,7 +5,7 @@ services:
     name: bridou-server
     runtime: node
     plan: free
-    branch: feature/revamp
+    branch: main
     buildCommand: pnpm install --frozen-lockfile && pnpm --filter @bridou/server build
     startCommand: node apps/server/dist/main.js
     envVars:
