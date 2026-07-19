@@ -88,7 +88,7 @@ export const Card: React.FC<CardProps> = ({
     // Slimmer than a bridge deck (0.63 ratio) — the old 5:7 poker cut read
     // squat on the phone fan. Height is the layout anchor everywhere
     // (wrappers scale from it), so only the width changed.
-    width: '88px',
+    width: '92px',
     height: '140px',
     backgroundColor: isDark ? '#0e1520' : '#fdfbf7', // Dark slate or warm cream
     background: isDark
