@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Outfit } from 'next/font/google'
+import { Outfit, Playfair_Display } from 'next/font/google'
 import type { ReactNode } from 'react'
 import { AuthProvider } from '@/features/auth/AuthProvider'
 import { VoiceRoomProvider } from '@/features/game/voice/VoiceRoomProvider'
@@ -10,6 +10,10 @@ import './globals.css'
 
 // The card faces (@bridou/cards-ui) are designed around Outfit
 const outfit = Outfit({ subsets: ['latin'] })
+
+// Display serif for the big moments (overlay titles) — exposed as a CSS
+// variable so any module can opt in via var(--font-display)
+const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-display' })
 
 export const metadata: Metadata = {
   title: 'Bridou Online',
@@ -28,7 +32,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR">
-      <body className={outfit.className}>
+      <body className={`${outfit.className} ${playfair.variable}`}>
         <AuthProvider>
           <DeckThemeProvider>
             <SoundSettingsProvider>
