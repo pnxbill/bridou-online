@@ -106,7 +106,7 @@ export interface FinishedGameRecord {
   leaderId: string
   players: FinishedGamePlayer[]
   finalScoreboard: ScoreboardEntry[]
-  /** Counts toward the leaderboard — no bot seat and no bot takeover. */
+  /** Counts toward the leaderboard — started with no bot seat. */
   ranked: boolean
 }
 

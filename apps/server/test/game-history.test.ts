@@ -113,7 +113,7 @@ describe('game history persistence', () => {
     expect(await history.getLeaderboard()).toHaveLength(0)
   })
 
-  it('excludes games where a bot took over mid-game', async () => {
+  it('keeps a game ranked when a bot only took over an abandoned seat', async () => {
     const history = new InMemoryGameHistoryRepository()
     const recorder = new GameHistoryRecorder(history, new InMemoryPlayerRepository())
 
@@ -122,8 +122,8 @@ describe('game history persistence', () => {
       recorder.onDomainEvent('takeover', { type: 'bot-took-over', playerId: roster[1]!.id })
     })
 
-    expect(history.games.get('takeover')?.ranked).toBe(false)
-    expect(await history.getLeaderboard()).toHaveLength(0)
+    expect(history.games.get('takeover')?.ranked).toBe(true)
+    expect(await history.getLeaderboard()).toHaveLength(3)
   })
 
   it('aggregates wins and win rate across multiple ranked games', async () => {

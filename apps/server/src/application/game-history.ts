@@ -13,7 +13,7 @@ export class GameHistoryRecorder {
   private readonly rosters = new Map<string, PlayerInfo[]>()
   private readonly leaderIds = new Map<string, string>()
   private readonly chains = new Map<string, Promise<void>>()
-  /** Games where a bot played at any point — bot seat at start or a takeover. */
+  /** Games that started with a bot seat — never ranked. A mid-game takeover is fine. */
   private readonly botTainted = new Set<string>()
 
   constructor(
@@ -52,8 +52,6 @@ export class GameHistoryRecorder {
   onDomainEvent(gameId: string, event: DomainEvent): void {
     const next = (this.seq.get(gameId) ?? 0) + 1
     this.seq.set(gameId, next)
-
-    if (event.type === 'bot-took-over') this.botTainted.add(gameId)
 
     if (event.type === 'round-ended') {
       const counts = this.bailadas.get(gameId) ?? new Map<string, number>()
