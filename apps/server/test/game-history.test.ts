@@ -63,6 +63,15 @@ describe('game history persistence', () => {
     expect(finished?.finalScoreboard).toHaveLength(3)
     expect(finished?.players).toHaveLength(3)
 
+    // All-human game with no takeover counts toward the leaderboard.
+    expect(finished?.ranked).toBe(true)
+    const rankings = await history.getLeaderboard()
+    expect(rankings).toHaveLength(3)
+    expect(rankings.reduce((sum, r) => sum + r.wins, 0)).toBe(1)
+    expect(rankings[0]!.wins).toBe(1)
+    expect(rankings[0]!.gamesPlayed).toBe(1)
+    expect(rankings[0]!.winRate).toBe(1)
+
     const rate = trumpLeadRate(events, 'p1')
     expect(rate.leads).toBeGreaterThan(0)
     expect(rate.trumpLeads).toBeGreaterThanOrEqual(0)
@@ -76,4 +85,60 @@ describe('game history persistence', () => {
         `(${rate.trumpLeads}/${rate.leads} leads)`,
     )
   }, 60_000)
+
+  const finishGame = async (
+    recorder: GameHistoryRecorder,
+    gameId: string,
+    roster: ReturnType<typeof makePlayers>,
+    beforeEnd?: () => void,
+  ) => {
+    recorder.recordGameStarted({ gameId, leaderId: roster[0]!.id, roster })
+    beforeEnd?.()
+    recorder.onDomainEvent(gameId, {
+      type: 'game-ended',
+      scoreboard: roster.map((p, i) => ({ ...p, totalPoints: 100 - i * 10 })),
+    })
+    await recorder.flush(gameId)
+  }
+
+  it('excludes games with a bot seat from the ranking', async () => {
+    const history = new InMemoryGameHistoryRepository()
+    const recorder = new GameHistoryRecorder(history, new InMemoryPlayerRepository())
+
+    const roster = makePlayers(3)
+    roster[2] = { ...roster[2]!, isBot: true }
+    await finishGame(recorder, 'bot-seat', roster)
+
+    expect(history.games.get('bot-seat')?.ranked).toBe(false)
+    expect(await history.getLeaderboard()).toHaveLength(0)
+  })
+
+  it('excludes games where a bot took over mid-game', async () => {
+    const history = new InMemoryGameHistoryRepository()
+    const recorder = new GameHistoryRecorder(history, new InMemoryPlayerRepository())
+
+    const roster = makePlayers(3)
+    await finishGame(recorder, 'takeover', roster, () => {
+      recorder.onDomainEvent('takeover', { type: 'bot-took-over', playerId: roster[1]!.id })
+    })
+
+    expect(history.games.get('takeover')?.ranked).toBe(false)
+    expect(await history.getLeaderboard()).toHaveLength(0)
+  })
+
+  it('aggregates wins and win rate across multiple ranked games', async () => {
+    const history = new InMemoryGameHistoryRepository()
+    const recorder = new GameHistoryRecorder(history, new InMemoryPlayerRepository())
+    const roster = makePlayers(2)
+
+    await finishGame(recorder, 'g1', roster)
+    await finishGame(recorder, 'g2', roster)
+    await finishGame(recorder, 'g3', [...roster].reverse())
+
+    const rankings = await history.getLeaderboard()
+    expect(rankings.map((r) => r.playerId)).toEqual([roster[0]!.id, roster[1]!.id])
+    expect(rankings[0]).toMatchObject({ gamesPlayed: 3, wins: 2 })
+    expect(rankings[0]!.winRate).toBeCloseTo(2 / 3)
+    expect(rankings[1]).toMatchObject({ gamesPlayed: 3, wins: 1 })
+  })
 })

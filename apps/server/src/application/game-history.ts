@@ -13,6 +13,8 @@ export class GameHistoryRecorder {
   private readonly rosters = new Map<string, PlayerInfo[]>()
   private readonly leaderIds = new Map<string, string>()
   private readonly chains = new Map<string, Promise<void>>()
+  /** Games where a bot played at any point — bot seat at start or a takeover. */
+  private readonly botTainted = new Set<string>()
 
   constructor(
     private readonly history: GameHistoryRepository,
@@ -31,6 +33,7 @@ export class GameHistoryRecorder {
     this.bailadas.set(input.gameId, new Map())
     this.rosters.set(input.gameId, input.roster.map((p) => ({ ...p })))
     this.leaderIds.set(input.gameId, input.leaderId)
+    if (input.roster.some((p) => p.isBot)) this.botTainted.add(input.gameId)
 
     this.enqueue(input.gameId, async () => {
       for (const player of input.roster) {
@@ -49,6 +52,8 @@ export class GameHistoryRecorder {
   onDomainEvent(gameId: string, event: DomainEvent): void {
     const next = (this.seq.get(gameId) ?? 0) + 1
     this.seq.set(gameId, next)
+
+    if (event.type === 'bot-took-over') this.botTainted.add(gameId)
 
     if (event.type === 'round-ended') {
       const counts = this.bailadas.get(gameId) ?? new Map<string, number>()
@@ -96,6 +101,7 @@ export class GameHistoryRecorder {
       endedAt: new Date(),
       leaderId: this.leaderIds.get(gameId) ?? ranked[0]?.id ?? roster[0]!.id,
       finalScoreboard: scoreboard,
+      ranked: !this.botTainted.has(gameId),
       players: roster.map((p, seatIndex) => {
         const entry = scoreboard.find((s) => s.id === p.id)
         const rank = ranked.findIndex((s) => s.id === p.id) + 1
@@ -116,6 +122,7 @@ export class GameHistoryRecorder {
     this.rosters.delete(gameId)
     this.leaderIds.delete(gameId)
     this.chains.delete(gameId)
+    this.botTainted.delete(gameId)
   }
 }
 

@@ -29,6 +29,8 @@ export const games = pgTable('games', {
   playerCount: integer('player_count').notNull(),
   finalScoreboard: jsonb('final_scoreboard').$type<ScoreboardEntry[]>(),
   status: text('status').notNull().default('in_progress'),
+  /** Counts toward the leaderboard: finished with no bot seat and no bot takeover. */
+  ranked: boolean('ranked').notNull().default(false),
 })
 
 export const gamePlayers = pgTable(

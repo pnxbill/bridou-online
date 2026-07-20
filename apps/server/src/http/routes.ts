@@ -3,7 +3,7 @@ import type { PlayerInfo } from '@bridou/shared'
 import { Router, type Request, type Response } from 'express'
 import { ForbiddenError, NotFoundError } from '../application/errors'
 import type { GameService } from '../application/game-service'
-import type { TokenVerifier } from '../application/ports'
+import type { GameHistoryRepository, TokenVerifier } from '../application/ports'
 import { requireAuth, type AuthedRequest } from './auth'
 
 const statusFor = (err: unknown): number => {
@@ -36,9 +36,18 @@ const requireString = (value: unknown, name: string): string => {
   return value
 }
 
-export const createRoutes = (service: GameService, verifier: TokenVerifier): Router => {
+export const createRoutes = (
+  service: GameService,
+  verifier: TokenVerifier,
+  history: GameHistoryRepository,
+): Router => {
   const routes = Router()
   const auth = requireAuth(verifier)
+
+  // Public on purpose: the leaderboard is the game's shop window.
+  routes.get('/api/rankings', (_req: Request, res: Response) => {
+    respond(res, async () => ({ rankings: await history.getLeaderboard() }))
+  })
 
   routes.post('/api/lobbies', auth, (req: Request, res: Response) => {
     respond(res, () => ({ lobby: service.createLobby(player(req)) }))

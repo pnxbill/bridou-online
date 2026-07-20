@@ -1,0 +1,206 @@
+/* Ranking — the all-time score sheet, styled like a big card from the deck
+   (same cut as the round overlays: square panel + inner filete, hairline rows). */
+
+.screen {
+  --gold: #fbbf24;
+  --gold-soft: rgba(251, 191, 36, 0.35);
+  --glass: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --ink: #e2e8f0;
+  --ink-muted: #94a3b8;
+
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3.6rem 1rem 2.5rem;
+  background: radial-gradient(120% 90% at 50% 0%, #16213c 0%, #0b1120 55%, #070b16 100%);
+  color: var(--ink);
+}
+
+/* Top-right — the global settings cog owns the top-left corner. */
+.back {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(8px);
+  color: var(--ink-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.back:hover {
+  color: var(--ink);
+}
+
+.heading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 1.4rem;
+  animation: fadeUp 0.6s ease both;
+}
+
+.eyebrow {
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.title {
+  font-family: var(--font-display), 'Playfair Display', serif;
+  font-size: 2.1rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  background: linear-gradient(180deg, #fde68a 0%, var(--gold) 55%, #b45309 130%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 40px rgba(251, 191, 36, 0.2);
+}
+
+/* ── the sheet ────────────────────────────────────────────── */
+
+.panel {
+  position: relative;
+  width: min(30rem, 100%);
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(8px);
+  padding: 0.9rem 0;
+  animation: fadeUp 0.6s ease 0.12s both;
+}
+
+.panel::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(251, 191, 36, 0.14);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.status {
+  padding: 1.6rem 1.4rem;
+  text-align: center;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--ink-muted);
+}
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.rowTop {
+  box-shadow: inset 2px 0 0 var(--gold);
+  background: rgba(251, 191, 36, 0.05);
+}
+
+.pos {
+  width: 1.9rem;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+.rowTop .pos {
+  color: var(--gold);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #0b1120;
+  background: linear-gradient(135deg, #cbd5e1, #64748b);
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.who {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sub {
+  font-size: 0.7rem;
+  color: var(--ink-muted);
+  letter-spacing: 0.02em;
+}
+
+.score {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.05rem;
+  flex-shrink: 0;
+}
+
+.wins {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--gold);
+  line-height: 1;
+}
+
+.winsLabel {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+}
+
+@keyframes fadeUp {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

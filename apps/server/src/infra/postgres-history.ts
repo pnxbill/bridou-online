@@ -1,11 +1,12 @@
-import type { DomainEvent, PlayerInfo } from '@bridou/shared'
-import { eq } from 'drizzle-orm'
+import type { DomainEvent, PlayerInfo, RankingEntry } from '@bridou/shared'
+import { and, eq, sql } from 'drizzle-orm'
 import type {
   FinishedGameRecord,
   GameHistoryRepository,
   PlayerRepository,
   StoredGameEvent,
 } from '../application/ports'
+import { toRanking } from '../application/ranking'
 import type { Db } from '../db/client'
 import { gameEvents, gamePlayers, games, players } from '../db/schema'
 
@@ -82,6 +83,7 @@ export class PostgresGameHistoryRepository implements GameHistoryRepository {
         playerCount: record.players.length,
         finalScoreboard: record.finalScoreboard,
         status: 'finished',
+        ranked: record.ranked,
       })
       .onConflictDoUpdate({
         target: games.id,
@@ -90,6 +92,7 @@ export class PostgresGameHistoryRepository implements GameHistoryRepository {
           finalScoreboard: record.finalScoreboard,
           status: 'finished',
           playerCount: record.players.length,
+          ranked: record.ranked,
         },
       })
 
@@ -133,6 +136,28 @@ export class PostgresGameHistoryRepository implements GameHistoryRepository {
       payload: row.payload,
       createdAt: row.createdAt,
     }))
+  }
+
+  async getLeaderboard(): Promise<RankingEntry[]> {
+    const rows = await this.db
+      .select({
+        playerId: gamePlayers.playerId,
+        name: players.displayName,
+        photoURL: players.photoUrl,
+        gamesPlayed: sql<number>`count(*)::int`,
+        wins: sql<number>`(count(*) filter (where ${gamePlayers.rank} = 1))::int`,
+        totalPoints: sql<number>`coalesce(sum(${gamePlayers.finalPoints}), 0)::int`,
+        bailadas: sql<number>`coalesce(sum(${gamePlayers.bailadasCount}), 0)::int`,
+      })
+      .from(gamePlayers)
+      .innerJoin(games, eq(gamePlayers.gameId, games.id))
+      .innerJoin(players, eq(gamePlayers.playerId, players.id))
+      .where(
+        and(eq(games.status, 'finished'), eq(games.ranked, true), eq(gamePlayers.isBot, false)),
+      )
+      .groupBy(gamePlayers.playerId, players.displayName, players.photoUrl)
+
+    return toRanking(rows)
   }
 
   async listPlayerGames(playerId: string): Promise<string[]> {

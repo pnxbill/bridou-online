@@ -199,6 +199,11 @@ export function HomeClient() {
         {user && !activeGameId && !joinOpen && (
           <span className={styles.hint}>abra uma mesa e chame os amigos</span>
         )}
+        {!loading && (
+          <button className={styles.joinToggle} onClick={() => router.push('/ranking')}>
+            ver ranking
+          </button>
+        )}
         {error && <span className={styles.error}>{error}</span>}
       </div>
     </div>

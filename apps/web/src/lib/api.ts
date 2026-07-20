@@ -2,6 +2,7 @@ import type {
   GameSnapshot,
   LobbySnapshot,
   PlayerPerspective,
+  RankingEntry,
   SessionState,
   VoicePresence,
 } from '@bridou/shared'
@@ -69,6 +70,8 @@ export const api = {
 
   closeScore: (gameId: string) =>
     request(`/api/close-score?gameId=${encodeURIComponent(gameId)}`),
+
+  rankings: () => request<{ rankings: RankingEntry[] }>('/api/rankings'),
 
   voiceRoster: (gameId: string) =>
     request<{ participants: VoicePresence[] }>(

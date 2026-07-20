@@ -1,4 +1,4 @@
-import type { DomainEvent, EventPublisher, LobbySnapshot, PlayerInfo, SessionState, ScoreboardEntry } from '@bridou/shared'
+import type { DomainEvent, EventPublisher, LobbySnapshot, PlayerInfo, RankingEntry, SessionState, ScoreboardEntry } from '@bridou/shared'
 import type { CompletedRoundResult, CurrentRoundState, Game } from '@bridou/engine'
 
 export interface GameRepository {
@@ -106,6 +106,8 @@ export interface FinishedGameRecord {
   leaderId: string
   players: FinishedGamePlayer[]
   finalScoreboard: ScoreboardEntry[]
+  /** Counts toward the leaderboard — no bot seat and no bot takeover. */
+  ranked: boolean
 }
 
 /** Append-only history for analytics — not the live game source of truth. */
@@ -121,6 +123,8 @@ export interface GameHistoryRepository {
   saveFinishedGame(record: FinishedGameRecord): Promise<void>
   getGameEvents(gameId: string): Promise<StoredGameEvent[]>
   listPlayerGames(playerId: string): Promise<string[]>
+  /** All-time leaderboard over ranked games only, best first. */
+  getLeaderboard(): Promise<RankingEntry[]>
 }
 
 export interface PlayerRepository {

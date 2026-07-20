@@ -1,16 +1,21 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import postgres from 'postgres'
 
 const here = dirname(fileURLToPath(import.meta.url))
 
-/** Applies the checked-in SQL migration against DATABASE_URL (Neon). */
+/** Applies the checked-in SQL migrations (idempotent, in order) against DATABASE_URL (Neon). */
 export const migrate = async (databaseUrl: string): Promise<void> => {
   const sql = postgres(databaseUrl, { max: 1 })
-  const migration = readFileSync(join(here, '../../drizzle/0000_init.sql'), 'utf8')
+  const dir = join(here, '../../drizzle')
+  const files = readdirSync(dir)
+    .filter((f) => f.endsWith('.sql'))
+    .sort()
   try {
-    await sql.unsafe(migration)
+    for (const file of files) {
+      await sql.unsafe(readFileSync(join(dir, file), 'utf8'))
+    }
   } finally {
     await sql.end()
   }

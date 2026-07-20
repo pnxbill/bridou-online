@@ -1,10 +1,11 @@
-import type { DomainEvent, PlayerInfo } from '@bridou/shared'
+import type { DomainEvent, PlayerInfo, RankingEntry } from '@bridou/shared'
 import type {
   FinishedGameRecord,
   GameHistoryRepository,
   PlayerRepository,
   StoredGameEvent,
 } from '../application/ports'
+import { toRanking, type RankingAggregate } from '../application/ranking'
 
 const eventPlayerId = (event: DomainEvent): string | null =>
   'playerId' in event ? event.playerId : null
@@ -29,6 +30,7 @@ export class InMemoryGameHistoryRepository implements GameHistoryRepository {
       status: string
       finalScoreboard?: FinishedGameRecord['finalScoreboard']
       players?: FinishedGameRecord['players']
+      ranked?: boolean
     }
   >()
   readonly events = new Map<string, StoredGameEvent[]>()
@@ -72,7 +74,34 @@ export class InMemoryGameHistoryRepository implements GameHistoryRepository {
       status: 'finished',
       finalScoreboard: record.finalScoreboard,
       players: record.players,
+      ranked: record.ranked,
     })
+  }
+
+  async getLeaderboard(): Promise<RankingEntry[]> {
+    const byPlayer = new Map<string, RankingAggregate>()
+    for (const game of this.games.values()) {
+      if (game.status !== 'finished' || !game.ranked || !game.players) continue
+      for (const p of game.players) {
+        if (p.isBot) continue
+        const info = game.finalScoreboard?.find((s) => s.id === p.playerId)
+        const row = byPlayer.get(p.playerId) ?? {
+          playerId: p.playerId,
+          name: info?.name ?? p.playerId,
+          photoURL: info?.photoURL ?? null,
+          gamesPlayed: 0,
+          wins: 0,
+          totalPoints: 0,
+          bailadas: 0,
+        }
+        row.gamesPlayed++
+        if (p.rank === 1) row.wins++
+        row.totalPoints += p.finalPoints
+        row.bailadas += p.bailadasCount
+        byPlayer.set(p.playerId, row)
+      }
+    }
+    return toRanking([...byPlayer.values()])
   }
 
   async getGameEvents(gameId: string): Promise<StoredGameEvent[]> {

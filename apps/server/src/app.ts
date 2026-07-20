@@ -184,7 +184,7 @@ export const createApp = (options: AppOptions = {}): AppInstance => {
   app.get('/api/games/:gameId/voice', requireAuth(verifier), (req, res) => {
     res.json({ participants: voiceRooms.rosterOf(req.params.gameId ?? '') })
   })
-  app.use(createRoutes(service, verifier))
+  app.use(createRoutes(service, verifier, historyRepo))
 
   const close = async (): Promise<void> => {
     sse.close()
