@@ -34,7 +34,7 @@
   justify-content: space-between;
   align-items: flex-start;
   /* leave room for the floating header menu button (top-left) */
-  padding: 12px 14px 0 60px;
+  padding: 12px 14px 0 86px;
   z-index: 5;
 }
 
