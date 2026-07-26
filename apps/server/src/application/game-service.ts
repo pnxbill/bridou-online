@@ -26,11 +26,15 @@ const BOT_NAMES = [
 
 export interface EnterGameResult extends GameSnapshot, PlayerPerspective, SessionState {
   time: number
+  /** Set while the table paused itself on purpose (not an abandonment). */
+  pausedBy: string | null
 }
 
 export class GameService {
   /** `${gameId}:${playerId}` → last emote time, for the cooldown. */
   private readonly lastEmoteAt = new Map<string, number>()
+  /** gameId → the player who paused it. Absent means running. */
+  private readonly pausedBy = new Map<string, string>()
 
   constructor(
     private readonly games: GameRepository,
@@ -153,20 +157,67 @@ export class GameService {
       ...game.snapshot(),
       ...game.clientPerspective(playerId),
       ...this.sessions.sessionState(gameId),
+      pausedBy: this.pausedByOf(gameId),
       time: Date.now(),
     }
   }
 
   placeBet(gameId: string, playerId: string, bet: number): void {
     const game = this.getGame(gameId)
+    this.assertNotPaused(gameId)
     this.sessions.assertPlayable(gameId)
     game.placeBet(playerId, bet)
   }
 
   playCard(gameId: string, playerId: string, card: string): void {
     const game = this.getGame(gameId)
+    this.assertNotPaused(gameId)
     this.sessions.assertPlayable(gameId)
     game.playCard(playerId, card)
+  }
+
+  /**
+   * Pauses the table on purpose — someone's kid woke up, the pizza arrived.
+   *
+   * Distinct from the abandonment pause, which is involuntary and runs on a
+   * deadline: this one has no timer and only ends when a human ends it. The
+   * #1 killer of a 40-minute session is not having this.
+   *
+   * Any seated player may pause (the person who has to leave is rarely the
+   * leader), but only the leader or whoever paused can resume, so nobody can
+   * drag the table back before they're ready.
+   */
+  pauseGame(gameId: string, playerId: string): void {
+    const game = this.getGame(gameId)
+    if (!game.hasPlayer(playerId)) throw new ForbiddenError("You're not in this game")
+    if (game.finished) throw new GameError('A partida já acabou')
+    if (this.pausedBy.has(gameId)) return
+
+    this.pausedBy.set(gameId, playerId)
+    this.gateway.publisherFor(gameId).publish({ type: 'game-paused', byPlayerId: playerId })
+  }
+
+  resumeGame(gameId: string, playerId: string): void {
+    const game = this.getGame(gameId)
+    if (!game.hasPlayer(playerId)) throw new ForbiddenError("You're not in this game")
+
+    const pausedBy = this.pausedBy.get(gameId)
+    if (pausedBy === undefined) return
+    if (pausedBy !== playerId && game.leaderId !== playerId) {
+      throw new ForbiddenError('Só quem pausou (ou o líder) pode voltar')
+    }
+
+    this.pausedBy.delete(gameId)
+    this.gateway.publisherFor(gameId).publish({ type: 'game-resumed', byPlayerId: playerId })
+  }
+
+  /** Who paused this game, if anyone — included in the reconnect snapshot. */
+  pausedByOf(gameId: string): string | null {
+    return this.pausedBy.get(gameId) ?? null
+  }
+
+  private assertNotPaused(gameId: string): void {
+    if (this.pausedBy.has(gameId)) throw new GameError('A partida está pausada')
   }
 
   closeScoreboard(gameId: string): void {

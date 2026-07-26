@@ -8,6 +8,8 @@ import { useGameChannel } from './useGameChannel'
 import { AbandonedOverlay } from './components/AbandonedOverlay'
 import { EmoteWheel } from './components/EmoteWheel'
 import { GameTable } from './components/GameTable'
+import { PauseButton } from './components/PauseButton'
+import { PausedOverlay } from './components/PausedOverlay'
 import { RoundEndOverlay } from './components/RoundEndOverlay'
 import { ScoreboardOverlay } from './components/ScoreboardOverlay'
 import { TableToasts } from './components/TableToasts'
@@ -93,7 +95,12 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
         speakingIds={voice.speakingIds}
       />
       <TableToasts toasts={state.toasts} players={state.players} onDismiss={dismissToast} />
-      {!state.gameOver && <EmoteWheel onSend={sendEmote} />}
+      {!state.gameOver && !state.pausedBy && (
+        <>
+          <PauseButton onPause={() => api.pauseGame(gameId).catch(resync)} />
+          <EmoteWheel onSend={sendEmote} />
+        </>
+      )}
       <VoiceControls voice={voice} players={state.players} />
 
       {state.scoreboard && (
@@ -108,10 +115,20 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
           }
         />
       )}
-      {!state.scoreboard && state.abandoned.length > 0 && (
+      {/* a deliberate pause outranks everything except the scoreboard */}
+      {!state.scoreboard && state.pausedBy && (
+        <PausedOverlay
+          pausedBy={state.pausedBy}
+          players={state.players}
+          myId={playerId}
+          leaderId={state.leaderId}
+          onResume={() => api.resumeGame(gameId).catch(resync)}
+        />
+      )}
+      {!state.scoreboard && !state.pausedBy && state.abandoned.length > 0 && (
         <AbandonedOverlay seats={state.abandoned} players={state.players} />
       )}
-      {!state.scoreboard && !state.abandoned.length && state.lastRoundResult && (
+      {!state.scoreboard && !state.pausedBy && !state.abandoned.length && state.lastRoundResult && (
         <RoundEndOverlay
           key={state.lastRoundResult.round}
           result={state.lastRoundResult}

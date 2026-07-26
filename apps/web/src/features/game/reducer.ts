@@ -53,6 +53,11 @@ export interface GameViewState {
   /** Seats currently played by the bot. */
   botSeats: string[]
   /**
+   * Set while the table paused itself on purpose. Distinct from `abandoned`,
+   * which is involuntary and runs on a deadline — this one has no timer.
+   */
+  pausedBy: string | null
+  /**
    * Blind (last) round: other players' remaining cards, keyed by player id.
    * Empty otherwise.
    */
@@ -134,6 +139,7 @@ export const stateFromSnapshot = (snapshot: GameEntry, myId = ''): GameViewState
   gameOver: snapshot.finished ?? false,
   abandoned: snapshot.abandoned ?? [],
   botSeats: snapshot.botSeats ?? [],
+  pausedBy: snapshot.pausedBy ?? null,
   opponentHands: snapshot.opponentHands ?? {},
   completedTricks: tricksFromRound(
     snapshot.currentRound.turns,
@@ -271,6 +277,10 @@ const applyEvent = (state: GameViewState, event: DomainEvent): GameViewState => 
           ? state.botSeats
           : [...state.botSeats, event.playerId],
       }
+    case 'game-paused':
+      return { ...state, pausedBy: event.byPlayerId }
+    case 'game-resumed':
+      return { ...state, pausedBy: null }
     case 'achievement-unlocked':
       return {
         ...state,

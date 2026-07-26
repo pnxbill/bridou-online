@@ -148,6 +148,20 @@ export const createRoutes = (deps: RouteDeps): Router => {
     })
   })
 
+  routes.post('/api/pause', auth, (req: Request, res: Response) => {
+    respond(res, () => {
+      service.pauseGame(requireString(req.body.gameId, 'gameId'), player(req).id)
+      return {}
+    })
+  })
+
+  routes.post('/api/resume', auth, (req: Request, res: Response) => {
+    respond(res, () => {
+      service.resumeGame(requireString(req.body.gameId, 'gameId'), player(req).id)
+      return {}
+    })
+  })
+
   routes.post('/api/emote', auth, (req: Request, res: Response) => {
     respond(res, () => {
       service.sendEmote(

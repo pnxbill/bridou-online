@@ -74,6 +74,7 @@ function makeState(players: RoundPlayer[], betting: boolean): GameViewState {
     opponentHands: {},
     completedTricks: [],
     toasts: [],
+    pausedBy: null,
   }
 }
 

@@ -201,4 +201,78 @@ describe('GameService', () => {
     const played = gateway.published.filter(({ event }) => event.type === 'card-played')
     expect(played).toHaveLength(1)
   })
+
+  describe('pausa deliberada', () => {
+    const startedGame = () => {
+      const lobby = lobbyWith('a', 'b')
+      return service.startGame(lobby.code, 'a')
+    }
+
+    const eventsOfType = (type: DomainEvent['type']) =>
+      gateway.published.filter((p) => p.event.type === type)
+
+    it('any seated player can pause, and play is refused while paused', () => {
+      const game = startedGame()
+
+      service.pauseGame(game.id, 'b')
+      expect(eventsOfType('game-paused')).toHaveLength(1)
+      expect(service.pausedByOf(game.id)).toBe('b')
+
+      expect(() => service.placeBet(game.id, 'a', 1)).toThrow(/pausada/i)
+      expect(() => service.playCard(game.id, 'a', 'A-\u2660\ufe0f')).toThrow(/pausada/i)
+    })
+
+    it('refuses a pause from someone who is not at the table', () => {
+      const game = startedGame()
+      expect(() => service.pauseGame(game.id, 'stranger')).toThrow()
+      expect(service.pausedByOf(game.id)).toBeNull()
+    })
+
+    it('is idempotent — a second pause does not re-announce', () => {
+      const game = startedGame()
+      service.pauseGame(game.id, 'b')
+      service.pauseGame(game.id, 'a')
+      expect(eventsOfType('game-paused')).toHaveLength(1)
+      expect(service.pausedByOf(game.id)).toBe('b')
+    })
+
+    it('lets whoever paused resume', () => {
+      const game = startedGame()
+      service.pauseGame(game.id, 'b')
+      service.resumeGame(game.id, 'b')
+
+      expect(eventsOfType('game-resumed')).toHaveLength(1)
+      expect(service.pausedByOf(game.id)).toBeNull()
+    })
+
+    it('lets the leader resume someone else\'s pause', () => {
+      const game = startedGame()
+      service.pauseGame(game.id, 'b')
+      service.resumeGame(game.id, 'a') // 'a' is the leader
+      expect(service.pausedByOf(game.id)).toBeNull()
+    })
+
+    it('refuses a resume from a seat that neither paused nor leads', () => {
+      const lobby = lobbyWith('a', 'b', 'c')
+      const game = service.startGame(lobby.code, 'a')
+
+      service.pauseGame(game.id, 'b')
+      expect(() => service.resumeGame(game.id, 'c')).toThrow(/pausou/i)
+      expect(service.pausedByOf(game.id)).toBe('b')
+    })
+
+    it('resuming a running game is a no-op, not an error', () => {
+      const game = startedGame()
+      expect(() => service.resumeGame(game.id, 'a')).not.toThrow()
+      expect(eventsOfType('game-resumed')).toHaveLength(0)
+    })
+
+    it('reports the pause in the reconnect snapshot', async () => {
+      const game = startedGame()
+      service.pauseGame(game.id, 'b')
+
+      const entry = await service.enterGame(game.id, 'a')
+      expect(entry.pausedBy).toBe('b')
+    })
+  })
 })
