@@ -1,7 +1,6 @@
 'use client'
 
 import type { RankingEntry } from '@bridou/shared'
-import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { api } from '@/lib/api'
 import styles from './Ranking.module.css'
@@ -34,10 +33,6 @@ export function RankingClient() {
 
   return (
     <div className={styles.screen}>
-      <Link href="/" className={styles.back}>
-        ← início
-      </Link>
-
       <div className={styles.heading}>
         <span className={styles.eyebrow}>só valem mesas sem bots</span>
         <h1 className={styles.title}>Ranking</h1>
