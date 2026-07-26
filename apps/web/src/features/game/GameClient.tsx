@@ -89,6 +89,7 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
         <ScoreboardOverlay
           scoreboard={state.scoreboard}
           final={state.gameOver}
+          gameId={gameId}
           onClose={
             !state.gameOver && state.leaderId === playerId
               ? () => api.closeScore(gameId)

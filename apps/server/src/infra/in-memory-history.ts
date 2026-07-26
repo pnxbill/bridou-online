@@ -4,6 +4,7 @@ import type {
   GameHistoryRepository,
   PlayerRepository,
   StoredGameEvent,
+  StoredGameSummary,
 } from '../application/ports'
 import { toRanking, type RankingAggregate } from '../application/ranking'
 
@@ -102,6 +103,20 @@ export class InMemoryGameHistoryRepository implements GameHistoryRepository {
       }
     }
     return toRanking([...byPlayer.values()])
+  }
+
+  async getGame(gameId: string): Promise<StoredGameSummary | null> {
+    const game = this.games.get(gameId)
+    if (!game) return null
+    return {
+      gameId,
+      startedAt: game.startedAt,
+      endedAt: game.endedAt ?? null,
+      status: game.status,
+      ranked: !!game.ranked,
+      playerCount: game.playerCount,
+      finalScoreboard: game.finalScoreboard ?? null,
+    }
   }
 
   async getGameEvents(gameId: string): Promise<StoredGameEvent[]> {

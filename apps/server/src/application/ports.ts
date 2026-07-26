@@ -120,8 +120,21 @@ export interface FinishedGameRecord {
   ranked: boolean
 }
 
+/** A stored game's envelope, without its event log. */
+export interface StoredGameSummary {
+  gameId: string
+  startedAt: Date
+  endedAt: Date | null
+  status: string
+  ranked: boolean
+  playerCount: number
+  finalScoreboard: ScoreboardEntry[] | null
+}
+
 /** Append-only history for analytics — not the live game source of truth. */
 export interface GameHistoryRepository {
+  /** Envelope for one game — the resenha needs its timings and ranked flag. */
+  getGame(gameId: string): Promise<StoredGameSummary | null>
   /** Ensure a games row exists (status in_progress) before events land. */
   ensureGameStarted(input: {
     gameId: string

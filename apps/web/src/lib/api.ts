@@ -1,4 +1,5 @@
 import type {
+  GameRecap,
   GameSnapshot,
   HeadToHead,
   LobbySnapshot,
@@ -98,6 +99,10 @@ export const api = {
 
   playerProfile: (playerId: string) =>
     request<PlayerProfile>(`/api/players/${encodeURIComponent(playerId)}/profile`),
+
+  /** Post-game resenha, rebuilt from the event log. Public — links get shared. */
+  recap: (gameId: string) =>
+    request<{ recap: GameRecap }>(`/api/games/${encodeURIComponent(gameId)}/recap`),
 
   voiceRoster: (gameId: string) =>
     request<{ participants: VoicePresence[] }>(

@@ -5,6 +5,7 @@ import type {
   GameHistoryRepository,
   PlayerRepository,
   StoredGameEvent,
+  StoredGameSummary,
 } from '../application/ports'
 import { toRanking } from '../application/ranking'
 import type { Db } from '../db/client'
@@ -118,6 +119,20 @@ export class PostgresGameHistoryRepository implements GameHistoryRepository {
             seatIndex: p.seatIndex,
           },
         })
+    }
+  }
+
+  async getGame(gameId: string): Promise<StoredGameSummary | null> {
+    const [row] = await this.db.select().from(games).where(eq(games.id, gameId))
+    if (!row) return null
+    return {
+      gameId: row.id,
+      startedAt: row.startedAt,
+      endedAt: row.endedAt,
+      status: row.status,
+      ranked: row.ranked,
+      playerCount: row.playerCount,
+      finalScoreboard: row.finalScoreboard,
     }
   }
 

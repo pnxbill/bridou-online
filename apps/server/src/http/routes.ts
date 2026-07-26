@@ -11,6 +11,7 @@ import type {
 } from '../application/ports'
 import { requireAuth, type AuthedRequest } from './auth'
 import { createAchievementRoutes } from './achievement-routes'
+import { createRecapRoutes } from './recap-routes'
 
 const statusFor = (err: unknown): number => {
   if (err instanceof NotFoundError) return 404
@@ -134,6 +135,7 @@ export const createRoutes = (deps: RouteDeps): Router => {
   })
 
   routes.use(createAchievementRoutes(deps))
+  routes.use(createRecapRoutes(deps))
 
   return routes
 }

@@ -14,6 +14,8 @@ interface Props {
   final?: boolean
   /** Mid-game only: the leader can dismiss and resume. */
   onClose?: () => void
+  /** Set on game end — routes to the resenha, the thing that gets shared. */
+  gameId?: string
 }
 
 const MEDALS = ['🥇', '🥈', '🥉']
@@ -25,7 +27,7 @@ const initials = (name: string) =>
     .slice(0, 2)
     .join('')
 
-export function ScoreboardOverlay({ scoreboard, final = false, onClose }: Props) {
+export function ScoreboardOverlay({ scoreboard, final = false, onClose, gameId }: Props) {
   const router = useRouter()
   const champion = scoreboard[0]
 
@@ -74,9 +76,19 @@ export function ScoreboardOverlay({ scoreboard, final = false, onClose }: Props)
         </ul>
 
         {final ? (
-          <button className={styles.action} onClick={() => router.push('/')}>
-            Voltar ao início
-          </button>
+          <div className={styles.actionRow}>
+            {gameId && (
+              <button
+                className={`${styles.action} ${styles.actionPrimary}`}
+                onClick={() => router.push(`/resenha/${gameId}`)}
+              >
+                Ver a resenha
+              </button>
+            )}
+            <button className={styles.action} onClick={() => router.push('/')}>
+              Voltar ao início
+            </button>
+          </div>
         ) : (
           onClose && (
             <button className={styles.action} onClick={onClose}>
