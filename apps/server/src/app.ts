@@ -3,16 +3,19 @@ import express from 'express'
 import http from 'node:http'
 import { Server } from 'socket.io'
 import { AbandonmentService } from './application/abandonment'
+import { AchievementTracker } from './application/achievements'
 import { GameEviction } from './application/game-eviction'
 import { GameHistoryRecorder } from './application/game-history'
 import { GameService } from './application/game-service'
 import { LobbyRegistry } from './application/lobby'
 import { PresenceTracker } from './application/presence'
 import type {
+  AchievementRepository,
   GameHistoryRepository,
   GameRepository,
   GameStateStore,
   PlayerRepository,
+  PlayerStatsRepository,
   TokenVerifier,
 } from './application/ports'
 import { createDb } from './db/client'
@@ -23,10 +26,18 @@ import { FirebaseTokenVerifier } from './infra/firebase-token-verifier'
 import { InMemoryGameRepository } from './infra/in-memory-game-repository'
 import { PostgresGameStateStore } from './infra/postgres-game-store'
 import {
+  InMemoryAchievementRepository,
+  InMemoryPlayerStatsRepository,
+} from './infra/in-memory-engagement'
+import {
   InMemoryGameHistoryRepository,
   InMemoryPlayerRepository,
 } from './infra/in-memory-history'
 import { InterceptingGateway } from './infra/intercepting-gateway'
+import {
+  PostgresAchievementRepository,
+  PostgresPlayerStatsRepository,
+} from './infra/postgres-engagement'
 import {
   PostgresGameHistoryRepository,
   PostgresPlayerRepository,
@@ -41,6 +52,10 @@ export interface AppInstance {
   httpServer: http.Server
   service: GameService
   history: GameHistoryRepository
+  achievements: AchievementRepository
+  playerStats: PlayerStatsRepository
+  /** Lets tests await the async conquista writes before asserting. */
+  flushEngagement(gameId?: string): Promise<void>
   close(): Promise<void>
 }
 
@@ -54,6 +69,11 @@ export interface AppOptions {
   databaseUrl?: string
   /** Override token verification (tests inject a fake; default verifies Firebase ID tokens). */
   tokenVerifier?: TokenVerifier
+  /** Override conquista / career-stat storage (tests inject in-memory repos). */
+  achievements?: AchievementRepository
+  playerStats?: PlayerStatsRepository
+  /** Fixed clock for the time-of-day conquistas — tests pin this. */
+  now?: () => Date
   /**
    * Durable live-game storage. Tests inject an in-memory store (shared across
    * app instances to simulate a restart); production uses Postgres when a DB is
@@ -133,6 +153,25 @@ export const createApp = (options: AppOptions = {}): AppInstance => {
 
   const historyRecorder = new GameHistoryRecorder(historyRepo, playerRepo)
 
+  let achievementRepo: AchievementRepository
+  let statsRepo: PlayerStatsRepository
+  if (options.achievements && options.playerStats) {
+    achievementRepo = options.achievements
+    statsRepo = options.playerStats
+  } else if (db) {
+    achievementRepo = new PostgresAchievementRepository(db)
+    statsRepo = new PostgresPlayerStatsRepository(db)
+  } else {
+    achievementRepo = new InMemoryAchievementRepository()
+    statsRepo = new InMemoryPlayerStatsRepository()
+  }
+
+  const achievementTracker = new AchievementTracker({
+    achievements: achievementRepo,
+    stats: statsRepo,
+    ...(options.now ? { now: options.now } : {}),
+  })
+
   // Presence flows in from every transport; abandonment reacts to it
   const registry = new ConnectionRegistry()
   const presence = new PresenceTracker(abandonment)
@@ -151,6 +190,7 @@ export const createApp = (options: AppOptions = {}): AppInstance => {
       abandonment.onDomainEvent(gameId, event)
       eviction.onDomainEvent(gameId, event)
       historyRecorder.onDomainEvent(gameId, event)
+      achievementTracker.onDomainEvent(gameId, event)
       // Persist the live game at consistent settle points so it survives a restart.
       if (PERSIST_TRIGGERS.has(event.type)) {
         const game = games.get(gameId)
@@ -166,9 +206,11 @@ export const createApp = (options: AppOptions = {}): AppInstance => {
         leaderId: game.leaderId,
         roster: game.players,
       })
+      achievementTracker.registerGame(game.id, game.players, game.leaderId)
     },
   })
   abandonment.bind({ gateway, actions: service })
+  achievementTracker.bind({ publisherFor: (id) => gateway.publisherFor(id) })
 
   // A rehydrated game emits through the live gateway, carries its bot seats, and
   // hands reconnection back to abandonment (wired here — these deps exist now).
@@ -184,15 +226,37 @@ export const createApp = (options: AppOptions = {}): AppInstance => {
   app.get('/api/games/:gameId/voice', requireAuth(verifier), (req, res) => {
     res.json({ participants: voiceRooms.rosterOf(req.params.gameId ?? '') })
   })
-  app.use(createRoutes(service, verifier, historyRepo))
+  app.use(
+    createRoutes({
+      service,
+      verifier,
+      history: historyRepo,
+      achievements: achievementRepo,
+      playerStats: statsRepo,
+    }),
+  )
+
+  const flushEngagement = async (gameId?: string): Promise<void> => {
+    await historyRecorder.flush(gameId)
+    await achievementTracker.flush(gameId)
+  }
 
   const close = async (): Promise<void> => {
     sse.close()
     io.close()
+    await achievementTracker.flush()
     if (games instanceof DurableGameRepository) await games.flush()
     await closeDb?.()
     await new Promise<void>((resolve) => httpServer.close(() => resolve()))
   }
 
-  return { httpServer, service, history: historyRepo, close }
+  return {
+    httpServer,
+    service,
+    history: historyRepo,
+    achievements: achievementRepo,
+    playerStats: statsRepo,
+    flushEngagement,
+    close,
+  }
 }

@@ -1,0 +1,221 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+
+.count {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.count strong {
+  color: #eab308;
+  font-size: 1.1rem;
+}
+
+.progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.progress > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #b45309, #eab308);
+  transition: width 0.4s ease;
+}
+
+/* ── career stats strip ─────────────────────────────────────────────────── */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(5rem, 1fr));
+  gap: 0.5rem;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.75rem 0.5rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.stat strong {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.stat span {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── head to head ───────────────────────────────────────────────────────── */
+
+.section {
+  display: flex;
+  flex-direction: column;
+}
+
+.h2h {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  list-style: none;
+}
+
+.h2hRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.h2hName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.h2hScore {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.h2hScore strong[data-lead] {
+  color: var(--accent);
+}
+
+.h2hDash {
+  opacity: 0.5;
+}
+
+/* ── the shelf ──────────────────────────────────────────────────────────── */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 0.6rem;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--panel);
+  border: 1px solid var(--tier-color, var(--border));
+  border-radius: 12px;
+}
+
+.card[data-tier='bronze'] {
+  --tier-color: #b45309;
+}
+.card[data-tier='prata'] {
+  --tier-color: #94a3b8;
+}
+.card[data-tier='ouro'] {
+  --tier-color: #eab308;
+}
+.card[data-tier='lenda'] {
+  --tier-color: #a855f7;
+}
+.card[data-roast] {
+  --tier-color: #64748b;
+}
+
+/* Locked entries stay legible — they're the to-do list, not decoration. */
+.card[data-locked] {
+  --tier-color: var(--border);
+  opacity: 0.55;
+}
+
+.card[data-locked] .cardName {
+  color: var(--muted);
+}
+
+.icon {
+  font-size: 1.75rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.cardName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--tier-color);
+}
+
+.cardDesc {
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.tier {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  opacity: 0.8;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.error {
+  color: #f87171;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}

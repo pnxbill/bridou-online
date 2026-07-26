@@ -36,6 +36,15 @@ export type DomainEvent =
   | { type: 'player-abandoned'; playerId: string; resumeAt: number }
   | { type: 'player-rejoined'; playerId: string }
   | { type: 'bot-took-over'; playerId: string }
+  // table-level social events. Published by the SERVER, never the engine —
+  // they carry a clock and the engine has none.
+  /** A conquista was earned; the whole table sees it land. */
+  | { type: 'achievement-unlocked'; playerId: string; achievementId: string; at: number }
+  /** A provocação fired from the reaction wheel. */
+  | { type: 'emote-sent'; playerId: string; emoteId: string; at: number }
+  /** The table paused the game on purpose (distinct from an abandonment pause). */
+  | { type: 'game-paused'; byPlayerId: string }
+  | { type: 'game-resumed'; byPlayerId: string }
 
 export type DomainEventType = DomainEvent['type']
 

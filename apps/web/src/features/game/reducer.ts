@@ -59,7 +59,18 @@ export interface GameViewState {
   opponentHands: Record<string, Card[]>
   /** Completed tricks this round — powers the per-seat trick history popup. */
   completedTricks: CompletedTrick[]
+  /**
+   * Conquistas and provocações waiting to be shown, oldest first. The UI
+   * consumes them with `dismiss-toast`, which is what keeps a burst of unlocks
+   * at the end of a round from stacking on top of each other.
+   */
+  toasts: TableToast[]
 }
+
+/** A transient banner over the table — an unlock or a reaction. */
+export type TableToast =
+  | { kind: 'achievement'; id: string; playerId: string; achievementId: string }
+  | { kind: 'emote'; id: string; playerId: string; emoteId: string }
 
 /** One finished trick, kept so players can review what already hit the table. */
 export interface CompletedTrick {
@@ -81,6 +92,8 @@ export type GameAction =
   | { type: 'optimistic-play'; card: Card }
   /** Optimistic UI: hide bet buttons while a bet is in flight. */
   | { type: 'clear-bets' }
+  /** The banner finished its animation — drop it and let the next one show. */
+  | { type: 'dismiss-toast'; id: string }
 
 /** Tricks taken per player, from the round's winner-per-trick list. */
 const countMade = (whoMade: RoundPlayer[]): Record<string, number> =>
@@ -126,6 +139,7 @@ export const stateFromSnapshot = (snapshot: GameEntry, myId = ''): GameViewState
     snapshot.currentRound.turns,
     snapshot.currentRound.whoMade,
   ),
+  toasts: [],
 })
 
 const applyEvent = (state: GameViewState, event: DomainEvent): GameViewState => {
@@ -257,6 +271,33 @@ const applyEvent = (state: GameViewState, event: DomainEvent): GameViewState => 
           ? state.botSeats
           : [...state.botSeats, event.playerId],
       }
+    case 'achievement-unlocked':
+      return {
+        ...state,
+        toasts: [
+          ...state.toasts,
+          {
+            kind: 'achievement',
+            // `at` alone collides when a round awards several at once
+            id: `a:${event.playerId}:${event.achievementId}`,
+            playerId: event.playerId,
+            achievementId: event.achievementId,
+          },
+        ],
+      }
+    case 'emote-sent':
+      return {
+        ...state,
+        toasts: [
+          ...state.toasts,
+          {
+            kind: 'emote',
+            id: `e:${event.playerId}:${event.emoteId}:${event.at}`,
+            playerId: event.playerId,
+            emoteId: event.emoteId,
+          },
+        ],
+      }
     default:
       // Future events (e.g. player-abandoned) are ignored until the UI learns them
       return state
@@ -268,8 +309,13 @@ export const gameReducer = (state: GameViewState, action: GameAction): GameViewS
     case 'apply-event':
       return applyEvent(state, action.event)
     case 'sync':
-      // keep dealSeq: a resync (reconnect, rejected play) is not a new deal
-      return { ...stateFromSnapshot(action.snapshot, state.myId), dealSeq: state.dealSeq }
+      // keep dealSeq: a resync (reconnect, rejected play) is not a new deal.
+      // Pending toasts survive too — a reconnect shouldn't swallow an unlock.
+      return {
+        ...stateFromSnapshot(action.snapshot, state.myId),
+        dealSeq: state.dealSeq,
+        toasts: state.toasts,
+      }
     case 'lock-hand':
       return { ...state, hand: state.hand.map((c) => ({ ...c, disabled: true })) }
     case 'optimistic-play':
@@ -284,5 +330,7 @@ export const gameReducer = (state: GameViewState, action: GameAction): GameViewS
       }
     case 'clear-bets':
       return { ...state, availableBets: [] }
+    case 'dismiss-toast':
+      return { ...state, toasts: state.toasts.filter((t) => t.id !== action.id) }
   }
 }

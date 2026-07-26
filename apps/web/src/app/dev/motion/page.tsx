@@ -62,6 +62,7 @@ const IDLE: GameViewState = {
   botSeats: [],
   opponentHands: {},
   completedTricks: [],
+  toasts: [],
 }
 
 const turnSnapshot = (playedCards: Card[]): TurnSnapshot => ({

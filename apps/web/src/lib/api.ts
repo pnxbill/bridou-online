@@ -1,9 +1,11 @@
 import type {
   GameSnapshot,
+  HeadToHead,
   LobbySnapshot,
   PlayerPerspective,
   RankingEntry,
   SessionState,
+  UnlockedAchievement,
   VoicePresence,
 } from '@bridou/shared'
 import { getServerUrl } from './config'
@@ -11,6 +13,24 @@ import { getIdToken } from './firebase'
 
 /** What `/api/enter-game` returns: the shared snapshot plus the caller's private view. */
 export type GameEntry = GameSnapshot & PlayerPerspective & SessionState & { time: number }
+
+/** Lifetime counters as the profile endpoints return them. */
+export interface CareerStats {
+  playerId: string
+  gamesPlayed: number
+  wins: number
+  hosted: number
+  currentWinStreak: number
+  bestWinStreak: number
+  totalPoints: number
+  bailadas: number
+}
+
+export interface PlayerProfile {
+  unlocked: UnlockedAchievement[]
+  stats: CareerStats
+  headToHead: HeadToHead[]
+}
 
 export class ApiError extends Error {
   constructor(
@@ -72,6 +92,12 @@ export const api = {
     request(`/api/close-score?gameId=${encodeURIComponent(gameId)}`),
 
   rankings: () => request<{ rankings: RankingEntry[] }>('/api/rankings'),
+
+  /** Conquistas + career stats + head-to-head for the signed-in player. */
+  myProfile: () => request<PlayerProfile>('/api/me/profile'),
+
+  playerProfile: (playerId: string) =>
+    request<PlayerProfile>(`/api/players/${encodeURIComponent(playerId)}/profile`),
 
   voiceRoster: (gameId: string) =>
     request<{ participants: VoicePresence[] }>(

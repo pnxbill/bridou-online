@@ -3,8 +3,14 @@ import type { PlayerInfo } from '@bridou/shared'
 import { Router, type Request, type Response } from 'express'
 import { ForbiddenError, NotFoundError } from '../application/errors'
 import type { GameService } from '../application/game-service'
-import type { GameHistoryRepository, TokenVerifier } from '../application/ports'
+import type {
+  AchievementRepository,
+  GameHistoryRepository,
+  PlayerStatsRepository,
+  TokenVerifier,
+} from '../application/ports'
 import { requireAuth, type AuthedRequest } from './auth'
+import { createAchievementRoutes } from './achievement-routes'
 
 const statusFor = (err: unknown): number => {
   if (err instanceof NotFoundError) return 404
@@ -36,11 +42,21 @@ const requireString = (value: unknown, name: string): string => {
   return value
 }
 
-export const createRoutes = (
-  service: GameService,
-  verifier: TokenVerifier,
-  history: GameHistoryRepository,
-): Router => {
+/**
+ * Everything the HTTP layer needs. An object rather than positional args
+ * because the surface keeps growing (conquistas, resenhas, mesas, mão do dia)
+ * and each feature mounts its own router.
+ */
+export interface RouteDeps {
+  service: GameService
+  verifier: TokenVerifier
+  history: GameHistoryRepository
+  achievements: AchievementRepository
+  playerStats: PlayerStatsRepository
+}
+
+export const createRoutes = (deps: RouteDeps): Router => {
+  const { service, verifier, history } = deps
   const routes = Router()
   const auth = requireAuth(verifier)
 
@@ -117,5 +133,10 @@ export const createRoutes = (
     })
   })
 
+  routes.use(createAchievementRoutes(deps))
+
   return routes
 }
+
+/** Shared by the feature routers so error mapping stays identical everywhere. */
+export { respond, requireString, player }

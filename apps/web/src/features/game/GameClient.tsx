@@ -9,6 +9,7 @@ import { AbandonedOverlay } from './components/AbandonedOverlay'
 import { GameTable } from './components/GameTable'
 import { RoundEndOverlay } from './components/RoundEndOverlay'
 import { ScoreboardOverlay } from './components/ScoreboardOverlay'
+import { TableToasts } from './components/TableToasts'
 import { VoiceControls } from './voice/VoiceControls'
 import { useVoiceRoom } from './voice/VoiceRoomProvider'
 
@@ -71,6 +72,8 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
     }
   }
 
+  const dismissToast = useCallback((id: string) => dispatch({ type: 'dismiss-toast', id }), [])
+
   return (
     <>
       <GameTable
@@ -79,6 +82,7 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
         onBet={placeBet}
         speakingIds={voice.speakingIds}
       />
+      <TableToasts toasts={state.toasts} players={state.players} onDismiss={dismissToast} />
       <VoiceControls voice={voice} players={state.players} />
 
       {state.scoreboard && (

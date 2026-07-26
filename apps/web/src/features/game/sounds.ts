@@ -409,3 +409,62 @@ export const playScoreboardSound = (final = false) => {
     }
   })
 }
+
+/**
+ * Conquista unlock — a bright rising arpeggio with a little shimmer on top.
+ * Deliberately the most "up" sound in the set: it's the only one that means
+ * something good happened to a specific person, and the table should hear it.
+ */
+export const playAchievementSound = () => {
+  void ensureRunning().then((ac) => {
+    if (!ac) return
+    const t = ac.currentTime + 0.01
+
+    // rising major triad + octave
+    const notes = [
+      { freq: 523.25, at: 0, peak: 0.1 }, // C5
+      { freq: 659.25, at: 0.07, peak: 0.1 }, // E5
+      { freq: 783.99, at: 0.14, peak: 0.11 }, // G5
+      { freq: 1046.5, at: 0.22, peak: 0.12 }, // C6
+    ]
+    for (const note of notes) {
+      const osc = ac.createOscillator()
+      const gain = ac.createGain()
+      osc.type = 'triangle'
+      osc.frequency.setValueAtTime(note.freq, t + note.at)
+      env(gain.gain, note.peak, 0.01, 0.28, t + note.at)
+      osc.connect(gain).connect(ac.destination)
+      osc.start(t + note.at)
+      osc.stop(t + note.at + 0.34)
+    }
+
+    // shimmer — quiet high noise tail so it sparkles rather than beeps
+    const noise = ac.createBufferSource()
+    noise.buffer = noiseBuffer(ac, 0.4)
+    const filter = ac.createBiquadFilter()
+    filter.type = 'highpass'
+    filter.frequency.setValueAtTime(4200, t)
+    const noiseGain = ac.createGain()
+    env(noiseGain.gain, 0.05, 0.05, 0.3, t + 0.18)
+    noise.connect(filter).connect(noiseGain).connect(ac.destination)
+    noise.start(t + 0.18)
+    noise.stop(t + 0.6)
+  })
+}
+
+/** Light pop for a provocação — short, cheap, never annoying on repeat. */
+export const playEmoteSound = () => {
+  void ensureRunning().then((ac) => {
+    if (!ac) return
+    const t = ac.currentTime + 0.01
+    const osc = ac.createOscillator()
+    const gain = ac.createGain()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(420, t)
+    osc.frequency.exponentialRampToValueAtTime(880, t + 0.08)
+    env(gain.gain, 0.09, 0.006, 0.1, t)
+    osc.connect(gain).connect(ac.destination)
+    osc.start(t)
+    osc.stop(t + 0.16)
+  })
+}

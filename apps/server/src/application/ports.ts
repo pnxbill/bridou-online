@@ -1,4 +1,14 @@
-import type { DomainEvent, EventPublisher, LobbySnapshot, PlayerInfo, RankingEntry, SessionState, ScoreboardEntry } from '@bridou/shared'
+import type {
+  DomainEvent,
+  EventPublisher,
+  HeadToHead,
+  LobbySnapshot,
+  PlayerInfo,
+  RankingEntry,
+  SessionState,
+  ScoreboardEntry,
+  UnlockedAchievement,
+} from '@bridou/shared'
 import type { CompletedRoundResult, CurrentRoundState, Game } from '@bridou/engine'
 
 export interface GameRepository {
@@ -129,4 +139,52 @@ export interface GameHistoryRepository {
 
 export interface PlayerRepository {
   upsert(player: PlayerInfo): Promise<void>
+}
+
+/* ── Conquistas ──────────────────────────────────────────────────────────── */
+
+export interface AchievementRepository {
+  /**
+   * Awards a conquista. Returns true only the first time — that's what makes
+   * the unlock event fire exactly once no matter how often a rule matches.
+   */
+  unlock(playerId: string, achievementId: string, gameId: string | null): Promise<boolean>
+  listFor(playerId: string): Promise<UnlockedAchievement[]>
+  countFor(playerId: string): Promise<number>
+  /** Unlocks earned during one game — used to build the resenha. */
+  listForGame(gameId: string): Promise<Array<{ playerId: string; achievementId: string }>>
+}
+
+/** Lifetime counters for one player. */
+export interface PlayerCareerStats {
+  playerId: string
+  gamesPlayed: number
+  wins: number
+  hosted: number
+  currentWinStreak: number
+  bestWinStreak: number
+  totalPoints: number
+  bailadas: number
+}
+
+/** One player's line in a finished game, as the stats layer needs it. */
+export interface PlayerGameOutcome {
+  playerId: string
+  rank: number
+  points: number
+  bailadas: number
+  /** Everyone this player finished ahead of / behind, for the rivalry ledger. */
+  beat: string[]
+  lostTo: string[]
+}
+
+export interface PlayerStatsRepository {
+  get(playerId: string): Promise<PlayerCareerStats>
+  /** Applies a finished game to lifetime counters and returns the new totals. */
+  applyGameResult(outcome: PlayerGameOutcome): Promise<PlayerCareerStats>
+  /** Bumps the anfitrião counter when a player opens a table. */
+  bumpHosted(playerId: string): Promise<void>
+  /** Longest current run of finishing ahead of a single opponent. */
+  bestRivalryStreak(playerId: string): Promise<number>
+  headToHead(playerId: string): Promise<HeadToHead[]>
 }
