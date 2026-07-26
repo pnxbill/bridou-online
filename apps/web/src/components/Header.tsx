@@ -11,6 +11,13 @@ export function Header() {
       <Link href="/" className="logo">
         Bridou
       </Link>
+      {user && (
+        <nav className="header-nav">
+          <Link href="/mesas">Mesas</Link>
+          <Link href="/conquistas">Conquistas</Link>
+          <Link href="/ranking">Ranking</Link>
+        </nav>
+      )}
       {!loading &&
         (user ? (
           <div className="header-user">

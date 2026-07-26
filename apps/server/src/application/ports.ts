@@ -152,6 +152,90 @@ export interface GameHistoryRepository {
 
 export interface PlayerRepository {
   upsert(player: PlayerInfo): Promise<void>
+  /** Resolve display names/photos in bulk — standings and rosters need them. */
+  getMany(playerIds: string[]): Promise<PlayerInfo[]>
+}
+
+/* ── Mesas & temporadas ──────────────────────────────────────────────────── */
+
+export interface MesaRecord {
+  id: string
+  code: string
+  name: string
+  createdBy: string
+  createdAt: Date
+}
+
+export interface SeasonRecord {
+  id: string
+  mesaId: string
+  number: number
+  name: string
+  startsAt: Date
+  endsAt: Date
+  status: 'active' | 'finished'
+  championId: string | null
+}
+
+/** One seat's contribution to a season, written once per finished game. */
+export interface SeasonResultRow {
+  playerId: string
+  rank: number
+  seasonPoints: number
+  gamePoints: number
+  bailadas: number
+}
+
+/** Per-player season totals, before names and positions are attached. */
+export interface StandingAggregate {
+  playerId: string
+  gamesPlayed: number
+  wins: number
+  points: number
+  totalGamePoints: number
+  bailadas: number
+}
+
+export interface MesaGameRow {
+  gameId: string
+  playedAt: Date
+  playerCount: number
+  championId: string
+  championPoints: number
+}
+
+export interface MesaRepository {
+  create(input: { id: string; code: string; name: string; createdBy: string }): Promise<MesaRecord>
+  byCode(code: string): Promise<MesaRecord | null>
+  byId(mesaId: string): Promise<MesaRecord | null>
+  rename(mesaId: string, name: string): Promise<void>
+
+  addMember(mesaId: string, playerId: string): Promise<void>
+  removeMember(mesaId: string, playerId: string): Promise<void>
+  members(mesaId: string): Promise<Array<{ playerId: string; joinedAt: Date }>>
+  listForPlayer(playerId: string): Promise<MesaRecord[]>
+
+  activeSeason(mesaId: string): Promise<SeasonRecord | null>
+  createSeason(input: {
+    id: string
+    mesaId: string
+    number: number
+    name: string
+    startsAt: Date
+    endsAt: Date
+  }): Promise<SeasonRecord>
+  finishSeason(seasonId: string, championId: string | null): Promise<void>
+  listSeasons(mesaId: string): Promise<SeasonRecord[]>
+
+  /** Ties a started game to the mesa (and the season it counts toward). */
+  linkGame(gameId: string, mesaId: string, seasonId: string | null): Promise<void>
+  gameLink(gameId: string): Promise<{ mesaId: string; seasonId: string | null } | null>
+  recordResults(seasonId: string, gameId: string, rows: SeasonResultRow[]): Promise<void>
+  standings(seasonId: string): Promise<StandingAggregate[]>
+  /** Games played by this mesa, newest first. */
+  recentGames(mesaId: string, limit: number): Promise<MesaGameRow[]>
+  /** Games played by this mesa, for counting a member's appearances. */
+  gameCountsByPlayer(mesaId: string): Promise<Record<string, number>>
 }
 
 /* ── Conquistas ──────────────────────────────────────────────────────────── */

@@ -3,6 +3,8 @@ import type {
   GameSnapshot,
   HeadToHead,
   LobbySnapshot,
+  MesaDetail,
+  MesaSummary,
   PlayerPerspective,
   RankingEntry,
   SessionState,
@@ -103,6 +105,25 @@ export const api = {
   /** Post-game resenha, rebuilt from the event log. Public — links get shared. */
   recap: (gameId: string) =>
     request<{ recap: GameRecap }>(`/api/games/${encodeURIComponent(gameId)}/recap`),
+
+  /* ── mesas ────────────────────────────────────────────────────────────── */
+
+  createMesa: (name: string) => post<{ mesa: MesaSummary }>('/api/mesas', { name }),
+
+  myMesas: () => request<{ mesas: MesaSummary[] }>('/api/mesas'),
+
+  /** Public: an invite link shows the standings before you sign in. */
+  mesa: (code: string) =>
+    request<{ mesa: MesaDetail }>(`/api/mesas/${encodeURIComponent(code)}`),
+
+  joinMesa: (code: string) =>
+    post<{ mesa: MesaSummary }>(`/api/mesas/${encodeURIComponent(code)}/join`, {}),
+
+  leaveMesa: (code: string) => post(`/api/mesas/${encodeURIComponent(code)}/leave`, {}),
+
+  /** Opens a lobby bound to this mesa — its result lands in the season. */
+  openMesaTable: (code: string) =>
+    post<{ lobby: LobbySnapshot }>(`/api/mesas/${encodeURIComponent(code)}/open`, {}),
 
   voiceRoster: (gameId: string) =>
     request<{ participants: VoicePresence[] }>(

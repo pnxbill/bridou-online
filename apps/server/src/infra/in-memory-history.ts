@@ -18,6 +18,13 @@ export class InMemoryPlayerRepository implements PlayerRepository {
   async upsert(player: PlayerInfo): Promise<void> {
     this.byId.set(player.id, { ...player })
   }
+
+  async getMany(playerIds: string[]): Promise<PlayerInfo[]> {
+    return playerIds.flatMap((id) => {
+      const player = this.byId.get(id)
+      return player ? [{ ...player }] : []
+    })
+  }
 }
 
 export class InMemoryGameHistoryRepository implements GameHistoryRepository {

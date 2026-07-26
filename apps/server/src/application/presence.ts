@@ -12,9 +12,14 @@ export class PresenceTracker {
   private readonly connections = new Map<string, { gameId: string; playerId: string }>()
   private readonly counts = new Map<string, number>()
 
-  constructor(private readonly listener: PresenceListener) {}
+  constructor(
+    private readonly listener: PresenceListener,
+    /** Also told about every connection, so the mesa's online ledger stays warm. */
+    private readonly onSeen?: (playerId: string) => void,
+  ) {}
 
   connected(gameId: string, playerId: string, connectionId: string): void {
+    this.onSeen?.(playerId)
     if (this.connections.has(connectionId)) return
     this.connections.set(connectionId, { gameId, playerId })
 

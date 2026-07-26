@@ -1,8 +1,10 @@
 import { GameError } from '@bridou/engine'
 import type { PlayerInfo } from '@bridou/shared'
-import { Router, type Request, type Response } from 'express'
+import { Router, type Request, type RequestHandler, type Response } from 'express'
 import { ForbiddenError, NotFoundError } from '../application/errors'
 import type { GameService } from '../application/game-service'
+import type { MesaService } from '../application/mesa'
+import type { OnlineTracker } from '../application/online'
 import type {
   AchievementRepository,
   GameHistoryRepository,
@@ -11,6 +13,7 @@ import type {
 } from '../application/ports'
 import { requireAuth, type AuthedRequest } from './auth'
 import { createAchievementRoutes } from './achievement-routes'
+import { createMesaRoutes } from './mesa-routes'
 import { createRecapRoutes } from './recap-routes'
 
 const statusFor = (err: unknown): number => {
@@ -54,12 +57,23 @@ export interface RouteDeps {
   history: GameHistoryRepository
   achievements: AchievementRepository
   playerStats: PlayerStatsRepository
+  mesas: MesaService
+  /** Last-seen ledger behind the mesa's "quem tá on". */
+  presence: OnlineTracker
 }
 
+/**
+ * The auth middleware every router should use — it verifies the token AND
+ * marks the caller as online, so building it by hand anywhere would silently
+ * stop feeding the mesa presence ledger.
+ */
+export const authFor = (deps: RouteDeps): RequestHandler =>
+  requireAuth(deps.verifier, (playerId) => deps.presence.touch(playerId))
+
 export const createRoutes = (deps: RouteDeps): Router => {
-  const { service, verifier, history } = deps
+  const { service, history } = deps
   const routes = Router()
-  const auth = requireAuth(verifier)
+  const auth = authFor(deps)
 
   // Public on purpose: the leaderboard is the game's shop window.
   routes.get('/api/rankings', (_req: Request, res: Response) => {
@@ -136,6 +150,7 @@ export const createRoutes = (deps: RouteDeps): Router => {
 
   routes.use(createAchievementRoutes(deps))
   routes.use(createRecapRoutes(deps))
+  routes.use(createMesaRoutes(deps))
 
   return routes
 }

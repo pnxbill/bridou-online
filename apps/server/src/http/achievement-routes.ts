@@ -1,7 +1,7 @@
 import { ACHIEVEMENTS } from '@bridou/shared'
 import { Router, type Request, type Response } from 'express'
-import { requireAuth, type AuthedRequest } from './auth'
-import { player, requireString, respond, type RouteDeps } from './routes'
+import type { AuthedRequest } from './auth'
+import { authFor, player, requireString, respond, type RouteDeps } from './routes'
 
 /**
  * Conquistas and career stats.
@@ -12,7 +12,7 @@ import { player, requireString, respond, type RouteDeps } from './routes'
  */
 export const createAchievementRoutes = (deps: RouteDeps): Router => {
   const routes = Router()
-  const auth = requireAuth(deps.verifier)
+  const auth = authFor(deps)
 
   /** The whole catalog, so the client can render locked entries too. */
   routes.get('/api/achievements', (_req: Request, res: Response) => {

@@ -8,12 +8,16 @@ import { GameEviction } from './application/game-eviction'
 import { GameHistoryRecorder } from './application/game-history'
 import { GameService } from './application/game-service'
 import { LobbyRegistry } from './application/lobby'
+import { MesaService } from './application/mesa'
+import { MesaResultRecorder } from './application/mesa-recorder'
+import { OnlineTracker } from './application/online'
 import { PresenceTracker } from './application/presence'
 import type {
   AchievementRepository,
   GameHistoryRepository,
   GameRepository,
   GameStateStore,
+  MesaRepository,
   PlayerRepository,
   PlayerStatsRepository,
   TokenVerifier,
@@ -29,6 +33,8 @@ import {
   InMemoryAchievementRepository,
   InMemoryPlayerStatsRepository,
 } from './infra/in-memory-engagement'
+import { InMemoryMesaRepository } from './infra/in-memory-mesa'
+import { PostgresMesaRepository } from './infra/postgres-mesa'
 import {
   InMemoryGameHistoryRepository,
   InMemoryPlayerRepository,
@@ -54,7 +60,8 @@ export interface AppInstance {
   history: GameHistoryRepository
   achievements: AchievementRepository
   playerStats: PlayerStatsRepository
-  /** Lets tests await the async conquista writes before asserting. */
+  mesas: MesaService
+  /** Lets tests await the async conquista / mesa writes before asserting. */
   flushEngagement(gameId?: string): Promise<void>
   close(): Promise<void>
 }
@@ -72,8 +79,12 @@ export interface AppOptions {
   /** Override conquista / career-stat storage (tests inject in-memory repos). */
   achievements?: AchievementRepository
   playerStats?: PlayerStatsRepository
-  /** Fixed clock for the time-of-day conquistas — tests pin this. */
+  /** Override mesa/season storage. */
+  mesas?: MesaRepository
+  /** Fixed clock for the time-of-day conquistas and season rollover — tests pin this. */
   now?: () => Date
+  /** Shorten seasons so tests can watch a rollover. */
+  seasonWeeks?: number
   /**
    * Durable live-game storage. Tests inject an in-memory store (shared across
    * app instances to simulate a restart); production uses Postgres when a DB is
@@ -172,9 +183,18 @@ export const createApp = (options: AppOptions = {}): AppInstance => {
     ...(options.now ? { now: options.now } : {}),
   })
 
+  const mesaRepo: MesaRepository =
+    options.mesas ?? (db ? new PostgresMesaRepository(db) : new InMemoryMesaRepository())
+  const mesaService = new MesaService(mesaRepo, playerRepo, {
+    ...(options.now ? { now: options.now } : {}),
+    ...(options.seasonWeeks !== undefined ? { seasonWeeks: options.seasonWeeks } : {}),
+  })
+  const mesaRecorder = new MesaResultRecorder(mesaService)
+  const online = new OnlineTracker()
+
   // Presence flows in from every transport; abandonment reacts to it
   const registry = new ConnectionRegistry()
-  const presence = new PresenceTracker(abandonment)
+  const presence = new PresenceTracker(abandonment, (playerId) => online.touch(playerId))
   registerConnectionHandlers(io, registry, presence, verifier)
   const sse = new SseGateway(presence)
 
@@ -191,6 +211,7 @@ export const createApp = (options: AppOptions = {}): AppInstance => {
       eviction.onDomainEvent(gameId, event)
       historyRecorder.onDomainEvent(gameId, event)
       achievementTracker.onDomainEvent(gameId, event)
+      mesaRecorder.onDomainEvent(gameId, event)
       // Persist the live game at consistent settle points so it survives a restart.
       if (PERSIST_TRIGGERS.has(event.type)) {
         const game = games.get(gameId)
@@ -200,13 +221,14 @@ export const createApp = (options: AppOptions = {}): AppInstance => {
   )
 
   const service = new GameService(games, new LobbyRegistry(), gateway, abandonment, {
-    onGameStarted: (game) => {
+    onGameStarted: (game, { mesaId }) => {
       historyRecorder.recordGameStarted({
         gameId: game.id,
         leaderId: game.leaderId,
         roster: game.players,
       })
       achievementTracker.registerGame(game.id, game.players, game.leaderId)
+      mesaRecorder.registerGame(game.id, mesaId)
     },
   })
   abandonment.bind({ gateway, actions: service })
@@ -233,18 +255,22 @@ export const createApp = (options: AppOptions = {}): AppInstance => {
       history: historyRepo,
       achievements: achievementRepo,
       playerStats: statsRepo,
+      mesas: mesaService,
+      presence: online,
     }),
   )
 
   const flushEngagement = async (gameId?: string): Promise<void> => {
     await historyRecorder.flush(gameId)
     await achievementTracker.flush(gameId)
+    await mesaRecorder.flush(gameId)
   }
 
   const close = async (): Promise<void> => {
     sse.close()
     io.close()
     await achievementTracker.flush()
+    await mesaRecorder.flush()
     if (games instanceof DurableGameRepository) await games.flush()
     await closeDb?.()
     await new Promise<void>((resolve) => httpServer.close(() => resolve()))
@@ -256,6 +282,7 @@ export const createApp = (options: AppOptions = {}): AppInstance => {
     history: historyRepo,
     achievements: achievementRepo,
     playerStats: statsRepo,
+    mesas: mesaService,
     flushEngagement,
     close,
   }

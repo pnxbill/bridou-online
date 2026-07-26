@@ -1,5 +1,5 @@
 import type { DomainEvent, PlayerInfo, RankingEntry } from '@bridou/shared'
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq, inArray, sql } from 'drizzle-orm'
 import type {
   FinishedGameRecord,
   GameHistoryRepository,
@@ -38,6 +38,21 @@ export class PostgresPlayerRepository implements PlayerRepository {
           updatedAt: now,
         },
       })
+  }
+
+  async getMany(playerIds: string[]): Promise<PlayerInfo[]> {
+    if (!playerIds.length) return []
+    const rows = await this.db
+      .select()
+      .from(players)
+      .where(inArray(players.id, [...new Set(playerIds)]))
+
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.displayName,
+      ...(row.photoUrl ? { photoURL: row.photoUrl } : {}),
+      ...(row.isBot ? { isBot: true } : {}),
+    }))
   }
 }
 

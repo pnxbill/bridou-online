@@ -36,13 +36,16 @@ export class GameService {
     private readonly options: {
       scheduler?: Scheduler
       /** Fired after the Game is saved, before `game.start()` emits events. */
-      onGameStarted?: (game: Game) => void
+      onGameStarted?: (game: Game, context: { mesaId: string | null }) => void
     } = {},
   ) {}
 
-  /** Opens a new table with the creator in the leader seat. */
-  createLobby(player: PlayerInfo): LobbySnapshot {
-    const lobby = this.lobbies.create()
+  /**
+   * Opens a new table with the creator in the leader seat. `mesaId` ties the
+   * table to a persistent mesa so the result lands in its season standings.
+   */
+  createLobby(player: PlayerInfo, mesaId: string | null = null): LobbySnapshot {
+    const lobby = this.lobbies.create(mesaId)
     lobby.add(player)
     return lobby.snapshot()
   }
@@ -116,7 +119,7 @@ export class GameService {
       players.filter((p) => p.isBot).map((p) => p.id),
     )
 
-    this.options.onGameStarted?.(game)
+    this.options.onGameStarted?.(game, { mesaId: lobby.mesaId })
     this.gateway.gameStarted(gameId)
     game.start()
     return game
