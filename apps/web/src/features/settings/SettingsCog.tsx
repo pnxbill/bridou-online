@@ -3,6 +3,7 @@
 import { Card as PlayingCard } from '@bridou/cards-ui'
 import { useEffect, useRef, useState } from 'react'
 import { unlockGameAudio } from '@/features/game/sounds'
+import { useAmbience } from './ambience-settings'
 import { useDeckTheme, type DeckVariant } from './deck-theme'
 import { useHandOrder, type HandOrderPrefs } from './hand-order'
 import { useSoundSettings } from './sound-settings'
@@ -26,6 +27,7 @@ const HAND_ORDER_TOGGLES: Array<{ key: keyof HandOrderPrefs; icon: string; label
 export function SettingsCog() {
   const { variant, setVariant } = useDeckTheme()
   const { muted, setMuted } = useSoundSettings()
+  const { enabled: ambience, setEnabled: setAmbience } = useAmbience()
   const { prefs, setPrefs } = useHandOrder()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -154,6 +156,26 @@ export function SettingsCog() {
             </span>
             <span className={styles.toggleLabel}>{muted ? 'Sons mutados' : 'Sons ligados'}</span>
           </button>
+
+          {/* Room tone. Pointless while everything is muted, so it hides. */}
+          {!muted && (
+            <button
+              type="button"
+              className={`${styles.toggle} ${ambience ? styles.toggleActive : ''}`}
+              onClick={() => {
+                unlockGameAudio()
+                setAmbience(!ambience)
+              }}
+              aria-pressed={ambience}
+            >
+              <span className={styles.toggleIcon} aria-hidden>
+                🕯️
+              </span>
+              <span className={styles.toggleLabel}>
+                {ambience ? 'Ambiente ligado' : 'Som ambiente'}
+              </span>
+            </button>
+          )}
         </div>
       )}
     </div>
