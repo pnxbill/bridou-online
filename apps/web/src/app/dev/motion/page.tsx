@@ -6,10 +6,11 @@
  * "Distribuir" replays the dealing animation, and tapping a card twice shows
  * it traveling from the fan to the table. Opponents auto-play, tricks resolve
  * and fly to the winner (same 1.5s pacing as the engine).
- * Header-free on purpose (outside the (main) group), like the game route.
+ * Outside the (main) group with the floating menu button, like the game route.
  */
 import type { Card, HandCard, RoundPlayer, TurnSnapshot } from '@bridou/shared'
 import { useEffect, useReducer, useRef } from 'react'
+import { AppHeader } from '@/components/AppHeader'
 import { winningCardIndex } from '@/features/game/cards'
 import { GameTable } from '@/features/game/components/GameTable'
 import { gameReducer, type GameViewState } from '@/features/game/reducer'
@@ -168,6 +169,7 @@ export default function MotionDevPage() {
 
   return (
     <>
+      <AppHeader variant="floating" />
       <GameTable state={state} onPlay={playCard} onBet={() => {}} />
       <div style={{ position: 'fixed', top: 70, left: 10, zIndex: 50, display: 'flex', gap: 6 }}>
         <button style={toggleStyle} onClick={deal}>
