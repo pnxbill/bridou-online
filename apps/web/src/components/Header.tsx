@@ -14,6 +14,7 @@ export function Header() {
       {user && (
         <nav className="header-nav">
           <Link href="/mesas">Mesas</Link>
+          <Link href="/diaria">Mão do Dia</Link>
           <Link href="/conquistas">Conquistas</Link>
           <Link href="/ranking">Ranking</Link>
         </nav>

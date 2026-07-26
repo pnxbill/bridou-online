@@ -1,10 +1,12 @@
 import { Game, GameError, type Scheduler } from '@bridou/engine'
-import type {
-  GameSnapshot,
-  LobbySnapshot,
-  PlayerInfo,
-  PlayerPerspective,
-  SessionState,
+import {
+  EMOTE_COOLDOWN_MS,
+  isEmoteId,
+  type GameSnapshot,
+  type LobbySnapshot,
+  type PlayerInfo,
+  type PlayerPerspective,
+  type SessionState,
 } from '@bridou/shared'
 import { randomUUID } from 'node:crypto'
 import { ForbiddenError, NotFoundError } from './errors'
@@ -27,6 +29,9 @@ export interface EnterGameResult extends GameSnapshot, PlayerPerspective, Sessio
 }
 
 export class GameService {
+  /** `${gameId}:${playerId}` → last emote time, for the cooldown. */
+  private readonly lastEmoteAt = new Map<string, number>()
+
   constructor(
     private readonly games: GameRepository,
     private readonly lobbies: LobbyRegistry,
@@ -37,6 +42,8 @@ export class GameService {
       scheduler?: Scheduler
       /** Fired after the Game is saved, before `game.start()` emits events. */
       onGameStarted?: (game: Game, context: { mesaId: string | null }) => void
+      /** Injectable clock (emote cooldown, snapshot timestamps). */
+      now?: () => number
     } = {},
   ) {}
 
@@ -164,6 +171,33 @@ export class GameService {
 
   closeScoreboard(gameId: string): void {
     this.getGame(gameId).closeScoreboard()
+  }
+
+  /**
+   * Fires a provocação at the table.
+   *
+   * Trash talk is most of the point of a card game between friends, and voice
+   * only covers the players who turned it on. The set is fixed (no free text)
+   * so it's fast to fire mid-trick and impossible to abuse, and the cooldown is
+   * enforced here rather than in the client so nobody can spam the table.
+   */
+  sendEmote(gameId: string, playerId: string, emoteId: string): void {
+    if (!isEmoteId(emoteId)) throw new GameError('Provocação desconhecida')
+
+    const game = this.getGame(gameId)
+    if (!game.hasPlayer(playerId)) throw new ForbiddenError("You're not in this game")
+
+    const key = `${gameId}:${playerId}`
+    const now = this.now()
+    const last = this.lastEmoteAt.get(key) ?? 0
+    if (now - last < EMOTE_COOLDOWN_MS) throw new GameError('Calma aí')
+    this.lastEmoteAt.set(key, now)
+
+    this.gateway.publisherFor(gameId).publish({ type: 'emote-sent', playerId, emoteId, at: now })
+  }
+
+  private now(): number {
+    return this.options.now?.() ?? Date.now()
   }
 
   private getLobby(code: string): Lobby {

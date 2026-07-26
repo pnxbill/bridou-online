@@ -1,0 +1,252 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.title {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.label {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.error {
+  color: #f87171;
+  font-size: 0.9rem;
+}
+
+.hint {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  max-width: 28rem;
+}
+
+.streak {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f59e0b;
+  white-space: nowrap;
+}
+
+/* ── the deal ───────────────────────────────────────────────────────────── */
+
+.trunfoRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.trunfoCard {
+  width: 3.6rem;
+}
+
+.hand {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.handCard {
+  width: 3.6rem;
+  border-radius: 6px;
+  transition: transform 0.15s ease;
+}
+
+/* Trump-suit cards are marked in the live table too — keep the vocabulary. */
+.handCard[data-trunfo] {
+  box-shadow: 0 0 0 2px #eab308;
+  transform: translateY(-4px);
+}
+
+/* ── betting ────────────────────────────────────────────────────────────── */
+
+.betSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: flex-start;
+  padding: 1rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.bets {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.betButton {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.betButton[data-selected] {
+  border-color: #eab308;
+  background: rgb(234 179 8 / 18%);
+  color: #eab308;
+}
+
+/* ── result ─────────────────────────────────────────────────────────────── */
+
+.result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  padding: 1.1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.result[data-exact] {
+  border-color: var(--accent);
+  background: linear-gradient(135deg, rgb(34 197 94 / 12%), transparent);
+}
+
+.resultHeadline {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.result[data-exact] .resultHeadline {
+  color: var(--accent);
+}
+
+.resultDetail {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.resultPoints {
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 0.3rem;
+}
+
+/* ── leaderboard ────────────────────────────────────────────────────────── */
+
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  list-style: none;
+}
+
+.boardRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.7rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+.boardRow[data-me] {
+  background: rgb(234 179 8 / 10%);
+  border-color: #eab308;
+}
+
+.position {
+  width: 1.15rem;
+  text-align: center;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.avatar,
+.avatarFallback {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.avatar {
+  object-fit: cover;
+}
+
+.avatarFallback {
+  display: grid;
+  place-items: center;
+  background: var(--border);
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.boardName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.boardBet {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.boardPoints {
+  font-variant-numeric: tabular-nums;
+  min-width: 2rem;
+  text-align: right;
+  color: var(--muted);
+}
+
+.boardPoints[data-exact] {
+  color: var(--accent);
+}

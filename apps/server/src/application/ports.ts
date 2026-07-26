@@ -204,6 +204,26 @@ export interface MesaGameRow {
   championPoints: number
 }
 
+/* ── Mão do Dia ──────────────────────────────────────────────────────────── */
+
+export interface DailyAttemptRow {
+  date: string
+  playerId: string
+  bet: number
+  made: number
+  points: number
+  playedAt: Date
+}
+
+export interface DailyRepository {
+  /** One attempt per player per day — a second submit is rejected, not overwritten. */
+  record(row: Omit<DailyAttemptRow, 'playedAt'>): Promise<boolean>
+  attemptFor(date: string, playerId: string): Promise<DailyAttemptRow | null>
+  leaderboard(date: string, playerIds?: string[]): Promise<DailyAttemptRow[]>
+  /** Consecutive days played up to and including `date`. */
+  streak(playerId: string, date: string): Promise<number>
+}
+
 export interface MesaRepository {
   create(input: { id: string; code: string; name: string; createdBy: string }): Promise<MesaRecord>
   byCode(code: string): Promise<MesaRecord | null>

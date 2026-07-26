@@ -5,7 +5,7 @@ export { Round, TRICK_RESOLUTION_MS, cardsForRound, type RoundDeps } from './rou
 export { Turn } from './turn'
 export { createDeck, shuffle } from './deck'
 export { GameError } from './errors'
-export { systemScheduler, type Rng, type Scheduler } from './ports'
+export { createSeededRng, systemScheduler, type Rng, type Scheduler } from './ports'
 export { toRoundPlayer, type RoundPlayerState } from './player'
 export type {
   CompletedRoundResult,

@@ -3,16 +3,20 @@ import type { PlayerInfo } from '@bridou/shared'
 import { Router, type Request, type RequestHandler, type Response } from 'express'
 import { ForbiddenError, NotFoundError } from '../application/errors'
 import type { GameService } from '../application/game-service'
+import type { DailyHandService } from '../application/daily-hand'
 import type { MesaService } from '../application/mesa'
 import type { OnlineTracker } from '../application/online'
 import type {
   AchievementRepository,
+  DailyRepository,
   GameHistoryRepository,
+  PlayerRepository,
   PlayerStatsRepository,
   TokenVerifier,
 } from '../application/ports'
 import { requireAuth, type AuthedRequest } from './auth'
 import { createAchievementRoutes } from './achievement-routes'
+import { createDailyRoutes } from './daily-routes'
 import { createMesaRoutes } from './mesa-routes'
 import { createRecapRoutes } from './recap-routes'
 
@@ -60,6 +64,9 @@ export interface RouteDeps {
   mesas: MesaService
   /** Last-seen ledger behind the mesa's "quem tá on". */
   presence: OnlineTracker
+  daily: DailyHandService
+  dailyAttempts: DailyRepository
+  players: PlayerRepository
 }
 
 /**
@@ -141,6 +148,17 @@ export const createRoutes = (deps: RouteDeps): Router => {
     })
   })
 
+  routes.post('/api/emote', auth, (req: Request, res: Response) => {
+    respond(res, () => {
+      service.sendEmote(
+        requireString(req.body.gameId, 'gameId'),
+        player(req).id,
+        requireString(req.body.emoteId, 'emoteId'),
+      )
+      return {}
+    })
+  })
+
   routes.get('/api/close-score', auth, (req: Request, res: Response) => {
     respond(res, () => {
       service.closeScoreboard(requireString(req.query.gameId, 'gameId'))
@@ -151,6 +169,7 @@ export const createRoutes = (deps: RouteDeps): Router => {
   routes.use(createAchievementRoutes(deps))
   routes.use(createRecapRoutes(deps))
   routes.use(createMesaRoutes(deps))
+  routes.use(createDailyRoutes(deps))
 
   return routes
 }

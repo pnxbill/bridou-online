@@ -6,6 +6,7 @@ import { api, type GameEntry } from '@/lib/api'
 import { gameReducer, stateFromSnapshot } from './reducer'
 import { useGameChannel } from './useGameChannel'
 import { AbandonedOverlay } from './components/AbandonedOverlay'
+import { EmoteWheel } from './components/EmoteWheel'
 import { GameTable } from './components/GameTable'
 import { RoundEndOverlay } from './components/RoundEndOverlay'
 import { ScoreboardOverlay } from './components/ScoreboardOverlay'
@@ -74,6 +75,15 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
 
   const dismissToast = useCallback((id: string) => dispatch({ type: 'dismiss-toast', id }), [])
 
+  // Fire-and-forget: a rejected provocação (cooldown, bad id) is not worth
+  // interrupting the game for — the wheel already went back to idle.
+  const sendEmote = useCallback(
+    (emoteId: string) => {
+      api.sendEmote(gameId, emoteId).catch(() => {})
+    },
+    [gameId],
+  )
+
   return (
     <>
       <GameTable
@@ -83,6 +93,7 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
         speakingIds={voice.speakingIds}
       />
       <TableToasts toasts={state.toasts} players={state.players} onDismiss={dismissToast} />
+      {!state.gameOver && <EmoteWheel onSend={sendEmote} />}
       <VoiceControls voice={voice} players={state.players} />
 
       {state.scoreboard && (

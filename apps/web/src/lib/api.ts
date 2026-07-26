@@ -1,4 +1,5 @@
 import type {
+  DailyState,
   GameRecap,
   GameSnapshot,
   HeadToHead,
@@ -91,6 +92,8 @@ export const api = {
 
   playCard: (gameId: string, card: string) => post('/api/play-card', { gameId, card }),
 
+  sendEmote: (gameId: string, emoteId: string) => post('/api/emote', { gameId, emoteId }),
+
   closeScore: (gameId: string) =>
     request(`/api/close-score?gameId=${encodeURIComponent(gameId)}`),
 
@@ -124,6 +127,12 @@ export const api = {
   /** Opens a lobby bound to this mesa — its result lands in the season. */
   openMesaTable: (code: string) =>
     post<{ lobby: LobbySnapshot }>(`/api/mesas/${encodeURIComponent(code)}/open`, {}),
+
+  /* ── mão do dia ───────────────────────────────────────────────────────── */
+
+  daily: () => request<{ daily: DailyState }>('/api/daily'),
+
+  playDaily: (bet: number) => post<{ daily: DailyState }>('/api/daily', { bet }),
 
   voiceRoster: (gameId: string) =>
     request<{ participants: VoicePresence[] }>(

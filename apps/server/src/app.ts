@@ -4,6 +4,7 @@ import http from 'node:http'
 import { Server } from 'socket.io'
 import { AbandonmentService } from './application/abandonment'
 import { AchievementTracker } from './application/achievements'
+import { DailyHandService } from './application/daily-hand'
 import { GameEviction } from './application/game-eviction'
 import { GameHistoryRecorder } from './application/game-history'
 import { GameService } from './application/game-service'
@@ -16,6 +17,7 @@ import type {
   AchievementRepository,
   GameHistoryRepository,
   GameRepository,
+  DailyRepository,
   GameStateStore,
   MesaRepository,
   PlayerRepository,
@@ -33,7 +35,9 @@ import {
   InMemoryAchievementRepository,
   InMemoryPlayerStatsRepository,
 } from './infra/in-memory-engagement'
+import { InMemoryDailyRepository } from './infra/in-memory-daily'
 import { InMemoryMesaRepository } from './infra/in-memory-mesa'
+import { PostgresDailyRepository } from './infra/postgres-daily'
 import { PostgresMesaRepository } from './infra/postgres-mesa'
 import {
   InMemoryGameHistoryRepository,
@@ -81,6 +85,8 @@ export interface AppOptions {
   playerStats?: PlayerStatsRepository
   /** Override mesa/season storage. */
   mesas?: MesaRepository
+  /** Override Mão do Dia attempt storage. */
+  dailyAttempts?: DailyRepository
   /** Fixed clock for the time-of-day conquistas and season rollover — tests pin this. */
   now?: () => Date
   /** Shorten seasons so tests can watch a rollover. */
@@ -192,6 +198,10 @@ export const createApp = (options: AppOptions = {}): AppInstance => {
   const mesaRecorder = new MesaResultRecorder(mesaService)
   const online = new OnlineTracker()
 
+  const dailyRepo: DailyRepository =
+    options.dailyAttempts ?? (db ? new PostgresDailyRepository(db) : new InMemoryDailyRepository())
+  const dailyService = new DailyHandService()
+
   // Presence flows in from every transport; abandonment reacts to it
   const registry = new ConnectionRegistry()
   const presence = new PresenceTracker(abandonment, (playerId) => online.touch(playerId))
@@ -257,6 +267,9 @@ export const createApp = (options: AppOptions = {}): AppInstance => {
       playerStats: statsRepo,
       mesas: mesaService,
       presence: online,
+      daily: dailyService,
+      dailyAttempts: dailyRepo,
+      players: playerRepo,
     }),
   )
 
