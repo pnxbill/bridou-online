@@ -6,7 +6,6 @@ import { AuthProvider } from '@/features/auth/AuthProvider'
 import { VoiceRoomProvider } from '@/features/game/voice/VoiceRoomProvider'
 import { DeckThemeProvider } from '@/features/settings/deck-theme'
 import { HandOrderProvider } from '@/features/settings/hand-order'
-import { SettingsCog } from '@/features/settings/SettingsCog'
 import { SoundSettingsProvider } from '@/features/settings/sound-settings'
 import './globals.css'
 
@@ -52,10 +51,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <DeckThemeProvider>
             <HandOrderProvider>
               <SoundSettingsProvider>
-                <VoiceRoomProvider>
-                  <SettingsCog />
-                  {children}
-                </VoiceRoomProvider>
+                <VoiceRoomProvider>{children}</VoiceRoomProvider>
               </SoundSettingsProvider>
             </HandOrderProvider>
           </DeckThemeProvider>

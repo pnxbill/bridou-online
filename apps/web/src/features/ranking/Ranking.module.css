@@ -9,32 +9,11 @@
   --ink: #e2e8f0;
   --ink-muted: #94a3b8;
 
-  min-height: 100dvh;
+  /* the night sky comes from the body; the header owns the top of the page */
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 3.6rem 1rem 2.5rem;
-  background: radial-gradient(120% 90% at 50% 0%, #16213c 0%, #0b1120 55%, #070b16 100%);
-  color: var(--ink);
-}
-
-/* Top-right — the global settings cog owns the top-left corner. */
-.back {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: var(--glass);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(8px);
-  color: var(--ink-muted);
-  font-size: 0.78rem;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.back:hover {
+  padding-bottom: 1.5rem;
   color: var(--ink);
 }
 
