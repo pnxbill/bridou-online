@@ -29,8 +29,8 @@
   color: transparent;
 }
 
-/* Full-bleed screens keep their corner: the button alone, where the settings
-   cog used to sit (the table HUD already reserves this space). */
+/* Full-bleed screens keep their corner: the menu button alone, where the
+   settings cog used to sit (the table HUD reserves 86px for it). */
 .floating {
   position: fixed;
   top: calc(12px + env(safe-area-inset-top));

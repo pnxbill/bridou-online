@@ -106,11 +106,13 @@ Invariants worth preserving:
   scripted events (`table`, `moments`, `motion`, `edge`, `lobby`, `home`, `cards`) — use them to
   iterate on visuals without a live game.
 - One chrome, one menu: `components/AppHeader` is the app's only header. `variant="bar"` (the
-  `(main)` layout) is the fixed glass bar — wordmark left, avatar right; `variant="floating"` is
-  just the menu button over the full-bleed screens, top-left, where the table HUD already reserves
-  60px. Everything behind the avatar (`components/UserMenu`): who you are, Início/Ranking, the
-  preferences (`features/settings/SettingsSections`) and Sair. Nothing else may pin itself to a
-  screen corner — that's how the old settings cog ended up fighting every screen's own top bar.
+  `(main)` layout) is the fixed glass bar — wordmark left, menu right; `variant="floating"` is just
+  the menu button over the full-bleed screens, top-left, where the table HUD reserves 86px. The
+  trigger (`components/UserMenu`) is a pill — avatar *and* a cog — because a bare portrait reads as
+  decoration, not a control, and the cog is the only hint that the preferences live behind your own
+  face. Behind it: who you are, Início/Ranking, the preferences
+  (`features/settings/SettingsSections`) and Sair. Nothing else may pin itself to a screen corner —
+  that's how the old settings cog ended up fighting every screen's own top bar.
 - `GameClient` owns the loop: reducer + `useGameChannel` + optimistic play, and any rejected action
   or reconnect refetches the `/api/enter-game` snapshot (`resync`).
 - Transport lives in exactly one file: `src/lib/realtime.ts`. All HTTP lives in `src/lib/api.ts`

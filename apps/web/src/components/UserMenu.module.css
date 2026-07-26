@@ -5,15 +5,15 @@
   display: flex;
 }
 
+/* A pill, not a bare portrait: the button shape says "tappable" and the cog
+   says the settings are in here — an avatar alone says neither. */
 .trigger {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 40px;
+  gap: 5px;
   height: 40px;
-  padding: 0;
-  overflow: hidden;
-  border-radius: 50%;
+  padding: 3px 9px 3px 3px;
+  border-radius: 999px;
   border: 1px solid var(--glass-border);
   background: linear-gradient(160deg, rgba(22, 33, 60, 0.92) 0%, rgba(11, 17, 32, 0.92) 100%);
   color: var(--ink-muted);
@@ -34,16 +34,35 @@
   border-color: var(--gold);
 }
 
+.face {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.07);
+}
+
 .photo {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.initials {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--ink);
+.cog {
+  display: flex;
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+.triggerOpen .cog {
+  transform: rotate(45deg);
 }
 
 .panel {
