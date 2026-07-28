@@ -1,4 +1,11 @@
-import { cardSuit, type DomainEvent, type PlayerInfo, type ScoreboardEntry } from '@bridou/shared'
+import {
+  cardSuit,
+  compareScoreboard,
+  scoreboardRanks,
+  type DomainEvent,
+  type PlayerInfo,
+  type ScoreboardEntry,
+} from '@bridou/shared'
 import type { GameHistoryRepository, PlayerRepository, StoredGameEvent } from './ports'
 
 /**
@@ -90,7 +97,10 @@ export class GameHistoryRecorder {
     const roster = this.rosters.get(gameId)
     if (!roster) return
 
-    const ranked = [...scoreboard].sort((a, b) => b.totalPoints - a.totalPoints)
+    // Points, then fewest bailadas, then fewest bets of 0; players level on all
+    // three share a rank, so a drawn game credits every champion with the win.
+    const ranked = [...scoreboard].sort(compareScoreboard)
+    const ranks = scoreboardRanks(ranked)
     const bailadas = this.bailadas.get(gameId) ?? new Map()
 
     await this.history.saveFinishedGame({
@@ -102,14 +112,14 @@ export class GameHistoryRecorder {
       ranked: !this.botTainted.has(gameId),
       players: roster.map((p, seatIndex) => {
         const entry = scoreboard.find((s) => s.id === p.id)
-        const rank = ranked.findIndex((s) => s.id === p.id) + 1
+        const rank = ranks[ranked.findIndex((s) => s.id === p.id)]
         return {
           playerId: p.id,
           seatIndex,
           isBot: !!p.isBot,
           finalPoints: entry?.totalPoints ?? 0,
           bailadasCount: bailadas.get(p.id) ?? 0,
-          rank: rank || roster.length,
+          rank: rank ?? roster.length,
         }
       }),
     })

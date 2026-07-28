@@ -1,6 +1,6 @@
 'use client'
 
-import type { ScoreboardEntry } from '@bridou/shared'
+import { scoreboardRanks, type ScoreboardEntry } from '@bridou/shared'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
@@ -27,7 +27,9 @@ const initials = (name: string) =>
 
 export function ScoreboardOverlay({ scoreboard, final = false, onClose }: Props) {
   const router = useRouter()
-  const champion = scoreboard[0]
+  // Ranks can be shared, so the champion isn't simply row zero.
+  const ranks = scoreboardRanks(scoreboard)
+  const champions = scoreboard.filter((_, i) => ranks[i] === 1)
 
   useEffect(() => {
     playScoreboardSound(final)
@@ -47,19 +49,23 @@ export function ScoreboardOverlay({ scoreboard, final = false, onClose }: Props)
           {final ? 'FIM DE JOGO' : 'PLACAR'}
         </h2>
         <p className={styles.subtitle}>
-          {final && champion ? `${champion.name} venceu!` : 'metade do jogo'}
+          {final && champions.length
+            ? `${champions.map((c) => c.name).join(' e ')} ${
+                champions.length > 1 ? 'venceram' : 'venceu'
+              }!`
+            : 'metade do jogo'}
         </p>
 
         <ul className={styles.rows}>
           {scoreboard.map((entry, i) => (
             <motion.li
               key={entry.id}
-              className={`${styles.row} ${final && i === 0 ? styles.rowWinner : ''}`}
+              className={`${styles.row} ${final && ranks[i] === 1 ? styles.rowWinner : ''}`}
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 + i * 0.08 }}
             >
-              <span className={styles.rank}>{MEDALS[i] ?? `${i + 1}º`}</span>
+              <span className={styles.rank}>{MEDALS[ranks[i]! - 1] ?? `${ranks[i]}º`}</span>
               <span className={`${styles.avatar} ${entry.isBot ? styles.avatarBot : ''}`}>
                 {entry.isBot ? '🤖' : entry.photoURL ? (
                   <img src={entry.photoURL} alt="" />

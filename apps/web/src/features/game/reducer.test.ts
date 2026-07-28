@@ -61,7 +61,7 @@ describe('stateFromSnapshot', () => {
   })
 
   it('shows the scoreboard when the snapshot says so', () => {
-    const board = [{ id: 'me', name: 'me', totalPoints: 12 }]
+    const board = [{ id: 'me', name: 'me', totalPoints: 12, bailadas: 1, zeroBets: 0 }]
     const state = stateFromSnapshot(snapshot({ scoreboardShowing: true, scoreboard: board }))
     expect(state.scoreboard).toEqual(board)
   })
@@ -283,7 +283,7 @@ describe('tricks', () => {
 
 describe('scoreboard', () => {
   const base = stateFromSnapshot(snapshot())
-  const board = [{ id: 'me', name: 'me', totalPoints: 22 }]
+  const board = [{ id: 'me', name: 'me', totalPoints: 22, bailadas: 2, zeroBets: 1 }]
 
   it('shows on scoreboard-shown and game-ended, hides on scoreboard-hidden', () => {
     let state = apply({ ...base, bailadores: [player('other')] }, { type: 'scoreboard-shown', scoreboard: board })
@@ -299,7 +299,7 @@ describe('scoreboard', () => {
   })
 
   it('shows the final scoreboard when reconnecting to a finished game', () => {
-    const board = [{ id: 'me', name: 'me', totalPoints: 40 }]
+    const board = [{ id: 'me', name: 'me', totalPoints: 40, bailadas: 3, zeroBets: 2 }]
     const state = stateFromSnapshot(snapshot({ finished: true, scoreboard: board }))
     expect(state.scoreboard).toEqual(board)
     expect(state.gameOver).toBe(true)

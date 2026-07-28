@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { TOTAL_ROUNDS } from '@bridou/shared'
+import { TOTAL_ROUNDS, compareScoreboard, scoreboardRanks } from '@bridou/shared'
 import { Game } from '../src/game'
 import {
   ManualScheduler,
@@ -105,6 +105,27 @@ describe('a full game', () => {
     for (let i = 1; i < scoreboard.length; i++) {
       expect(scoreboard[i - 1]!.totalPoints).toBeGreaterThanOrEqual(scoreboard[i]!.totalPoints)
     }
+  })
+
+  it('counts bailadas and bets of 0 per player', () => {
+    const { game } = finished({ seed: 7 })
+    game.scoreboard.forEach((entry) => {
+      const rounds = game.rounds.map((r) => r.players.find((p) => p.id === entry.id)!)
+      expect(entry.bailadas).toBe(rounds.filter((p) => p.points === -1).length)
+      expect(entry.zeroBets).toBe(rounds.filter((p) => p.bet === 0).length)
+    })
+  })
+
+  it('orders equal totals by fewest bailadas, then fewest bets of 0', () => {
+    const board = [
+      { id: 'a', name: 'a', totalPoints: 60, bailadas: 4, zeroBets: 1 },
+      { id: 'b', name: 'b', totalPoints: 60, bailadas: 4, zeroBets: 5 },
+      { id: 'c', name: 'c', totalPoints: 60, bailadas: 2, zeroBets: 9 },
+      { id: 'd', name: 'd', totalPoints: 61, bailadas: 9, zeroBets: 9 },
+    ]
+    expect([...board].sort(compareScoreboard).map((e) => e.id)).toEqual(['d', 'c', 'a', 'b'])
+    // Level on all three: one shared rank, and nobody takes the skipped place.
+    expect(scoreboardRanks([board[0]!, { ...board[0]!, id: 'a2' }, board[1]!])).toEqual([1, 1, 3])
   })
 
   it('reports the same scoreboard in the game-ended event', () => {

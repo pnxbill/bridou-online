@@ -1,6 +1,7 @@
 import {
   MAX_PLAYERS,
   TOTAL_ROUNDS,
+  compareScoreboard,
   type EventPublisher,
   type GameSnapshot,
   type PlayerInfo,
@@ -95,20 +96,34 @@ export class Game {
     this.publisher.publish({ type: 'scoreboard-hidden' })
   }
 
-  /** Total points per player across completed rounds, best first. */
+  /**
+   * Per-player totals across completed rounds, best first — points, then
+   * fewest bailadas, then fewest bets of 0 (see `compareScoreboard`).
+   */
   get scoreboard(): ScoreboardEntry[] {
     return this.playerOrder
-      .map((player) => ({
-        id: player.id,
-        name: player.name,
-        ...(player.photoURL !== undefined && { photoURL: player.photoURL }),
-        ...(player.isBot && { isBot: true }),
-        totalPoints: this.rounds.reduce(
-          (acc, round) => acc + (round.players.find((p) => p.id === player.id)?.points ?? 0),
-          0,
-        ),
-      }))
-      .sort((a, b) => b.totalPoints - a.totalPoints)
+      .map((player) => {
+        let totalPoints = 0
+        let bailadas = 0
+        let zeroBets = 0
+        for (const round of this.rounds) {
+          const inRound = round.players.find((p) => p.id === player.id)
+          if (!inRound) continue
+          totalPoints += inRound.points ?? 0
+          if (inRound.points === -1) bailadas++
+          if (inRound.bet === 0) zeroBets++
+        }
+        return {
+          id: player.id,
+          name: player.name,
+          ...(player.photoURL !== undefined && { photoURL: player.photoURL }),
+          ...(player.isBot && { isBot: true }),
+          totalPoints,
+          bailadas,
+          zeroBets,
+        }
+      })
+      .sort(compareScoreboard)
   }
 
   snapshot(): GameSnapshot {
