@@ -1,5 +1,6 @@
 import type {
   DailyState,
+  DomainEvent,
   GameRecap,
   GameSnapshot,
   HeadToHead,
@@ -23,6 +24,16 @@ export type GameEntry = GameSnapshot &
     /** Set while the table paused itself on purpose (not an abandonment). */
     pausedBy?: string | null
   }
+
+/**
+ * The Mão do Dia endpoints all answer the same way: where the table is, plus
+ * the events that got it there so the client can play them out rather than
+ * cut straight to the result.
+ */
+export interface DailyResponse {
+  daily: DailyState
+  events: DomainEvent[]
+}
 
 /** Lifetime counters as the profile endpoints return them. */
 export interface CareerStats {
@@ -141,9 +152,17 @@ export const api = {
 
   /* ── mão do dia ───────────────────────────────────────────────────────── */
 
-  daily: () => request<{ daily: DailyState }>('/api/daily'),
+  /**
+   * The day's table. `events` is what the client hasn't watched yet — a page
+   * load gets none (the snapshot already holds it), a bet or a play gets
+   * everything the table did in reply, to be animated in order.
+   */
+  daily: () => request<DailyResponse>('/api/daily'),
 
-  playDaily: (bet: number) => post<{ daily: DailyState }>('/api/daily', { bet }),
+  /** Calls the day's bet. Final the moment it lands — one hand per day. */
+  dailyBet: (bet: number) => post<DailyResponse>('/api/daily/bet', { bet }),
+
+  dailyPlay: (card: string) => post<DailyResponse>('/api/daily/play', { card }),
 
   voiceRoster: (gameId: string) =>
     request<{ participants: VoicePresence[] }>(

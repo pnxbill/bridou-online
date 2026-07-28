@@ -1,252 +1,319 @@
-.page {
+/*
+ * The Mão do Dia is played on the real table (features/game/GameTable), so
+ * there is no page layout here — only the screens around it: the signed-out
+ * gate, and the result that lands when the fifth trick does.
+ */
+
+.notice,
+.gate {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-  padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  min-height: 100dvh;
+  padding: 2rem 1.5rem calc(2rem + env(safe-area-inset-bottom));
+  text-align: center;
+  color: var(--muted);
 }
 
-.head {
+.gateTitle {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 2rem;
+  color: var(--gold);
+  letter-spacing: 0.02em;
+}
+
+.gateText {
+  max-width: 30ch;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* A rejected action. Sits over the felt, clear of the HUD above it and of the
+   floating menu button that owns the top-left. */
+.error {
+  position: fixed;
+  left: 50%;
+  top: calc(96px + env(safe-area-inset-top));
+  transform: translateX(-50%);
+  z-index: 60;
+  max-width: min(420px, calc(100vw - 24px));
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(127, 29, 29, 0.92);
+  border: 1px solid rgba(248, 113, 113, 0.5);
+  color: #fee2e2;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* ── result ───────────────────────────────────────────────────────────── */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  padding: calc(1rem + env(safe-area-inset-top)) 1rem calc(1rem + env(safe-area-inset-bottom));
+  background: rgba(7, 11, 22, 0.82);
+  backdrop-filter: blur(6px);
+  overflow-y: auto;
+}
+
+.panel {
+  position: relative;
+  width: min(420px, 100%);
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.75rem 1.25rem 1.25rem;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #1c2740 0%, #131c2f 100%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  text-align: center;
+}
+
+.close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: var(--ink);
+  background: var(--glass);
+}
+
+.emoji {
+  font-size: 2.5rem;
+  line-height: 1;
 }
 
 .title {
-  font-size: 1.4rem;
-  font-weight: 700;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 2.25rem;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.titleExact {
+  color: #86efac;
+  text-shadow: 0 0 24px rgba(134, 239, 172, 0.35);
+}
+
+.titleBailou {
+  color: #fca5a5;
+  text-shadow: 0 0 24px rgba(252, 165, 165, 0.3);
 }
 
 .subtitle {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.5rem;
+  color: var(--ink-muted);
+  font-size: 0.95rem;
 }
 
-.label {
-  display: block;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-  margin-bottom: 0.4rem;
+.subtitle b {
+  color: var(--ink);
 }
 
-.muted {
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-.error {
-  color: #f87171;
-  font-size: 0.9rem;
-}
-
-.hint {
-  font-size: 0.75rem;
-  color: var(--muted);
-  line-height: 1.4;
-}
-
-.empty {
+/* One square per trick, in the order they were played. */
+.grid {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.75rem;
-  max-width: 28rem;
+  gap: 6px;
+  margin: 0.25rem 0;
 }
 
-.streak {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #f59e0b;
-  white-space: nowrap;
-}
-
-/* ── the deal ───────────────────────────────────────────────────────────── */
-
-.trunfoRow {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.trunfoCard {
-  width: 3.6rem;
-}
-
-.hand {
-  display: flex;
-  gap: 0.35rem;
-  flex-wrap: wrap;
-}
-
-.handCard {
-  width: 3.6rem;
+.gridCell {
+  width: 26px;
+  height: 26px;
   border-radius: 6px;
-  transition: transform 0.15s ease;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--glass-border);
 }
 
-/* Trump-suit cards are marked in the live table too — keep the vocabulary. */
-.handCard[data-trunfo] {
-  box-shadow: 0 0 0 2px #eab308;
-  transform: translateY(-4px);
+.gridCell[data-won] {
+  background: #22c55e;
+  border-color: #4ade80;
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
 }
 
-/* ── betting ────────────────────────────────────────────────────────────── */
+.points {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 2.75rem;
+  line-height: 1;
+  color: var(--gold);
+}
 
-.betSection {
+.points[data-negative] {
+  color: #fca5a5;
+}
+
+.par,
+.streak {
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+.par b {
+  color: var(--gold);
+}
+
+.actions {
   display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  align-items: flex-start;
-  padding: 1rem;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 }
 
-.bets {
-  display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
-
-.betButton {
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text);
-  font-size: 1.1rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.12s ease;
-}
-
-.betButton[data-selected] {
-  border-color: #eab308;
-  background: rgb(234 179 8 / 18%);
-  color: #eab308;
-}
-
-/* ── result ─────────────────────────────────────────────────────────────── */
-
-.result {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.4rem;
-  padding: 1.1rem;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--panel);
-}
-
-.result[data-exact] {
-  border-color: var(--accent);
-  background: linear-gradient(135deg, rgb(34 197 94 / 12%), transparent);
-}
-
-.resultHeadline {
-  font-size: 1.4rem;
-  font-weight: 700;
-}
-
-.result[data-exact] .resultHeadline {
-  color: var(--accent);
-}
-
-.resultDetail {
+.action,
+.actionPrimary {
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
   font-size: 0.9rem;
-  color: var(--muted);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  color: var(--ink);
 }
 
-.resultPoints {
-  font-size: 1.75rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  margin-bottom: 0.3rem;
+.actionPrimary {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #2a1a00;
 }
 
-/* ── leaderboard ────────────────────────────────────────────────────────── */
+.boardTitle {
+  margin-top: 0.9rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-muted);
+}
 
 .board {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 4px;
   list-style: none;
 }
 
 .boardRow {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.45rem 0.7rem;
-  background: var(--panel);
-  border: 1px solid var(--border);
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
   border-radius: 10px;
-  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.85rem;
+  text-align: left;
 }
 
 .boardRow[data-me] {
-  background: rgb(234 179 8 / 10%);
-  border-color: #eab308;
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid var(--gold-soft);
 }
 
 .position {
-  width: 1.15rem;
-  text-align: center;
-  color: var(--muted);
+  width: 1.25rem;
+  color: var(--ink-muted);
   font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
-}
-
-.avatar,
-.avatarFallback {
-  width: 1.6rem;
-  height: 1.6rem;
-  border-radius: 50%;
-  flex-shrink: 0;
 }
 
 .avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
   object-fit: cover;
-}
-
-.avatarFallback {
   display: grid;
   place-items: center;
-  background: var(--border);
+  background: var(--glass);
   font-size: 0.65rem;
-  font-weight: 600;
+  color: var(--ink-muted);
+  flex: none;
 }
 
 .boardName {
   flex: 1;
-  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .boardBet {
-  font-size: 0.78rem;
-  color: var(--muted);
+  color: var(--ink-muted);
   font-variant-numeric: tabular-nums;
 }
 
 .boardPoints {
-  font-variant-numeric: tabular-nums;
-  min-width: 2rem;
+  min-width: 2.25rem;
   text-align: right;
-  color: var(--muted);
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .boardPoints[data-exact] {
-  color: var(--accent);
+  color: var(--gold);
+}
+
+.tomorrow {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+}
+
+/* ── dismissed result ─────────────────────────────────────────────────── */
+
+/* Full-width so it can't collide with anything that owns a corner. */
+.resultBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1rem calc(0.7rem + env(safe-area-inset-bottom));
+  background: rgba(11, 17, 32, 0.92);
+  border-top: 1px solid var(--glass-border);
+  backdrop-filter: blur(8px);
+}
+
+.resultBarText {
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+.resultBarText b {
+  color: var(--ink);
+}
+
+.resultBarBtn {
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--gold-soft);
+  background: transparent;
+  color: var(--gold);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
 }
