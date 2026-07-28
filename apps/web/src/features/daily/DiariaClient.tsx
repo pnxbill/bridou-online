@@ -1,36 +1,45 @@
 'use client'
 
-import { Card as PlayingCard } from '@bridou/cards-ui'
-import { cardSuit, type DailyState } from '@bridou/shared'
-import { useEffect, useState } from 'react'
+import { dailyDateLabel, type DailyState, type HandCard } from '@bridou/shared'
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { useAuth } from '@/features/auth/AuthProvider'
-import { parseCard } from '@/features/game/cards'
-import { useDeckTheme } from '@/features/settings/deck-theme'
-import { ApiError, api } from '@/lib/api'
+import { GameTable } from '@/features/game/components/GameTable'
+import { gameReducer, stateFromSnapshot } from '@/features/game/reducer'
+import { ApiError, api, type DailyResponse, type GameEntry } from '@/lib/api'
+import { DailyResultBar, DailyResultOverlay } from './DailyResultOverlay'
+import { useScriptedEvents } from './useScriptedEvents'
 import styles from './Diaria.module.css'
 
-const initials = (name: string) =>
-  name
-    .split(' ')
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join('')
+/** The day's table in the shape the game screen already consumes. */
+const entryFrom = (table: DailyState['table']): GameEntry => ({
+  ...table.snapshot,
+  playableCards: table.playableCards,
+  availableBets: table.availableBets,
+  abandoned: [],
+  botSeats: [],
+  time: Date.now(),
+  pausedBy: null,
+})
+
+const message = (err: unknown, fallback: string) =>
+  err instanceof ApiError ? err.message : fallback
 
 /**
  * A Mão do Dia.
  *
- * One deal, the same for everybody, once a day: read the hand, call the number
- * of vazas, and the hand gets played out for you. Thirty seconds and a score to
- * argue about — the reason to open the app on a night nobody else is around.
+ * One deal, the same for everybody, once a day — and you *play* it: call your
+ * bet, then lead and follow all five tricks against the three bots everyone
+ * else is facing too. It runs on the real table, driven by the real reducer;
+ * the only difference from a live game is where the events come from. The
+ * server resolves each play instantly and hands back what the table did in
+ * reply, and `useScriptedEvents` deals that out at the speed a real table
+ * would have — so the hand is watched, not reported.
  */
 export function DiariaClient() {
   const { user, loading: authLoading, signIn } = useAuth()
-  const { variant } = useDeckTheme()
   const [state, setState] = useState<DailyState | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [bet, setBet] = useState<number | null>(null)
-  const [busy, setBusy] = useState(false)
 
   useEffect(() => {
     if (!user) {
@@ -54,170 +63,138 @@ export function DiariaClient() {
     }
   }, [user])
 
-  const submit = async () => {
-    if (bet === null || busy) return
-    setBusy(true)
-    setError('')
-    try {
-      const { daily } = await api.playDaily(bet)
-      setState(daily)
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Não deu pra enviar a aposta.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const share = async () => {
-    if (!state?.attempt) return
-    const { bet, made, points, exact } = state.attempt
-    const text = exact
-      ? `🃏 Mão do Dia: apostei ${bet}, fiz ${made}. ${points} pontos. 🎯`
-      : `🃏 Mão do Dia: apostei ${bet}, fiz ${made}. Bailei. 💃`
-    const url = `${window.location.origin}/diaria`
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: 'Bridou — Mão do Dia', text, url })
-        return
-      } catch {
-        // dismissed
-      }
-    }
-    await navigator.clipboard.writeText(`${text}\n${url}`).catch(() => {})
-  }
-
-  if (authLoading || loading) return <p className={styles.muted}>Carregando…</p>
+  if (authLoading || loading) return <p className={styles.notice}>Carregando…</p>
 
   if (!user) {
     return (
-      <div className={styles.empty}>
-        <h1 className={styles.title}>Mão do Dia</h1>
-        <p className={styles.muted}>
-          Uma mão por dia, a mesma pra todo mundo. Entre pra jogar a de hoje.
+      <div className={styles.gate}>
+        <h1 className={styles.gateTitle}>Mão do Dia</h1>
+        <p className={styles.gateText}>
+          Uma mão por dia, a mesma pra todo mundo. Mesmas cartas, mesmos
+          adversários — só o seu jogo muda o placar.
         </p>
-        <button className="btn" onClick={signIn}>
+        <button className="btn primary" onClick={signIn}>
           Entrar com Google
         </button>
       </div>
     )
   }
 
-  if (!state) return <p className={styles.error}>{error || 'Indisponível.'}</p>
+  if (!state) return <p className={styles.notice}>{error || 'Indisponível.'}</p>
 
-  const { puzzle, attempt, leaderboard, streak } = state
-  const trunfoSuit = cardSuit(puzzle.trunfo)
+  // Keyed by date so a hand that rolls over midnight restarts clean.
+  return <DailyTable key={state.date} initial={state} myId={user.id} />
+}
+
+function DailyTable({ initial, myId }: { initial: DailyState; myId: string }) {
+  /** The daily seat id, straight from the deal — the table's leader is the human. */
+  const seat = initial.table.snapshot.leaderId
+  const [daily, setDaily] = useState(initial)
+  const [view, dispatch] = useReducer(gameReducer, initial.table, (table) =>
+    stateFromSnapshot(entryFrom(table), seat),
+  )
+  const { enqueue, reset, playing } = useScriptedEvents(dispatch)
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [showResult, setShowResult] = useState(true)
+
+  // A hand nobody has bet on yet gets its cards dealt into the fan, the same
+  // riffle a live table opens with. A hand already in progress is picked up
+  // where it stands, so there is nothing to deal.
+  const dealt = useRef(false)
+  useEffect(() => {
+    if (dealt.current || !initial.table.betting) return
+    dealt.current = true
+    dispatch({
+      type: 'apply-event',
+      event: {
+        type: 'cards-dealt',
+        playerId: seat,
+        cards: initial.table.playableCards.map((c) => c.value),
+      },
+    })
+  }, [initial, seat])
+
+  const resync = useCallback(async () => {
+    reset()
+    try {
+      const { daily: fresh } = await api.daily()
+      setDaily(fresh)
+      dispatch({ type: 'sync', snapshot: entryFrom(fresh.table) })
+    } catch {
+      // server unreachable — the table stays where it is and the player retries
+    }
+  }, [reset])
+
+  const apply = ({ daily: fresh, events }: DailyResponse) => {
+    setDaily(fresh)
+    enqueue(events)
+  }
+
+  const onBet = async (bet: number) => {
+    if (busy) return
+    setBusy(true)
+    setError('')
+    dispatch({ type: 'clear-bets' })
+    try {
+      apply(await api.dailyBet(bet))
+    } catch (err) {
+      setError(message(err, 'Não deu pra enviar a aposta.'))
+      await resync()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const onPlay = async (card: HandCard) => {
+    if (card.disabled || busy) return
+    setBusy(true)
+    setError('')
+    dispatch({ type: 'optimistic-play', card: card.value })
+    try {
+      apply(await api.dailyPlay(card.value))
+    } catch (err) {
+      setError(message(err, 'Não deu pra jogar essa carta.'))
+      await resync()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const label = [
+    `Mão do Dia · ${dailyDateLabel(daily.date)}`,
+    daily.streak > 0 ? `🔥 ${daily.streak}` : '',
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
+  // Never while the hand is still being dealt out — the overlay would announce
+  // the ending over the top of the trick that produced it.
+  const done = daily.result !== null && !playing
 
   return (
-    <div className={styles.page}>
-      <header className={styles.head}>
-        <div>
-          <h1 className={styles.title}>Mão do Dia</h1>
-          <p className={styles.muted}>{puzzle.date}</p>
-        </div>
-        {streak > 0 && (
-          <span className={styles.streak} title={`${streak} dias seguidos`}>
-            🔥 {streak}
-          </span>
-        )}
-      </header>
+    <>
+      <GameTable state={view} onPlay={onPlay} onBet={onBet} roundLabel={label} />
 
-      <section className={styles.trunfoRow}>
-        <span className={styles.label}>Trunfo</span>
-        <div className={styles.trunfoCard}>
-          <PlayingCard
-            id={puzzle.trunfo}
-            {...parseCard(puzzle.trunfo)}
-            variant={variant}
-          />
-        </div>
-      </section>
-
-      <section>
-        <span className={styles.label}>Sua mão</span>
-        <div className={styles.hand}>
-          {puzzle.hand.map((card) => (
-            <div
-              key={card}
-              className={styles.handCard}
-              data-trunfo={cardSuit(card) === trunfoSuit ? '' : undefined}
-            >
-              <PlayingCard id={card} {...parseCard(card)} variant={variant} />
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {error && <p className={styles.error}>{error}</p>}
-
-      {attempt ? (
-        <section className={styles.result} data-exact={attempt.exact ? '' : undefined}>
-          <p className={styles.resultHeadline}>
-            {attempt.exact ? 'Cravou!' : 'Bailou.'}
-          </p>
-          <p className={styles.resultDetail}>
-            Você apostou <strong>{attempt.bet}</strong> e fez <strong>{attempt.made}</strong>.
-          </p>
-          <p className={styles.resultPoints}>
-            {attempt.points > 0 ? `+${attempt.points}` : attempt.points} pontos
-          </p>
-          <button className="btn" onClick={share}>
-            Compartilhar
-          </button>
-        </section>
-      ) : (
-        <section className={styles.betSection}>
-          <span className={styles.label}>Quantas vazas você faz?</span>
-          <div className={styles.bets}>
-            {puzzle.availableBets.map((value) => (
-              <button
-                key={value}
-                className={styles.betButton}
-                data-selected={bet === value ? '' : undefined}
-                onClick={() => setBet(value)}
-              >
-                {value}
-              </button>
-            ))}
-          </div>
-          <button className="btn" onClick={submit} disabled={bet === null || busy}>
-            {busy ? 'Jogando…' : 'Apostar'}
-          </button>
-          <p className={styles.hint}>
-            Você só escolhe a aposta — a mão é jogada pra você. Uma tentativa por dia.
-          </p>
-        </section>
+      {error && (
+        <p className={styles.error} role="alert">
+          {error}
+        </p>
       )}
 
-      {leaderboard.length > 0 && (
-        <section>
-          <h2 className={styles.subtitle}>Hoje</h2>
-          <ol className={styles.board}>
-            {leaderboard.map((row) => (
-              <li
-                key={row.id}
-                className={styles.boardRow}
-                data-me={row.id === user.id ? '' : undefined}
-              >
-                <span className={styles.position}>{row.position}</span>
-                {row.photoURL ? (
-                  <img className={styles.avatar} src={row.photoURL} alt="" />
-                ) : (
-                  <span className={styles.avatarFallback} aria-hidden>
-                    {initials(row.name)}
-                  </span>
-                )}
-                <span className={styles.boardName}>{row.name}</span>
-                <span className={styles.boardBet}>
-                  {row.bet}/{row.made}
-                </span>
-                <strong className={styles.boardPoints} data-exact={row.exact ? '' : undefined}>
-                  {row.points}
-                </strong>
-              </li>
-            ))}
-          </ol>
-        </section>
+      {done && daily.result && showResult && (
+        <DailyResultOverlay
+          date={daily.date}
+          result={daily.result}
+          leaderboard={daily.leaderboard}
+          streak={daily.streak}
+          myId={myId}
+          onClose={() => setShowResult(false)}
+        />
       )}
-    </div>
+      {done && daily.result && !showResult && (
+        <DailyResultBar result={daily.result} onOpen={() => setShowResult(true)} />
+      )}
+    </>
   )
 }

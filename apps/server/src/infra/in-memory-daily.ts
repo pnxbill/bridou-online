@@ -15,6 +15,12 @@ export const countStreak = (dates: ReadonlySet<string>, date: string): number =>
   return streak
 }
 
+/** Finished first, then best score, then whoever got there first. */
+export const compareAttempts = (a: DailyAttemptRow, b: DailyAttemptRow): number =>
+  b.points - a.points ||
+  (a.finishedAt?.getTime() ?? a.playedAt.getTime()) -
+    (b.finishedAt?.getTime() ?? b.playedAt.getTime())
+
 export class InMemoryDailyRepository implements DailyRepository {
   readonly attempts = new Map<string, DailyAttemptRow>()
 
@@ -22,27 +28,71 @@ export class InMemoryDailyRepository implements DailyRepository {
     return `${date}:${playerId}`
   }
 
-  async record(row: Omit<DailyAttemptRow, 'playedAt'>): Promise<boolean> {
-    const key = this.key(row.date, row.playerId)
+  async start({
+    date,
+    playerId,
+    bet,
+  }: {
+    date: string
+    playerId: string
+    bet: number
+  }): Promise<boolean> {
+    const key = this.key(date, playerId)
     if (this.attempts.has(key)) return false
-    this.attempts.set(key, { ...row, playedAt: new Date() })
+    this.attempts.set(key, {
+      date,
+      playerId,
+      bet,
+      plays: [],
+      made: 0,
+      points: 0,
+      finished: false,
+      playedAt: new Date(),
+      finishedAt: null,
+    })
     return true
   }
 
+  async appendPlay(
+    date: string,
+    playerId: string,
+    card: string,
+    afterPlays: number,
+  ): Promise<boolean> {
+    const row = this.attempts.get(this.key(date, playerId))
+    if (!row || row.finished || row.plays.length !== afterPlays) return false
+    row.plays = [...row.plays, card]
+    return true
+  }
+
+  async finish(date: string, playerId: string, made: number, points: number): Promise<void> {
+    const row = this.attempts.get(this.key(date, playerId))
+    if (!row || row.finished) return
+    row.made = made
+    row.points = points
+    row.finished = true
+    row.finishedAt = new Date()
+  }
+
   async attemptFor(date: string, playerId: string): Promise<DailyAttemptRow | null> {
-    return this.attempts.get(this.key(date, playerId)) ?? null
+    const row = this.attempts.get(this.key(date, playerId))
+    return row ? { ...row, plays: [...row.plays] } : null
   }
 
   async leaderboard(date: string, playerIds?: string[]): Promise<DailyAttemptRow[]> {
     const allowed = playerIds ? new Set(playerIds) : null
     return [...this.attempts.values()]
-      .filter((row) => row.date === date && (!allowed || allowed.has(row.playerId)))
-      .sort((a, b) => b.points - a.points || a.playedAt.getTime() - b.playedAt.getTime())
+      .filter(
+        (row) => row.date === date && row.finished && (!allowed || allowed.has(row.playerId)),
+      )
+      .sort(compareAttempts)
   }
 
   async streak(playerId: string, date: string): Promise<number> {
     const played = new Set(
-      [...this.attempts.values()].filter((r) => r.playerId === playerId).map((r) => r.date),
+      [...this.attempts.values()]
+        .filter((r) => r.playerId === playerId && r.finished)
+        .map((r) => r.date),
     )
     return countStreak(played, date)
   }

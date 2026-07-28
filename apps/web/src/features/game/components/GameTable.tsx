@@ -28,6 +28,12 @@ interface Props {
   onBet: (bet: number) => void
   /** Players talking in voice chat right now — their avatars glow. */
   speakingIds?: string[]
+  /**
+   * Replaces "Rodada N · X cartas" in the HUD. The Mão do Dia is one hand, not
+   * round five of thirteen, and saying otherwise would be a lie about where
+   * you are in a game.
+   */
+  roundLabel?: string
 }
 
 /* Felt, seats and played cards share one ellipse (see .felt in the CSS). */
@@ -75,7 +81,7 @@ const initials = (name: string) =>
     .slice(0, 2)
     .join('')
 
-export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
+export function GameTable({ state, onPlay, onBet, speakingIds = [], roundLabel }: Props) {
   const isBlind = isBlindRound(state.roundNumber)
   // Re-read on mount only: a game never runs long enough to cross a lighting
   // boundary in a way worth re-rendering the whole table for.
@@ -335,8 +341,12 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
       <div className={styles.hud}>
         <div className={styles.roundChip}>
           <span className={styles.roundLabel}>
-            Rodada {state.roundNumber} · {state.cardsForEachPlayer}{' '}
-            {state.cardsForEachPlayer === 1 ? 'carta' : 'cartas'}
+            {roundLabel ?? (
+              <>
+                Rodada {state.roundNumber} · {state.cardsForEachPlayer}{' '}
+                {state.cardsForEachPlayer === 1 ? 'carta' : 'cartas'}
+              </>
+            )}
           </span>
           <span className={styles.roundValue}>
             Feita {Math.min(state.turnsCompleted + 1, state.cardsForEachPlayer)}/

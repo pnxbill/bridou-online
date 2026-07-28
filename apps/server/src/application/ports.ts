@@ -206,21 +206,52 @@ export interface MesaGameRow {
 
 /* ── Mão do Dia ──────────────────────────────────────────────────────────── */
 
+/**
+ * One player's run at one day's hand.
+ *
+ * `bet` + `plays` are the whole record: the table is replayed from them on
+ * every request (see `DailyHandService`), so this row is the entire savegame
+ * and an unfinished hand resumes anywhere the player signs in.
+ */
 export interface DailyAttemptRow {
   date: string
   playerId: string
   bet: number
+  /** Cards the player has played, in order. */
+  plays: string[]
   made: number
   points: number
+  /** All five tricks played. Unfinished attempts don't score and don't count. */
+  finished: boolean
+  /** When the bet was placed — the attempt opened. */
   playedAt: Date
+  finishedAt: Date | null
 }
 
 export interface DailyRepository {
-  /** One attempt per player per day — a second submit is rejected, not overwritten. */
-  record(row: Omit<DailyAttemptRow, 'playedAt'>): Promise<boolean>
+  /**
+   * Opens the day's attempt with the player's bet. One per player per day — a
+   * second call is rejected, not overwritten, which is what makes the bet
+   * final the moment it's placed.
+   */
+  start(input: { date: string; playerId: string; bet: number }): Promise<boolean>
+  /**
+   * Appends a played card, but only if the stored hand is still exactly
+   * `afterPlays` cards long. Two taps racing each other can't both land, and a
+   * replayed request is a no-op rather than a second card.
+   */
+  appendPlay(
+    date: string,
+    playerId: string,
+    card: string,
+    afterPlays: number,
+  ): Promise<boolean>
+  /** Records the final score. Idempotent. */
+  finish(date: string, playerId: string, made: number, points: number): Promise<void>
   attemptFor(date: string, playerId: string): Promise<DailyAttemptRow | null>
+  /** Finished attempts only, best first. */
   leaderboard(date: string, playerIds?: string[]): Promise<DailyAttemptRow[]>
-  /** Consecutive days played up to and including `date`. */
+  /** Consecutive days *finished* up to and including `date`. */
   streak(playerId: string, date: string): Promise<number>
 }
 

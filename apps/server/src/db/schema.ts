@@ -223,9 +223,15 @@ export const dailyAttempts = pgTable(
     date: text('date').notNull(),
     playerId: text('player_id').notNull(),
     bet: integer('bet').notNull(),
-    made: integer('made').notNull(),
-    points: integer('points').notNull(),
+    /** Cards played so far — this plus the bet replays the whole hand. */
+    plays: text('plays').array().notNull().default([]),
+    made: integer('made').notNull().default(0),
+    points: integer('points').notNull().default(0),
+    /** Only finished attempts score, rank and count toward a streak. */
+    finished: boolean('finished').notNull().default(true),
+    /** When the bet was placed and the attempt opened. */
     playedAt: timestamp('played_at', { withTimezone: true }).notNull().defaultNow(),
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
   },
   (t) => [primaryKey({ columns: [t.date, t.playerId] })],
 )

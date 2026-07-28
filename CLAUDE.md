@@ -111,13 +111,14 @@ Invariants worth preserving:
 
 ### Web app (`apps/web`)
 
-- Routes: `/` (entrance) and `/game/[gameId]` (full-bleed table) are full-viewport screens outside
-  the `(main)` group; everything else lives in `(main)` with the header (`/mesa/[code]` lobby,
-  `/mesas` + `/mesas/[code]` persistent groups, `/diaria`, `/conquistas`, `/resenha/[gameId]`,
-  `/ranking`, `/dev/*`). Note `/mesa/[code]` is the ephemeral *lobby* and `/mesas/[code]` is the
-  *persistent* group — the singular/plural split is load-bearing. `/dev/*` pages are design
-  fixtures driving the *real* components with scripted events (`table`, `moments`, `motion`,
-  `edge`, `lobby`, `home`, `cards`, `resenha`) — use them to iterate on visuals without a live game.
+- Routes: `/` (entrance), `/game/[gameId]` and `/diaria` (both the full-bleed table) are
+  full-viewport screens outside the `(main)` group; everything else lives in `(main)` with the
+  header (`/mesa/[code]` lobby, `/mesas` + `/mesas/[code]` persistent groups, `/conquistas`,
+  `/resenha/[gameId]`, `/ranking`, `/dev/*`). Note `/mesa/[code]` is the ephemeral *lobby* and
+  `/mesas/[code]` is the *persistent* group — the singular/plural split is load-bearing.
+  `/dev/*` pages are design fixtures driving the *real* components with scripted events (`table`,
+  `moments`, `motion`, `edge`, `lobby`, `home`, `cards`, `resenha`, `diaria`) — use them to
+  iterate on visuals without a live game.
 - One chrome, one menu: `components/AppHeader` is the app's only header. `variant="bar"` (the
   `(main)` layout) is the fixed glass bar — wordmark left, menu right; `variant="floating"` is just
   the menu button over the full-bleed screens, top-left, where the table HUD reserves 86px. The

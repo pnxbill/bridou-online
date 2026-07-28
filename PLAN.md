@@ -146,8 +146,17 @@ written and never read; and there was no reason to open the app alone.
   mural, trophy cabinet, and "quem tá on" via `OnlineTracker`. `/mesas`
 - [x] **Provocações** — fixed reaction wheel, server-enforced 2s cooldown
 - [x] **Mão do Dia** — one hand, same deal for everyone, derived from the date
-  alone (seeded RNG + the zero-randomness heuristic bot), so a (date, bet) pair
-  always resolves identically anywhere. One attempt/day, streaks. `/diaria`
+  alone (seeded RNG + the zero-randomness heuristic bot), so the day's table is
+  identical anywhere. You *play* it on the real felt: call the bet, then lead
+  and follow all five tricks against the three bots everybody else faced. The
+  hand is a pure function of `(date, bet, plays)` — the server stores only
+  those three things and replays from the deal on every request, which is what
+  makes it verifiable, resumable across devices, and free of any session.
+  Responses carry the events the replay emitted, so the client animates the
+  bots' replies instead of cutting to the result. Scored against **par**: an
+  exhaustive search of every bet and every legal line, so a result reads "12 of
+  a possible 15". One attempt/day, streaks, and a spoiler-free share grid.
+  `/diaria`, fixture at `/dev/diaria`
 - [x] **Pausa deliberada** — any seat can pause the table with no timer; only
   whoever paused (or the leader) resumes. Distinct from the abandonment pause
 - [x] **Imersão** — rodada cega as a set piece (dimmed room, spotlit felt,
