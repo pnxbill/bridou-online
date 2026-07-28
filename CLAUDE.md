@@ -122,6 +122,10 @@ Invariants worth preserving:
 
 ### Domain vocabulary (Portuguese, kept in code and UI)
 
+`RULES.md` is the full rules reference (deal, betting restriction, trick resolution, scoring, blind
+round, table lifecycle, ranking) — read it instead of re-deriving the rules from the engine, and
+update it if a rule changes.
+
 13 rounds dealing 1→7→1 cards for 2–7 players. Each player bets how many tricks they'll take;
 **trunfo** is the trump card, a **bailador** is someone who missed their bet, **feita/made** is a
 trick taken. The last round is **blind**: you see everyone else's cards, not your own (the wire
