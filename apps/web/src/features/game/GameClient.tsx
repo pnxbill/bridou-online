@@ -6,9 +6,14 @@ import { api, type GameEntry } from '@/lib/api'
 import { gameReducer, stateFromSnapshot } from './reducer'
 import { useGameChannel } from './useGameChannel'
 import { AbandonedOverlay } from './components/AbandonedOverlay'
+import { EmoteWheel } from './components/EmoteWheel'
 import { GameTable } from './components/GameTable'
+import { PauseButton } from './components/PauseButton'
+import { PausedOverlay } from './components/PausedOverlay'
+import { TableDock } from './components/TableDock'
 import { RoundEndOverlay } from './components/RoundEndOverlay'
 import { ScoreboardOverlay } from './components/ScoreboardOverlay'
+import { TableToasts } from './components/TableToasts'
 import { VoiceControls } from './voice/VoiceControls'
 import { useVoiceRoom } from './voice/VoiceRoomProvider'
 
@@ -71,6 +76,17 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
     }
   }
 
+  const dismissToast = useCallback((id: string) => dispatch({ type: 'dismiss-toast', id }), [])
+
+  // Fire-and-forget: a rejected provocação (cooldown, bad id) is not worth
+  // interrupting the game for — the wheel already went back to idle.
+  const sendEmote = useCallback(
+    (emoteId: string) => {
+      api.sendEmote(gameId, emoteId).catch(() => {})
+    },
+    [gameId],
+  )
+
   return (
     <>
       <GameTable
@@ -79,12 +95,23 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
         onBet={placeBet}
         speakingIds={voice.speakingIds}
       />
-      <VoiceControls voice={voice} players={state.players} />
+      <TableToasts toasts={state.toasts} players={state.players} onDismiss={dismissToast} />
+      {/* One owner of the bottom-left rim; nothing here positions itself. */}
+      <TableDock>
+        {!state.gameOver && !state.pausedBy && (
+          <>
+            <PauseButton onPause={() => api.pauseGame(gameId).catch(resync)} />
+            <EmoteWheel onSend={sendEmote} />
+          </>
+        )}
+        <VoiceControls voice={voice} players={state.players} />
+      </TableDock>
 
       {state.scoreboard && (
         <ScoreboardOverlay
           scoreboard={state.scoreboard}
           final={state.gameOver}
+          gameId={gameId}
           onClose={
             !state.gameOver && state.leaderId === playerId
               ? () => api.closeScore(gameId)
@@ -92,10 +119,20 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
           }
         />
       )}
-      {!state.scoreboard && state.abandoned.length > 0 && (
+      {/* a deliberate pause outranks everything except the scoreboard */}
+      {!state.scoreboard && state.pausedBy && (
+        <PausedOverlay
+          pausedBy={state.pausedBy}
+          players={state.players}
+          myId={playerId}
+          leaderId={state.leaderId}
+          onResume={() => api.resumeGame(gameId).catch(resync)}
+        />
+      )}
+      {!state.scoreboard && !state.pausedBy && state.abandoned.length > 0 && (
         <AbandonedOverlay seats={state.abandoned} players={state.players} />
       )}
-      {!state.scoreboard && !state.abandoned.length && state.lastRoundResult && (
+      {!state.scoreboard && !state.pausedBy && !state.abandoned.length && state.lastRoundResult && (
         <RoundEndOverlay
           key={state.lastRoundResult.round}
           result={state.lastRoundResult}

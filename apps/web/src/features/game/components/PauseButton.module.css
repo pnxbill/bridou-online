@@ -1,0 +1,67 @@
+/* Lives inside TableDock (bottom-left rim) — it owns the position. */
+.button {
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  border: 1px solid var(--border, #334155);
+  background: rgb(15 23 42 / 82%);
+  backdrop-filter: blur(8px);
+  color: #94a3b8;
+  font-size: 0.95rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.button:active {
+  transform: scale(0.92);
+}
+
+.button:hover {
+  color: #e2e8f0;
+}
+
+.confirm {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+  padding: 0.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--border, #334155);
+  background: rgb(15 23 42 / 94%);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 45%);
+}
+
+.confirmYes {
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid rgba(251, 191, 36, 0.5);
+  background: rgba(251, 191, 36, 0.14);
+  color: #e2e8f0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.confirmNo {
+  padding: 0.15rem 0.4rem;
+  border: none;
+  background: none;
+  color: #94a3b8;
+  font-size: 0.72rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-height: 700px) {
+  .button {
+    width: 2.3rem;
+    height: 2.3rem;
+    font-size: 0.85rem;
+  }
+}

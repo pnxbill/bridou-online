@@ -145,12 +145,21 @@ export function HomeClient() {
             Voltar ao jogo
           </button>
         )}
+        {/*
+          Two ways in, deliberately ranked: your mesa is the one with standings
+          and a season behind it, so it leads. A one-off table stays one tap away.
+        */}
         {user && (
           <button
             className={activeGameId ? styles.action : `${styles.action} ${styles.actionPrimary}`}
-            onClick={createTable}
+            onClick={() => router.push('/mesas')}
           >
-            Criar mesa
+            Suas mesas
+          </button>
+        )}
+        {user && (
+          <button className={styles.action} onClick={createTable}>
+            Jogo rápido
           </button>
         )}
         {!loading &&
@@ -178,7 +187,7 @@ export function HomeClient() {
             </button>
           ))}
         {user && !activeGameId && !joinOpen && (
-          <span className={styles.hint}>abra uma mesa e chame os amigos</span>
+          <span className={styles.hint}>sua mesa guarda a temporada e a classificação</span>
         )}
         {!loading && (
           <button className={styles.joinToggle} onClick={() => router.push('/ranking')}>

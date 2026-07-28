@@ -1,10 +1,11 @@
 'use client'
 
 import { Card as PlayingCard } from '@bridou/cards-ui'
-import type { HandCard, RoundPlayer } from '@bridou/shared'
+import { isBlindRound, type HandCard, type RoundPlayer } from '@bridou/shared'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import { useDeckTheme } from '@/features/settings/deck-theme'
+import { timeOfDayFor } from '../ambience'
 import { parseCard, winningCardIndex } from '../cards'
 import type { GameViewState } from '../reducer'
 import {
@@ -75,6 +76,10 @@ const initials = (name: string) =>
     .join('')
 
 export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
+  const isBlind = isBlindRound(state.roundNumber)
+  // Re-read on mount only: a game never runs long enough to cross a lighting
+  // boundary in a way worth re-rendering the whole table for.
+  const [timeOfDay] = useState(() => timeOfDayFor())
   const { variant } = useDeckTheme()
   /* px size of the table area — motion deltas are computed from % positions */
   const areaRef = useRef<HTMLDivElement>(null)
@@ -312,7 +317,13 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
   }
 
   return (
-    <div className={styles.screen}>
+    <div
+      className={styles.screen}
+      /* the felt is lit by the player's own clock — a 2am game looks like one */
+      data-ambience={timeOfDay}
+      /* the blind round is the game's signature moment; it gets its own look */
+      data-blind={isBlind ? '' : undefined}
+    >
       {/* landscape phones: portrait-only layout, ask for a rotate (CSS decides) */}
       <div className={styles.rotateOverlay}>
         <span className={styles.rotateIcon}>📱</span>
@@ -349,7 +360,21 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [] }: Props) {
         ref={areaRef}
       >
         <div className={styles.felt} />
-        <span className={styles.feltLogo}>BRIDOU</span>
+        {isBlind ? (
+          /* The signature round: your own card stays face-down, everyone
+             else's is on show. Naming it on the felt sets the whole mood. */
+          <motion.div
+            className={styles.blindBanner}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6 }}
+          >
+            <span className={styles.blindBannerTitle}>Rodada cega</span>
+            <span className={styles.blindBannerSub}>você não vê a sua carta</span>
+          </motion.div>
+        ) : (
+          <span className={styles.feltLogo}>BRIDOU</span>
+        )}
 
         {opponents.map((seat) => {
           const pos = seatPos.get(seat.id)!

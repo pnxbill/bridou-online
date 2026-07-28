@@ -14,6 +14,19 @@ const initials = (name: string) =>
     .slice(0, 2)
     .join('')
 
+/**
+ * Everywhere you can go. Ordered by how often you'd want it: your mesas carry
+ * the season, the daily hand is the reason to open the app alone, and the
+ * ranking is the shop window (so it stays visible signed-out).
+ */
+const NAV_LINKS: Array<{ href: string; label: string; requiresAuth?: boolean }> = [
+  { href: '/', label: 'Início' },
+  { href: '/mesas', label: 'Suas mesas', requiresAuth: true },
+  { href: '/diaria', label: 'Mão do Dia', requiresAuth: true },
+  { href: '/conquistas', label: 'Conquistas', requiresAuth: true },
+  { href: '/ranking', label: 'Ranking' },
+]
+
 const PersonIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
     <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" strokeWidth="1.75" />
@@ -116,15 +129,14 @@ export function UserMenu({ align = 'right' }: { align?: 'left' | 'right' }) {
           )}
 
           <nav className={styles.nav}>
-            {pathname !== '/' && (
-              <Link href="/" className={styles.navLink}>
-                Início
-              </Link>
-            )}
-            {pathname !== '/ranking' && (
-              <Link href="/ranking" className={styles.navLink}>
-                Ranking
-              </Link>
+            {NAV_LINKS.filter((link) => link.href !== pathname).map((link) =>
+              // Signed-out visitors get the public pages only; the rest are
+              // about *your* mesas, *your* conquistas, and would just 401.
+              !link.requiresAuth || user ? (
+                <Link key={link.href} href={link.href} className={styles.navLink}>
+                  {link.label}
+                </Link>
+              ) : null,
             )}
           </nav>
 

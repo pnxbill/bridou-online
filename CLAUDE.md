@@ -26,8 +26,19 @@ Database (optional — only when `DATABASE_URL` is set, see below):
 
 ```shell
 pnpm --filter @bridou/server db:generate   # drizzle-kit: schema.ts → drizzle/*.sql
-pnpm --filter @bridou/server db:migrate    # apply migrations (reads apps/server/.env)
+pnpm --filter @bridou/server db:migrate    # apply migrations by hand (reads apps/server/.env)
 ```
+
+Migrations run **automatically at server boot** when `DATABASE_URL` is set
+(`migrateOnBoot` in `main.ts`), so a deploy picks up new tables on its own; the
+CLI above is just the manual escape hatch. Every `drizzle/*.sql` file is
+hand-written to be idempotent (`CREATE TABLE IF NOT EXISTS`, `ADD COLUMN IF NOT
+EXISTS`, `DO $$ … EXCEPTION WHEN duplicate_object`) because the whole directory
+is replayed in filename order on every boot — there is no migrations table. An
+advisory lock serializes concurrent instances, and a real failure exits
+non-zero so a bad deploy leaves the previous version serving. **drizzle-kit
+`generate` doesn't know about these files** — it will try to emit a fresh
+`0000`; use it to read the diff, then hand-write the next numbered migration.
 
 CI (`.github/workflows/ci.yml`) runs server typecheck → `pnpm test` → `pnpm build` on every push.
 `next build` is what typechecks the web app (it needs `.next/types`), so a green `pnpm build` matters.
@@ -102,9 +113,11 @@ Invariants worth preserving:
 
 - Routes: `/` (entrance) and `/game/[gameId]` (full-bleed table) are full-viewport screens outside
   the `(main)` group; everything else lives in `(main)` with the header (`/mesa/[code]` lobby,
-  `/ranking`, `/dev/*`). `/dev/*` pages are design fixtures driving the *real* components with
-  scripted events (`table`, `moments`, `motion`, `edge`, `lobby`, `home`, `cards`) — use them to
-  iterate on visuals without a live game.
+  `/mesas` + `/mesas/[code]` persistent groups, `/diaria`, `/conquistas`, `/resenha/[gameId]`,
+  `/ranking`, `/dev/*`). Note `/mesa/[code]` is the ephemeral *lobby* and `/mesas/[code]` is the
+  *persistent* group — the singular/plural split is load-bearing. `/dev/*` pages are design
+  fixtures driving the *real* components with scripted events (`table`, `moments`, `motion`,
+  `edge`, `lobby`, `home`, `cards`, `resenha`) — use them to iterate on visuals without a live game.
 - One chrome, one menu: `components/AppHeader` is the app's only header. `variant="bar"` (the
   `(main)` layout) is the fixed glass bar — wordmark left, menu right; `variant="floating"` is just
   the menu button over the full-bleed screens, top-left, where the table HUD reserves 86px. The
@@ -113,6 +126,11 @@ Invariants worth preserving:
   face. Behind it: who you are, Início/Ranking, the preferences
   (`features/settings/SettingsSections`) and Sair. Nothing else may pin itself to a screen corner —
   that's how the old settings cog ended up fighting every screen's own top bar.
+- In-game, the same rule with a different owner: `features/game/components/TableDock` owns the
+  bottom-left rim and stacks the pause button, the provocação wheel and the voice controls. They
+  each used to pin themselves to that corner at hand-picked offsets, which collided the moment the
+  voice roster grew tall enough to reach them. Add an in-game control by putting it in the dock,
+  never by giving it its own `position: fixed`.
 - `GameClient` owns the loop: reducer + `useGameChannel` + optimistic play, and any rejected action
   or reconnect refetches the `/api/enter-game` snapshot (`resync`).
 - Transport lives in exactly one file: `src/lib/realtime.ts`. All HTTP lives in `src/lib/api.ts`

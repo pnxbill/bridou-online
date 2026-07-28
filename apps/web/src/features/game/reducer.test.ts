@@ -406,3 +406,61 @@ describe('forward compatibility', () => {
     expect(apply(base, unknown)).toEqual(base)
   })
 })
+
+describe('table toasts', () => {
+  it('queues conquista unlocks in arrival order', () => {
+    let state = stateFromSnapshot(snapshot())
+    state = apply(state, {
+      type: 'achievement-unlocked',
+      playerId: 'other',
+      achievementId: 'kamikaze',
+      at: 1,
+    })
+    state = apply(state, {
+      type: 'achievement-unlocked',
+      playerId: 'me',
+      achievementId: 'profeta',
+      at: 2,
+    })
+
+    expect(state.toasts).toEqual([
+      { kind: 'achievement', id: 'a:other:kamikaze', playerId: 'other', achievementId: 'kamikaze' },
+      { kind: 'achievement', id: 'a:me:profeta', playerId: 'me', achievementId: 'profeta' },
+    ])
+  })
+
+  it('queues emotes with a per-send id so repeats both show', () => {
+    let state = stateFromSnapshot(snapshot())
+    state = apply(state, { type: 'emote-sent', playerId: 'other', emoteId: 'suave', at: 1 })
+    state = apply(state, { type: 'emote-sent', playerId: 'other', emoteId: 'suave', at: 2 })
+    expect(state.toasts).toHaveLength(2)
+    expect(state.toasts[0]!.id).not.toBe(state.toasts[1]!.id)
+  })
+
+  it('drops only the dismissed toast', () => {
+    let state = stateFromSnapshot(snapshot())
+    state = apply(state, {
+      type: 'achievement-unlocked',
+      playerId: 'me',
+      achievementId: 'profeta',
+      at: 1,
+    })
+    state = apply(state, { type: 'emote-sent', playerId: 'other', emoteId: 'suave', at: 2 })
+
+    state = gameReducer(state, { type: 'dismiss-toast', id: 'a:me:profeta' })
+    expect(state.toasts).toHaveLength(1)
+    expect(state.toasts[0]!.kind).toBe('emote')
+  })
+
+  it('keeps pending toasts across a resync so a reconnect cannot swallow one', () => {
+    let state = stateFromSnapshot(snapshot())
+    state = apply(state, {
+      type: 'achievement-unlocked',
+      playerId: 'me',
+      achievementId: 'profeta',
+      at: 1,
+    })
+    state = gameReducer(state, { type: 'sync', snapshot: snapshot() })
+    expect(state.toasts).toHaveLength(1)
+  })
+})

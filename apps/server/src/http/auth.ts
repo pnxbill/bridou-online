@@ -17,9 +17,12 @@ export const bearerToken = (req: Request): string | null => {
  * Rejects the request with 401 unless it carries a valid Firebase ID token.
  * Handlers behind this middleware read the caller's identity from
  * `req.player` — never from the request body or query string.
+ *
+ * `onSeen` fires for every verified caller, which is how the mesa's "quem tá
+ * on" ledger stays warm without a dedicated heartbeat endpoint.
  */
 export const requireAuth =
-  (verifier: TokenVerifier): RequestHandler =>
+  (verifier: TokenVerifier, onSeen?: (playerId: string) => void): RequestHandler =>
   (req: AuthedRequest, res: Response, next: NextFunction): void => {
     const token = bearerToken(req)
     const verification = token ? verifier.verify(token) : Promise.resolve(null)
@@ -30,6 +33,7 @@ export const requireAuth =
           return
         }
         req.player = player
+        onSeen?.(player.id)
         next()
       })
       .catch(next)

@@ -30,6 +30,8 @@ export class Lobby {
   constructor(
     readonly code: string,
     now: number = Date.now(),
+    /** Set when the table was opened from a mesa — results flow back to it. */
+    readonly mesaId: string | null = null,
   ) {
     this.touchedAt = now
   }
@@ -83,13 +85,13 @@ export class LobbyRegistry {
     } = {},
   ) {}
 
-  create(): Lobby {
+  create(mesaId: string | null = null): Lobby {
     this.sweep()
     const generate = this.options.generateCode ?? randomCode
     let code = generate()
     while (this.lobbies.has(code)) code = generate()
 
-    const lobby = new Lobby(code, this.now())
+    const lobby = new Lobby(code, this.now(), mesaId)
     this.lobbies.set(code, lobby)
     return lobby
   }

@@ -1,4 +1,14 @@
-import type { DomainEvent, EventPublisher, LobbySnapshot, PlayerInfo, RankingEntry, SessionState, ScoreboardEntry } from '@bridou/shared'
+import type {
+  DomainEvent,
+  EventPublisher,
+  HeadToHead,
+  LobbySnapshot,
+  PlayerInfo,
+  RankingEntry,
+  SessionState,
+  ScoreboardEntry,
+  UnlockedAchievement,
+} from '@bridou/shared'
 import type { CompletedRoundResult, CurrentRoundState, Game } from '@bridou/engine'
 
 export interface GameRepository {
@@ -110,8 +120,21 @@ export interface FinishedGameRecord {
   ranked: boolean
 }
 
+/** A stored game's envelope, without its event log. */
+export interface StoredGameSummary {
+  gameId: string
+  startedAt: Date
+  endedAt: Date | null
+  status: string
+  ranked: boolean
+  playerCount: number
+  finalScoreboard: ScoreboardEntry[] | null
+}
+
 /** Append-only history for analytics — not the live game source of truth. */
 export interface GameHistoryRepository {
+  /** Envelope for one game — the resenha needs its timings and ranked flag. */
+  getGame(gameId: string): Promise<StoredGameSummary | null>
   /** Ensure a games row exists (status in_progress) before events land. */
   ensureGameStarted(input: {
     gameId: string
@@ -129,4 +152,156 @@ export interface GameHistoryRepository {
 
 export interface PlayerRepository {
   upsert(player: PlayerInfo): Promise<void>
+  /** Resolve display names/photos in bulk — standings and rosters need them. */
+  getMany(playerIds: string[]): Promise<PlayerInfo[]>
+}
+
+/* ── Mesas & temporadas ──────────────────────────────────────────────────── */
+
+export interface MesaRecord {
+  id: string
+  code: string
+  name: string
+  createdBy: string
+  createdAt: Date
+}
+
+export interface SeasonRecord {
+  id: string
+  mesaId: string
+  number: number
+  name: string
+  startsAt: Date
+  endsAt: Date
+  status: 'active' | 'finished'
+  championId: string | null
+}
+
+/** One seat's contribution to a season, written once per finished game. */
+export interface SeasonResultRow {
+  playerId: string
+  rank: number
+  seasonPoints: number
+  gamePoints: number
+  bailadas: number
+}
+
+/** Per-player season totals, before names and positions are attached. */
+export interface StandingAggregate {
+  playerId: string
+  gamesPlayed: number
+  wins: number
+  points: number
+  totalGamePoints: number
+  bailadas: number
+}
+
+export interface MesaGameRow {
+  gameId: string
+  playedAt: Date
+  playerCount: number
+  championId: string
+  championPoints: number
+}
+
+/* ── Mão do Dia ──────────────────────────────────────────────────────────── */
+
+export interface DailyAttemptRow {
+  date: string
+  playerId: string
+  bet: number
+  made: number
+  points: number
+  playedAt: Date
+}
+
+export interface DailyRepository {
+  /** One attempt per player per day — a second submit is rejected, not overwritten. */
+  record(row: Omit<DailyAttemptRow, 'playedAt'>): Promise<boolean>
+  attemptFor(date: string, playerId: string): Promise<DailyAttemptRow | null>
+  leaderboard(date: string, playerIds?: string[]): Promise<DailyAttemptRow[]>
+  /** Consecutive days played up to and including `date`. */
+  streak(playerId: string, date: string): Promise<number>
+}
+
+export interface MesaRepository {
+  create(input: { id: string; code: string; name: string; createdBy: string }): Promise<MesaRecord>
+  byCode(code: string): Promise<MesaRecord | null>
+  byId(mesaId: string): Promise<MesaRecord | null>
+  rename(mesaId: string, name: string): Promise<void>
+
+  addMember(mesaId: string, playerId: string): Promise<void>
+  removeMember(mesaId: string, playerId: string): Promise<void>
+  members(mesaId: string): Promise<Array<{ playerId: string; joinedAt: Date }>>
+  listForPlayer(playerId: string): Promise<MesaRecord[]>
+
+  activeSeason(mesaId: string): Promise<SeasonRecord | null>
+  createSeason(input: {
+    id: string
+    mesaId: string
+    number: number
+    name: string
+    startsAt: Date
+    endsAt: Date
+  }): Promise<SeasonRecord>
+  finishSeason(seasonId: string, championId: string | null): Promise<void>
+  listSeasons(mesaId: string): Promise<SeasonRecord[]>
+
+  /** Ties a started game to the mesa (and the season it counts toward). */
+  linkGame(gameId: string, mesaId: string, seasonId: string | null): Promise<void>
+  gameLink(gameId: string): Promise<{ mesaId: string; seasonId: string | null } | null>
+  recordResults(seasonId: string, gameId: string, rows: SeasonResultRow[]): Promise<void>
+  standings(seasonId: string): Promise<StandingAggregate[]>
+  /** Games played by this mesa, newest first. */
+  recentGames(mesaId: string, limit: number): Promise<MesaGameRow[]>
+  /** Games played by this mesa, for counting a member's appearances. */
+  gameCountsByPlayer(mesaId: string): Promise<Record<string, number>>
+}
+
+/* ── Conquistas ──────────────────────────────────────────────────────────── */
+
+export interface AchievementRepository {
+  /**
+   * Awards a conquista. Returns true only the first time — that's what makes
+   * the unlock event fire exactly once no matter how often a rule matches.
+   */
+  unlock(playerId: string, achievementId: string, gameId: string | null): Promise<boolean>
+  listFor(playerId: string): Promise<UnlockedAchievement[]>
+  countFor(playerId: string): Promise<number>
+  /** Unlocks earned during one game — used to build the resenha. */
+  listForGame(gameId: string): Promise<Array<{ playerId: string; achievementId: string }>>
+}
+
+/** Lifetime counters for one player. */
+export interface PlayerCareerStats {
+  playerId: string
+  gamesPlayed: number
+  wins: number
+  hosted: number
+  currentWinStreak: number
+  bestWinStreak: number
+  totalPoints: number
+  bailadas: number
+}
+
+/** One player's line in a finished game, as the stats layer needs it. */
+export interface PlayerGameOutcome {
+  playerId: string
+  rank: number
+  points: number
+  bailadas: number
+  /** Everyone this player finished ahead of / behind, for the rivalry ledger. */
+  beat: string[]
+  lostTo: string[]
+}
+
+export interface PlayerStatsRepository {
+  get(playerId: string): Promise<PlayerCareerStats>
+  /** Applies a finished game to lifetime counters and returns the new totals. */
+  applyGameResult(outcome: PlayerGameOutcome): Promise<PlayerCareerStats>
+  /** Bumps the anfitrião counter when a player opens a table. */
+  bumpHosted(playerId: string): Promise<void>
+  /** Longest current run of finishing ahead of a single opponent. */
+  bestRivalryStreak(playerId: string): Promise<number>
+  headToHead(playerId: string): Promise<HeadToHead[]>
 }

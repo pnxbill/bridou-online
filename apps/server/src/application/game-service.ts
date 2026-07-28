@@ -1,10 +1,12 @@
 import { Game, GameError, type Scheduler } from '@bridou/engine'
-import type {
-  GameSnapshot,
-  LobbySnapshot,
-  PlayerInfo,
-  PlayerPerspective,
-  SessionState,
+import {
+  EMOTE_COOLDOWN_MS,
+  isEmoteId,
+  type GameSnapshot,
+  type LobbySnapshot,
+  type PlayerInfo,
+  type PlayerPerspective,
+  type SessionState,
 } from '@bridou/shared'
 import { randomUUID } from 'node:crypto'
 import { ForbiddenError, NotFoundError } from './errors'
@@ -24,9 +26,16 @@ const BOT_NAMES = [
 
 export interface EnterGameResult extends GameSnapshot, PlayerPerspective, SessionState {
   time: number
+  /** Set while the table paused itself on purpose (not an abandonment). */
+  pausedBy: string | null
 }
 
 export class GameService {
+  /** `${gameId}:${playerId}` → last emote time, for the cooldown. */
+  private readonly lastEmoteAt = new Map<string, number>()
+  /** gameId → the player who paused it. Absent means running. */
+  private readonly pausedBy = new Map<string, string>()
+
   constructor(
     private readonly games: GameRepository,
     private readonly lobbies: LobbyRegistry,
@@ -36,13 +45,18 @@ export class GameService {
     private readonly options: {
       scheduler?: Scheduler
       /** Fired after the Game is saved, before `game.start()` emits events. */
-      onGameStarted?: (game: Game) => void
+      onGameStarted?: (game: Game, context: { mesaId: string | null }) => void
+      /** Injectable clock (emote cooldown, snapshot timestamps). */
+      now?: () => number
     } = {},
   ) {}
 
-  /** Opens a new table with the creator in the leader seat. */
-  createLobby(player: PlayerInfo): LobbySnapshot {
-    const lobby = this.lobbies.create()
+  /**
+   * Opens a new table with the creator in the leader seat. `mesaId` ties the
+   * table to a persistent mesa so the result lands in its season standings.
+   */
+  createLobby(player: PlayerInfo, mesaId: string | null = null): LobbySnapshot {
+    const lobby = this.lobbies.create(mesaId)
     lobby.add(player)
     return lobby.snapshot()
   }
@@ -116,7 +130,7 @@ export class GameService {
       players.filter((p) => p.isBot).map((p) => p.id),
     )
 
-    this.options.onGameStarted?.(game)
+    this.options.onGameStarted?.(game, { mesaId: lobby.mesaId })
     this.gateway.gameStarted(gameId)
     game.start()
     return game
@@ -143,24 +157,98 @@ export class GameService {
       ...game.snapshot(),
       ...game.clientPerspective(playerId),
       ...this.sessions.sessionState(gameId),
+      pausedBy: this.pausedByOf(gameId),
       time: Date.now(),
     }
   }
 
   placeBet(gameId: string, playerId: string, bet: number): void {
     const game = this.getGame(gameId)
+    this.assertNotPaused(gameId)
     this.sessions.assertPlayable(gameId)
     game.placeBet(playerId, bet)
   }
 
   playCard(gameId: string, playerId: string, card: string): void {
     const game = this.getGame(gameId)
+    this.assertNotPaused(gameId)
     this.sessions.assertPlayable(gameId)
     game.playCard(playerId, card)
   }
 
+  /**
+   * Pauses the table on purpose — someone's kid woke up, the pizza arrived.
+   *
+   * Distinct from the abandonment pause, which is involuntary and runs on a
+   * deadline: this one has no timer and only ends when a human ends it. The
+   * #1 killer of a 40-minute session is not having this.
+   *
+   * Any seated player may pause (the person who has to leave is rarely the
+   * leader), but only the leader or whoever paused can resume, so nobody can
+   * drag the table back before they're ready.
+   */
+  pauseGame(gameId: string, playerId: string): void {
+    const game = this.getGame(gameId)
+    if (!game.hasPlayer(playerId)) throw new ForbiddenError("You're not in this game")
+    if (game.finished) throw new GameError('A partida já acabou')
+    if (this.pausedBy.has(gameId)) return
+
+    this.pausedBy.set(gameId, playerId)
+    this.gateway.publisherFor(gameId).publish({ type: 'game-paused', byPlayerId: playerId })
+  }
+
+  resumeGame(gameId: string, playerId: string): void {
+    const game = this.getGame(gameId)
+    if (!game.hasPlayer(playerId)) throw new ForbiddenError("You're not in this game")
+
+    const pausedBy = this.pausedBy.get(gameId)
+    if (pausedBy === undefined) return
+    if (pausedBy !== playerId && game.leaderId !== playerId) {
+      throw new ForbiddenError('Só quem pausou (ou o líder) pode voltar')
+    }
+
+    this.pausedBy.delete(gameId)
+    this.gateway.publisherFor(gameId).publish({ type: 'game-resumed', byPlayerId: playerId })
+  }
+
+  /** Who paused this game, if anyone — included in the reconnect snapshot. */
+  pausedByOf(gameId: string): string | null {
+    return this.pausedBy.get(gameId) ?? null
+  }
+
+  private assertNotPaused(gameId: string): void {
+    if (this.pausedBy.has(gameId)) throw new GameError('A partida está pausada')
+  }
+
   closeScoreboard(gameId: string): void {
     this.getGame(gameId).closeScoreboard()
+  }
+
+  /**
+   * Fires a provocação at the table.
+   *
+   * Trash talk is most of the point of a card game between friends, and voice
+   * only covers the players who turned it on. The set is fixed (no free text)
+   * so it's fast to fire mid-trick and impossible to abuse, and the cooldown is
+   * enforced here rather than in the client so nobody can spam the table.
+   */
+  sendEmote(gameId: string, playerId: string, emoteId: string): void {
+    if (!isEmoteId(emoteId)) throw new GameError('Provocação desconhecida')
+
+    const game = this.getGame(gameId)
+    if (!game.hasPlayer(playerId)) throw new ForbiddenError("You're not in this game")
+
+    const key = `${gameId}:${playerId}`
+    const now = this.now()
+    const last = this.lastEmoteAt.get(key) ?? 0
+    if (now - last < EMOTE_COOLDOWN_MS) throw new GameError('Calma aí')
+    this.lastEmoteAt.set(key, now)
+
+    this.gateway.publisherFor(gameId).publish({ type: 'emote-sent', playerId, emoteId, at: now })
+  }
+
+  private now(): number {
+    return this.options.now?.() ?? Date.now()
   }
 
   private getLobby(code: string): Lobby {

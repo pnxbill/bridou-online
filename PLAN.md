@@ -124,6 +124,49 @@ Goal: friends open the Vercel URL once, tap **Add to Home Screen**, and Bridou l
 - [x] Production build pipeline for `apps/server` (tsup → `dist/main.js`; `pnpm start` runs `node dist/main.js`)
 - [x] Remove dead artifacts: `adaptors/`, `server/`, `types/`, `public/`, root env/eslint/vite configs
 
+## 10. Engagement & retention
+
+The diagnosis: getting 4 friends to the same table again is a **coordination**
+problem, not a motivation one. A lobby code used to live 2h and then the group
+evaporated; nothing carried from one night to the next; the full event log was
+written and never read; and there was no reason to open the app alone.
+
+- [x] **Conquistas** — 29-entry catalog in `@bridou/shared` (metadata) + rules
+  server-side (`achievement-rules.ts`, pure). `AchievementTracker` rides the
+  domain-event tee, so the engine stays unaware. Round-scoped ones fire live as
+  a public `achievement-unlocked` event; game/career ones land at `game-ended`.
+  Insert-once at the repo makes each unlock announce exactly once. Bots never
+  earn. Shelf at `/conquistas` with career stats + head-to-head
+- [x] **Resenha** — `buildRecap` (pure) replays the persisted event log into a
+  shareable recap: superlatives with evidence, the turning-point chart, and the
+  unlocks earned that game. Ties hand out *no* award rather than a fake one.
+  Public route; `/resenha/[gameId]`, fixture at `/dev/resenha`
+- [x] **Mesas persistentes + temporadas** — named groups, permanent codes,
+  rolling seasons that crown a champion on lazy rollover (no cron), standings,
+  mural, trophy cabinet, and "quem tá on" via `OnlineTracker`. `/mesas`
+- [x] **Provocações** — fixed reaction wheel, server-enforced 2s cooldown
+- [x] **Mão do Dia** — one hand, same deal for everyone, derived from the date
+  alone (seeded RNG + the zero-randomness heuristic bot), so a (date, bet) pair
+  always resolves identically anywhere. One attempt/day, streaks. `/diaria`
+- [x] **Pausa deliberada** — any seat can pause the table with no timer; only
+  whoever paused (or the leader) resumes. Distinct from the abandonment pause
+- [x] **Imersão** — rodada cega as a set piece (dimmed room, spotlit felt,
+  opponents' cards lit), time-of-day lighting, opt-in room tone
+
+Deferred, in rough priority order:
+
+- [ ] Push notifications ("a mesa abriu", "temporada acaba domingo", "a Mão do
+  Dia chegou", "é sua vez"). Needs VAPID keys + a `sw.js` push handler. This is
+  the multiplier on mesas and the daily — without it both rely on the player
+  remembering to look
+- [ ] Cosmetic unlocks (felts / card backs) tied to conquistas — cheap, since
+  the cards are CSS-drawn and `useDeckTheme` already exists
+- [ ] Champion's crown carried visibly into the mesa's next game
+- [ ] Resenha as a rendered share *image* (currently shares text + link)
+- [ ] Mesa-scoped Mão do Dia leaderboard (today it's global)
+- [ ] Persist the deliberate pause across a server restart (it's in-memory, so
+  a restart resumes the table)
+
 ## 9. Voice Chat (P2P WebRTC mesh)
 
 Friends talking while they play. Each game is a voice room (2–7 players); audio flows

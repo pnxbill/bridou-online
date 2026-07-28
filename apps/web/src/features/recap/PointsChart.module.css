@@ -1,0 +1,132 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.toggle {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  touch-action: pan-y;
+}
+
+/* Grid and axes stay recessive — the lines are the content. */
+.grid {
+  stroke: var(--border);
+  stroke-width: 1;
+  opacity: 0.35;
+}
+
+.crosshair {
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  opacity: 0.7;
+}
+
+/* Text wears text tokens, never a series colour. */
+.axisLabel {
+  fill: var(--muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.seriesLabel {
+  fill: var(--text);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  list-style: none;
+  font-size: 0.8rem;
+  color: var(--text);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.legendValue {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.hoverNote {
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+/* ── table view (the accessibility fallback) ───────────────────────────── */
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.caption {
+  text-align: left;
+  color: var(--muted);
+  font-size: 0.75rem;
+  padding-bottom: 0.35rem;
+}
+
+.table th,
+.table td {
+  padding: 0.3rem 0.5rem;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.table thead th {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.table tbody th {
+  color: var(--muted);
+  font-weight: 400;
+  text-align: left;
+}

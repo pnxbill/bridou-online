@@ -1,0 +1,103 @@
+/*
+ * Sits below the HUD and above the felt. Pointer-events off throughout —
+ * a banner must never eat a tap meant for a card.
+ */
+.layer {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 3.5rem);
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  padding: 0 1rem;
+  pointer-events: none;
+  z-index: 45;
+}
+
+.achievement,
+.emote {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: min(92vw, 26rem);
+  padding: 0.6rem 1rem 0.6rem 0.75rem;
+  border-radius: 999px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 45%);
+}
+
+.achievement {
+  background: linear-gradient(135deg, rgb(30 41 59 / 96%), rgb(15 23 42 / 96%));
+  border: 1px solid var(--tier-color, #64748b);
+}
+
+/* Rarity reads at a glance, before the name is even parsed. */
+.achievement[data-tier='bronze'] {
+  --tier-color: #b45309;
+}
+.achievement[data-tier='prata'] {
+  --tier-color: #94a3b8;
+}
+.achievement[data-tier='ouro'] {
+  --tier-color: #eab308;
+}
+.achievement[data-tier='lenda'] {
+  --tier-color: #a855f7;
+  box-shadow:
+    0 10px 30px rgb(0 0 0 / 45%),
+    0 0 24px rgb(168 85 247 / 45%);
+}
+
+/* Anti-achievements are a roast, not a trophy — cool the glow right down. */
+.achievement[data-roast] {
+  --tier-color: #64748b;
+  background: linear-gradient(135deg, rgb(51 65 85 / 94%), rgb(15 23 42 / 96%));
+}
+
+.emote {
+  background: rgb(15 23 42 / 88%);
+  border: 1px solid var(--border);
+  padding-right: 1.25rem;
+}
+
+.icon {
+  font-size: 1.75rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgb(0 0 0 / 40%));
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.who {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--tier-color, var(--text));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.emote .title {
+  color: var(--text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .achievement,
+  .emote {
+    transition: none;
+  }
+}

@@ -1,16 +1,46 @@
 import type {
+  DailyState,
+  GameRecap,
   GameSnapshot,
+  HeadToHead,
   LobbySnapshot,
+  MesaDetail,
+  MesaSummary,
   PlayerPerspective,
   RankingEntry,
   SessionState,
+  UnlockedAchievement,
   VoicePresence,
 } from '@bridou/shared'
 import { getServerUrl } from './config'
 import { getIdToken } from './firebase'
 
 /** What `/api/enter-game` returns: the shared snapshot plus the caller's private view. */
-export type GameEntry = GameSnapshot & PlayerPerspective & SessionState & { time: number }
+export type GameEntry = GameSnapshot &
+  PlayerPerspective &
+  SessionState & {
+    time: number
+    /** Set while the table paused itself on purpose (not an abandonment). */
+    pausedBy?: string | null
+  }
+
+/** Lifetime counters as the profile endpoints return them. */
+export interface CareerStats {
+  playerId: string
+  gamesPlayed: number
+  wins: number
+  hosted: number
+  currentWinStreak: number
+  bestWinStreak: number
+  totalPoints: number
+  bailadas: number
+}
+
+export interface PlayerProfile {
+  unlocked: UnlockedAchievement[]
+  stats: CareerStats
+  headToHead: HeadToHead[]
+}
 
 export class ApiError extends Error {
   constructor(
@@ -68,10 +98,52 @@ export const api = {
 
   playCard: (gameId: string, card: string) => post('/api/play-card', { gameId, card }),
 
+  sendEmote: (gameId: string, emoteId: string) => post('/api/emote', { gameId, emoteId }),
+
+  /** Deliberate pause — no timer, ends only when a human resumes. */
+  pauseGame: (gameId: string) => post('/api/pause', { gameId }),
+
+  resumeGame: (gameId: string) => post('/api/resume', { gameId }),
+
   closeScore: (gameId: string) =>
     request(`/api/close-score?gameId=${encodeURIComponent(gameId)}`),
 
   rankings: () => request<{ rankings: RankingEntry[] }>('/api/rankings'),
+
+  /** Conquistas + career stats + head-to-head for the signed-in player. */
+  myProfile: () => request<PlayerProfile>('/api/me/profile'),
+
+  playerProfile: (playerId: string) =>
+    request<PlayerProfile>(`/api/players/${encodeURIComponent(playerId)}/profile`),
+
+  /** Post-game resenha, rebuilt from the event log. Public — links get shared. */
+  recap: (gameId: string) =>
+    request<{ recap: GameRecap }>(`/api/games/${encodeURIComponent(gameId)}/recap`),
+
+  /* ── mesas ────────────────────────────────────────────────────────────── */
+
+  createMesa: (name: string) => post<{ mesa: MesaSummary }>('/api/mesas', { name }),
+
+  myMesas: () => request<{ mesas: MesaSummary[] }>('/api/mesas'),
+
+  /** Public: an invite link shows the standings before you sign in. */
+  mesa: (code: string) =>
+    request<{ mesa: MesaDetail }>(`/api/mesas/${encodeURIComponent(code)}`),
+
+  joinMesa: (code: string) =>
+    post<{ mesa: MesaSummary }>(`/api/mesas/${encodeURIComponent(code)}/join`, {}),
+
+  leaveMesa: (code: string) => post(`/api/mesas/${encodeURIComponent(code)}/leave`, {}),
+
+  /** Opens a lobby bound to this mesa — its result lands in the season. */
+  openMesaTable: (code: string) =>
+    post<{ lobby: LobbySnapshot }>(`/api/mesas/${encodeURIComponent(code)}/open`, {}),
+
+  /* ── mão do dia ───────────────────────────────────────────────────────── */
+
+  daily: () => request<{ daily: DailyState }>('/api/daily'),
+
+  playDaily: (bet: number) => post<{ daily: DailyState }>('/api/daily', { bet }),
 
   voiceRoster: (gameId: string) =>
     request<{ participants: VoicePresence[] }>(

@@ -535,3 +535,107 @@
   font-size: 0.75rem;
   color: var(--ink-muted);
 }
+
+/* ── time-of-day lighting ────────────────────────────────────────────────
+   Purely cosmetic: the same felt under a different lamp. The tokens the rest
+   of this file already uses are the only thing that changes, so nothing
+   downstream needs to know the hour. */
+
+.screen[data-ambience='tarde'] {
+  --felt-light: #1f8a4c;
+  --felt: #17603a;
+  --felt-dark: #0e4526;
+  background: radial-gradient(120% 90% at 50% 0%, #24365c 0%, #131e38 55%, #0b1224 100%);
+}
+
+.screen[data-ambience='entardecer'] {
+  --felt-light: #1d7d46;
+  --felt: #155c34;
+  --felt-dark: #0d4023;
+  background: radial-gradient(120% 90% at 50% 0%, #3a2a4a 0%, #1a1830 55%, #0c0e1c 100%);
+}
+
+/* 'noite' is the original art direction — the default tokens already are it. */
+
+.screen[data-ambience='madrugada'] {
+  --felt-light: #146138;
+  --felt: #0f4526;
+  --felt-dark: #08301a;
+  background: radial-gradient(120% 90% at 50% 0%, #0e1628 0%, #070c18 55%, #03060e 100%);
+}
+
+/* A single low lamp over the table once it's genuinely late. */
+.screen[data-ambience='madrugada'] .felt {
+  box-shadow:
+    inset 0 12px 40px rgba(0, 0, 0, 0.6),
+    inset 0 -6px 24px rgba(0, 0, 0, 0.5),
+    0 18px 40px -18px rgba(0, 0, 0, 0.9),
+    0 0 90px -10px rgba(251, 191, 36, 0.16);
+}
+
+/* ── rodada cega ─────────────────────────────────────────────────────────
+   The last round is the one everyone remembers — you hold your card to your
+   forehead and read the table off everyone else's face. So the room darkens,
+   the felt takes a spotlight, and the opponents' revealed hands are what's lit. */
+
+.screen[data-blind] {
+  background: radial-gradient(110% 80% at 50% 42%, #17233f 0%, #090e1c 55%, #04060d 100%);
+}
+
+.screen[data-blind] .felt {
+  border-color: rgba(251, 191, 36, 0.35);
+  box-shadow:
+    inset 0 12px 44px rgba(0, 0, 0, 0.6),
+    inset 0 -6px 24px rgba(0, 0, 0, 0.45),
+    0 18px 40px -18px rgba(0, 0, 0, 0.9),
+    0 0 120px -20px rgba(251, 191, 36, 0.3);
+}
+
+/* Everyone else's cards are the information this round — light them up. */
+.screen[data-blind] .seatCard {
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.4), 0 6px 16px -6px rgba(0, 0, 0, 0.8);
+}
+
+.screen[data-blind] .feltLogo {
+  color: rgba(251, 191, 36, 0.14);
+}
+
+/* My own hand is face-down against my forehead: raised, tilted, unreadable. */
+.screen[data-blind] .myArea {
+  filter: drop-shadow(0 -6px 18px rgba(251, 191, 36, 0.18));
+}
+
+.blindBanner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.blindBannerTitle {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.35rem;
+  letter-spacing: 0.18em;
+  color: var(--gold);
+  text-transform: uppercase;
+  text-shadow: 0 2px 18px rgba(251, 191, 36, 0.5);
+}
+
+.blindBannerSub {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blindBanner {
+    animation: none;
+  }
+}

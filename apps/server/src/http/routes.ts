@@ -1,10 +1,24 @@
 import { GameError } from '@bridou/engine'
 import type { PlayerInfo } from '@bridou/shared'
-import { Router, type Request, type Response } from 'express'
+import { Router, type Request, type RequestHandler, type Response } from 'express'
 import { ForbiddenError, NotFoundError } from '../application/errors'
 import type { GameService } from '../application/game-service'
-import type { GameHistoryRepository, TokenVerifier } from '../application/ports'
+import type { DailyHandService } from '../application/daily-hand'
+import type { MesaService } from '../application/mesa'
+import type { OnlineTracker } from '../application/online'
+import type {
+  AchievementRepository,
+  DailyRepository,
+  GameHistoryRepository,
+  PlayerRepository,
+  PlayerStatsRepository,
+  TokenVerifier,
+} from '../application/ports'
 import { requireAuth, type AuthedRequest } from './auth'
+import { createAchievementRoutes } from './achievement-routes'
+import { createDailyRoutes } from './daily-routes'
+import { createMesaRoutes } from './mesa-routes'
+import { createRecapRoutes } from './recap-routes'
 
 const statusFor = (err: unknown): number => {
   if (err instanceof NotFoundError) return 404
@@ -36,13 +50,37 @@ const requireString = (value: unknown, name: string): string => {
   return value
 }
 
-export const createRoutes = (
-  service: GameService,
-  verifier: TokenVerifier,
-  history: GameHistoryRepository,
-): Router => {
+/**
+ * Everything the HTTP layer needs. An object rather than positional args
+ * because the surface keeps growing (conquistas, resenhas, mesas, mão do dia)
+ * and each feature mounts its own router.
+ */
+export interface RouteDeps {
+  service: GameService
+  verifier: TokenVerifier
+  history: GameHistoryRepository
+  achievements: AchievementRepository
+  playerStats: PlayerStatsRepository
+  mesas: MesaService
+  /** Last-seen ledger behind the mesa's "quem tá on". */
+  presence: OnlineTracker
+  daily: DailyHandService
+  dailyAttempts: DailyRepository
+  players: PlayerRepository
+}
+
+/**
+ * The auth middleware every router should use — it verifies the token AND
+ * marks the caller as online, so building it by hand anywhere would silently
+ * stop feeding the mesa presence ledger.
+ */
+export const authFor = (deps: RouteDeps): RequestHandler =>
+  requireAuth(deps.verifier, (playerId) => deps.presence.touch(playerId))
+
+export const createRoutes = (deps: RouteDeps): Router => {
+  const { service, history } = deps
   const routes = Router()
-  const auth = requireAuth(verifier)
+  const auth = authFor(deps)
 
   // Public on purpose: the leaderboard is the game's shop window.
   routes.get('/api/rankings', (_req: Request, res: Response) => {
@@ -110,6 +148,31 @@ export const createRoutes = (
     })
   })
 
+  routes.post('/api/pause', auth, (req: Request, res: Response) => {
+    respond(res, () => {
+      service.pauseGame(requireString(req.body.gameId, 'gameId'), player(req).id)
+      return {}
+    })
+  })
+
+  routes.post('/api/resume', auth, (req: Request, res: Response) => {
+    respond(res, () => {
+      service.resumeGame(requireString(req.body.gameId, 'gameId'), player(req).id)
+      return {}
+    })
+  })
+
+  routes.post('/api/emote', auth, (req: Request, res: Response) => {
+    respond(res, () => {
+      service.sendEmote(
+        requireString(req.body.gameId, 'gameId'),
+        player(req).id,
+        requireString(req.body.emoteId, 'emoteId'),
+      )
+      return {}
+    })
+  })
+
   routes.get('/api/close-score', auth, (req: Request, res: Response) => {
     respond(res, () => {
       service.closeScoreboard(requireString(req.query.gameId, 'gameId'))
@@ -117,5 +180,13 @@ export const createRoutes = (
     })
   })
 
+  routes.use(createAchievementRoutes(deps))
+  routes.use(createRecapRoutes(deps))
+  routes.use(createMesaRoutes(deps))
+  routes.use(createDailyRoutes(deps))
+
   return routes
 }
+
+/** Shared by the feature routers so error mapping stays identical everywhere. */
+export { respond, requireString, player }
