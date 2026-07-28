@@ -1,12 +1,4 @@
-/* Left rim, directly above the provocação wheel (see EmoteWheel.module.css). */
-.button,
-.confirm {
-  position: fixed;
-  left: calc(0.6rem + env(safe-area-inset-left));
-  bottom: calc(8.5rem + env(safe-area-inset-bottom));
-  z-index: 40;
-}
-
+/* Lives inside TableDock (bottom-left rim) — it owns the position. */
 .button {
   width: 2.6rem;
   height: 2.6rem;
@@ -67,11 +59,6 @@
 }
 
 @media (max-height: 700px) {
-  .button,
-  .confirm {
-    bottom: calc(7.4rem + env(safe-area-inset-bottom));
-  }
-
   .button {
     width: 2.3rem;
     height: 2.3rem;

@@ -1,12 +1,6 @@
-/*
- * Anchored to the left rim, above the safe area. The voice dock owns the
- * right side and the hand owns the bottom centre, so this is the one corner
- * left that a thumb can reach without crossing the cards.
- */
+/* Lives inside TableDock (bottom-left rim) — it owns the position. */
 .root {
-  position: fixed;
-  left: calc(0.6rem + env(safe-area-inset-left));
-  bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -39,6 +33,9 @@
 }
 
 .wheel {
+  position: absolute;
+  bottom: calc(100% + 0.4rem);
+  left: 0;
   display: grid;
   grid-template-columns: repeat(2, auto);
   gap: 0.3rem;

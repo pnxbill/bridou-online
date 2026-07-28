@@ -1,0 +1,21 @@
+/*
+ * Bottom-left, below the overlays (z 50). Children stack upward in source
+ * order reversed — voice sits closest to the corner because it's the tallest
+ * and the least transient.
+ */
+.dock {
+  position: fixed;
+  left: calc(12px + env(safe-area-inset-left));
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  /* the column itself must never eat taps meant for the felt */
+  pointer-events: none;
+}
+
+.dock > * {
+  pointer-events: auto;
+}

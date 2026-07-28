@@ -20,13 +20,6 @@ const SUITS: Array<{ glyph: string; top: string; left: string; delay: string; go
   { glyph: '♠', top: '8%', left: '60%', delay: '6s' },
 ]
 
-const initials = (name: string) =>
-  name
-    .split(' ')
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join('')
-
 const GoogleG = () => (
   <span className={styles.googleBadge}>
     <svg width="14" height="14" viewBox="0 0 48 48" aria-hidden>
@@ -52,7 +45,7 @@ const GoogleG = () => (
 
 export function HomeClient() {
   const router = useRouter()
-  const { user, loading, signIn, logOut } = useAuth()
+  const { user, loading, signIn } = useAuth()
   const { variant } = useDeckTheme()
   const [error, setError] = useState('')
   const [activeGameId, setActiveGameId] = useState<string | null>(null)
@@ -107,18 +100,6 @@ export function HomeClient() {
           {s.glyph}
         </span>
       ))}
-
-      {user && (
-        <div className={styles.greeting}>
-          <span className={styles.greetingAvatar}>
-            {user.photoURL ? <img src={user.photoURL} alt="" /> : initials(user.name)}
-          </span>
-          {user.name}
-          <button className={styles.signOut} onClick={logOut}>
-            Sair
-          </button>
-        </div>
-      )}
 
       <div className={styles.brand}>
         <h1 className={styles.wordmark}>BRIDOU</h1>

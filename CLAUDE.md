@@ -111,11 +111,26 @@ Invariants worth preserving:
 
 ### Web app (`apps/web`)
 
-- Routes: `/` is a header-free entrance, `/game/[gameId]` is a header-free full-bleed table,
-  everything else lives in the `(main)` group with the header (`/mesa/[code]` lobby, `/ranking`).
-  `/dev/*` pages are design fixtures driving the *real* components with scripted events
-  (`table`, `moments`, `motion`, `edge`, `lobby`, `home`, `cards`) — use them to iterate on visuals
-  without a live game.
+- Routes: `/` (entrance) and `/game/[gameId]` (full-bleed table) are full-viewport screens outside
+  the `(main)` group; everything else lives in `(main)` with the header (`/mesa/[code]` lobby,
+  `/mesas` + `/mesas/[code]` persistent groups, `/diaria`, `/conquistas`, `/resenha/[gameId]`,
+  `/ranking`, `/dev/*`). Note `/mesa/[code]` is the ephemeral *lobby* and `/mesas/[code]` is the
+  *persistent* group — the singular/plural split is load-bearing. `/dev/*` pages are design
+  fixtures driving the *real* components with scripted events (`table`, `moments`, `motion`,
+  `edge`, `lobby`, `home`, `cards`, `resenha`) — use them to iterate on visuals without a live game.
+- One chrome, one menu: `components/AppHeader` is the app's only header. `variant="bar"` (the
+  `(main)` layout) is the fixed glass bar — wordmark left, menu right; `variant="floating"` is just
+  the menu button over the full-bleed screens, top-left, where the table HUD reserves 86px. The
+  trigger (`components/UserMenu`) is a pill — avatar *and* a cog — because a bare portrait reads as
+  decoration, not a control, and the cog is the only hint that the preferences live behind your own
+  face. Behind it: who you are, Início/Ranking, the preferences
+  (`features/settings/SettingsSections`) and Sair. Nothing else may pin itself to a screen corner —
+  that's how the old settings cog ended up fighting every screen's own top bar.
+- In-game, the same rule with a different owner: `features/game/components/TableDock` owns the
+  bottom-left rim and stacks the pause button, the provocação wheel and the voice controls. They
+  each used to pin themselves to that corner at hand-picked offsets, which collided the moment the
+  voice roster grew tall enough to reach them. Add an in-game control by putting it in the dock,
+  never by giving it its own `position: fixed`.
 - `GameClient` owns the loop: reducer + `useGameChannel` + optimistic play, and any rejected action
   or reconnect refetches the `/api/enter-game` snapshot (`resync`).
 - Transport lives in exactly one file: `src/lib/realtime.ts`. All HTTP lives in `src/lib/api.ts`

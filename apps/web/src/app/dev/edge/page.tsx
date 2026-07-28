@@ -3,11 +3,12 @@
 /**
  * Dev-only edge-layout fixture — renders the REAL GameTable with fake state
  * at the crowded extremes: 7 players, 7-card hands, full bet bar.
- * Header-free on purpose (outside the (main) group) so the 100dvh screen
- * matches the real game route exactly.
+ * Outside the (main) group with the floating menu button, so the 100dvh
+ * screen matches the real game route exactly.
  */
 import type { RoundPlayer } from '@bridou/shared'
 import { useState } from 'react'
+import { AppHeader } from '@/components/AppHeader'
 import { GameTable } from '@/features/game/components/GameTable'
 import type { GameViewState } from '@/features/game/reducer'
 
@@ -86,6 +87,7 @@ export default function EdgeLayoutFixturePage() {
 
   return (
     <>
+      <AppHeader variant="floating" />
       <GameTable state={state} onPlay={() => {}} onBet={() => {}} />
       <div style={{ position: 'fixed', top: 70, left: 10, zIndex: 50, display: 'flex', gap: 6 }}>
         <button style={toggleStyle} onClick={() => setSeven((v) => !v)}>

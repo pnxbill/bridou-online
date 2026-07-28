@@ -10,6 +10,7 @@ import { EmoteWheel } from './components/EmoteWheel'
 import { GameTable } from './components/GameTable'
 import { PauseButton } from './components/PauseButton'
 import { PausedOverlay } from './components/PausedOverlay'
+import { TableDock } from './components/TableDock'
 import { RoundEndOverlay } from './components/RoundEndOverlay'
 import { ScoreboardOverlay } from './components/ScoreboardOverlay'
 import { TableToasts } from './components/TableToasts'
@@ -95,13 +96,16 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
         speakingIds={voice.speakingIds}
       />
       <TableToasts toasts={state.toasts} players={state.players} onDismiss={dismissToast} />
-      {!state.gameOver && !state.pausedBy && (
-        <>
-          <PauseButton onPause={() => api.pauseGame(gameId).catch(resync)} />
-          <EmoteWheel onSend={sendEmote} />
-        </>
-      )}
-      <VoiceControls voice={voice} players={state.players} />
+      {/* One owner of the bottom-left rim; nothing here positions itself. */}
+      <TableDock>
+        {!state.gameOver && !state.pausedBy && (
+          <>
+            <PauseButton onPause={() => api.pauseGame(gameId).catch(resync)} />
+            <EmoteWheel onSend={sendEmote} />
+          </>
+        )}
+        <VoiceControls voice={voice} players={state.players} />
+      </TableDock>
 
       {state.scoreboard && (
         <ScoreboardOverlay

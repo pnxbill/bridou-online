@@ -7,7 +7,6 @@ import { VoiceRoomProvider } from '@/features/game/voice/VoiceRoomProvider'
 import { AmbienceProvider } from '@/features/settings/ambience-settings'
 import { DeckThemeProvider } from '@/features/settings/deck-theme'
 import { HandOrderProvider } from '@/features/settings/hand-order'
-import { SettingsCog } from '@/features/settings/SettingsCog'
 import { SoundSettingsProvider } from '@/features/settings/sound-settings'
 import './globals.css'
 
@@ -53,11 +52,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <DeckThemeProvider>
             <HandOrderProvider>
               <SoundSettingsProvider>
+                {/* nests inside sound settings — the room tone obeys the mute */}
                 <AmbienceProvider>
-                  <VoiceRoomProvider>
-                    <SettingsCog />
-                    {children}
-                  </VoiceRoomProvider>
+                  <VoiceRoomProvider>{children}</VoiceRoomProvider>
                 </AmbienceProvider>
               </SoundSettingsProvider>
             </HandOrderProvider>

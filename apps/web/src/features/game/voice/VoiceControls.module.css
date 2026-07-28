@@ -1,4 +1,5 @@
-/* Voice chat dock — bottom-left corner, below the overlays (z 50) */
+/* Voice chat controls. Positioning belongs to TableDock, which owns the
+   bottom-left rim; this only styles the stack itself. */
 
 .dock {
   --gold: #fbbf24;
@@ -10,10 +11,6 @@
   --danger: #fb7185;
   --live: #34d399;
 
-  position: fixed;
-  left: 12px;
-  bottom: calc(12px + env(safe-area-inset-bottom));
-  z-index: 40;
   display: flex;
   flex-direction: column;
   gap: 8px;

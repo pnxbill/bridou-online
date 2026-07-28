@@ -1,0 +1,39 @@
+/* The fixed header. Standalone on iOS the bar runs under the translucent
+   status bar, so the top inset is padding, not margin. */
+
+.bar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  height: calc(var(--header-h) + env(safe-area-inset-top));
+  padding: env(safe-area-inset-top) 12px 0;
+  background: linear-gradient(180deg, rgba(11, 17, 32, 0.94) 0%, rgba(11, 17, 32, 0.78) 100%);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.wordmark {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-decoration: none;
+  background: linear-gradient(180deg, #fde68a 0%, var(--gold) 55%, #b45309 130%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Full-bleed screens keep their corner: the menu button alone, where the
+   settings cog used to sit (the table HUD reserves 86px for it). */
+.floating {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top));
+  left: 12px;
+  z-index: 60;
+}
