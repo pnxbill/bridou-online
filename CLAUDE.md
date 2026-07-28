@@ -26,8 +26,19 @@ Database (optional — only when `DATABASE_URL` is set, see below):
 
 ```shell
 pnpm --filter @bridou/server db:generate   # drizzle-kit: schema.ts → drizzle/*.sql
-pnpm --filter @bridou/server db:migrate    # apply migrations (reads apps/server/.env)
+pnpm --filter @bridou/server db:migrate    # apply migrations by hand (reads apps/server/.env)
 ```
+
+Migrations run **automatically at server boot** when `DATABASE_URL` is set
+(`migrateOnBoot` in `main.ts`), so a deploy picks up new tables on its own; the
+CLI above is just the manual escape hatch. Every `drizzle/*.sql` file is
+hand-written to be idempotent (`CREATE TABLE IF NOT EXISTS`, `ADD COLUMN IF NOT
+EXISTS`, `DO $$ … EXCEPTION WHEN duplicate_object`) because the whole directory
+is replayed in filename order on every boot — there is no migrations table. An
+advisory lock serializes concurrent instances, and a real failure exits
+non-zero so a bad deploy leaves the previous version serving. **drizzle-kit
+`generate` doesn't know about these files** — it will try to emit a fresh
+`0000`; use it to read the diff, then hand-write the next numbered migration.
 
 CI (`.github/workflows/ci.yml`) runs server typecheck → `pnpm test` → `pnpm build` on every push.
 `next build` is what typechecks the web app (it needs `.next/types`), so a green `pnpm build` matters.
