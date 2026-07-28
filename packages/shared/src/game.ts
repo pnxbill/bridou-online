@@ -28,6 +28,27 @@ export interface RoundPlayer extends PlayerInfo {
 
 export interface ScoreboardEntry extends PlayerInfo {
   totalPoints: number
+  /** Rounds where the player missed their bet. */
+  bailadas: number
+  /** Rounds where the player bet 0 — the safe call, so fewer breaks ties. */
+  zeroBets: number
+}
+
+/**
+ * Final standings order: most points, then fewest bailadas, then fewest bets
+ * of 0 (bravery breaks ties). Returns 0 only for a genuinely shared place.
+ */
+export const compareScoreboard = (a: ScoreboardEntry, b: ScoreboardEntry): number =>
+  b.totalPoints - a.totalPoints || a.bailadas - b.bailadas || a.zeroBets - b.zeroBets
+
+/** Competition ranks for an already-sorted scoreboard: tied entries share one (1, 1, 3). */
+export const scoreboardRanks = (scoreboard: readonly ScoreboardEntry[]): number[] => {
+  const ranks: number[] = []
+  scoreboard.forEach((entry, i) => {
+    const previous = scoreboard[i - 1]
+    ranks.push(previous && compareScoreboard(previous, entry) === 0 ? ranks[i - 1]! : i + 1)
+  })
+  return ranks
 }
 
 /** One trick. `players` is in play order; the player at index `playedCards.length` acts next. */

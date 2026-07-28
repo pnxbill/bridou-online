@@ -1,4 +1,5 @@
 import { Game, createHeuristicBot } from '@bridou/engine'
+import type { ScoreboardEntry } from '@bridou/shared'
 import { describe, expect, it } from 'vitest'
 import { GameHistoryRecorder, trumpLeadRate } from '../src/application/game-history'
 import {
@@ -91,12 +92,15 @@ describe('game history persistence', () => {
     gameId: string,
     roster: ReturnType<typeof makePlayers>,
     beforeEnd?: () => void,
+    scoreboard?: ScoreboardEntry[],
   ) => {
     recorder.recordGameStarted({ gameId, leaderId: roster[0]!.id, roster })
     beforeEnd?.()
     recorder.onDomainEvent(gameId, {
       type: 'game-ended',
-      scoreboard: roster.map((p, i) => ({ ...p, totalPoints: 100 - i * 10 })),
+      scoreboard:
+        scoreboard ??
+        roster.map((p, i) => ({ ...p, totalPoints: 100 - i * 10, bailadas: i, zeroBets: i })),
     })
     await recorder.flush(gameId)
   }
@@ -140,5 +144,43 @@ describe('game history persistence', () => {
     expect(rankings[0]).toMatchObject({ gamesPlayed: 3, wins: 2 })
     expect(rankings[0]!.winRate).toBeCloseTo(2 / 3)
     expect(rankings[1]).toMatchObject({ gamesPlayed: 3, wins: 1 })
+  })
+
+  it('breaks a points tie by bailadas, then by bets of 0', async () => {
+    const history = new InMemoryGameHistoryRepository()
+    const recorder = new GameHistoryRecorder(history, new InMemoryPlayerRepository())
+    const roster = makePlayers(3)
+
+    // Level on points: p3 wins on fewest bailadas; p1 beats p2 on bravery.
+    await finishGame(recorder, 'tie', roster, undefined, [
+      { ...roster[0]!, totalPoints: 60, bailadas: 4, zeroBets: 1 },
+      { ...roster[1]!, totalPoints: 60, bailadas: 4, zeroBets: 5 },
+      { ...roster[2]!, totalPoints: 60, bailadas: 2, zeroBets: 9 },
+    ])
+
+    const ranks = new Map(
+      history.games.get('tie')!.players!.map((p) => [p.playerId, p.rank]),
+    )
+    expect(ranks.get('p3')).toBe(1)
+    expect(ranks.get('p1')).toBe(2)
+    expect(ranks.get('p2')).toBe(3)
+  })
+
+  it('shares first place — and the win — when players are level on every tiebreak', async () => {
+    const history = new InMemoryGameHistoryRepository()
+    const recorder = new GameHistoryRecorder(history, new InMemoryPlayerRepository())
+    const roster = makePlayers(3)
+
+    await finishGame(recorder, 'drawn', roster, undefined, [
+      { ...roster[0]!, totalPoints: 70, bailadas: 3, zeroBets: 2 },
+      { ...roster[1]!, totalPoints: 70, bailadas: 3, zeroBets: 2 },
+      { ...roster[2]!, totalPoints: 12, bailadas: 9, zeroBets: 0 },
+    ])
+
+    // Competition ranking: 1, 1, 3 — nobody is second.
+    expect(history.games.get('drawn')!.players!.map((p) => p.rank)).toEqual([1, 1, 3])
+
+    const rankings = await history.getLeaderboard()
+    expect(rankings.filter((r) => r.wins === 1).map((r) => r.playerId)).toEqual(['p1', 'p2'])
   })
 })

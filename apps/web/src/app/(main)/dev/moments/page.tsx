@@ -20,10 +20,10 @@ const player = (name: string, bet: number, made: number, isBot = false): RoundPl
 })
 
 const SCOREBOARD: ScoreboardEntry[] = [
-  { id: 'ana', name: 'Ana', totalPoints: 47 },
-  { id: 'bot', name: 'Bot Marley', isBot: true, totalPoints: 33 },
-  { id: 'rafa', name: 'Rafa', totalPoints: 21 },
-  { id: 'carol', name: 'Carol', totalPoints: -2 },
+  { id: 'ana', name: 'Ana', totalPoints: 47, bailadas: 3, zeroBets: 2 },
+  { id: 'bot', name: 'Bot Marley', isBot: true, totalPoints: 33, bailadas: 5, zeroBets: 4 },
+  { id: 'rafa', name: 'Rafa', totalPoints: 21, bailadas: 7, zeroBets: 1 },
+  { id: 'carol', name: 'Carol', totalPoints: -2, bailadas: 11, zeroBets: 0 },
 ]
 
 type Moment = 'none' | 'bailou' | 'bailaram' | 'ninguem' | 'placar' | 'fim' | 'pausada'
