@@ -2,6 +2,7 @@
 
 import type { RankingEntry } from '@bridou/shared'
 import { useEffect, useState } from 'react'
+import { Skeleton } from '@/components/Loading'
 import { api } from '@/lib/api'
 import styles from './Ranking.module.css'
 
@@ -40,7 +41,9 @@ export function RankingClient() {
 
       <div className={styles.panel}>
         {error && <p className={styles.status}>{error}</p>}
-        {!error && entries === null && <p className={styles.status}>Embaralhando…</p>}
+        {/* The sheet is already on screen — only the rows are missing, so we
+            draw the rows rather than replace the sheet with a spinner. */}
+        {!error && entries === null && <RankingSkeleton />}
         {entries !== null && entries.length === 0 && (
           <p className={styles.status}>
             Nenhuma partida ranqueada ainda.
@@ -75,5 +78,34 @@ export function RankingClient() {
         )}
       </div>
     </div>
+  )
+}
+
+/** The score sheet's own rows, drawn empty: the podium's gold filete included,
+ *  so the first three seats don't slide into place when the data lands. */
+function RankingSkeleton() {
+  return (
+    <ol className={styles.rows} role="status" aria-live="polite">
+      <li className={styles.srOnly}>Embaralhando…</li>
+      {Array.from({ length: 6 }, (_, i) => (
+        <li
+          key={i}
+          className={`${styles.row} ${i < 3 ? styles.rowTop : ''}`}
+          style={{ '--d': `${i * 0.09}s` } as React.CSSProperties}
+          aria-hidden
+        >
+          <span className={styles.pos}>{i + 1}º</span>
+          <Skeleton className={styles.skeletonAvatar} />
+          <span className={styles.who}>
+            <Skeleton width={`${62 - (i % 3) * 12}%`} height="0.9rem" radius="4px" />
+            <Skeleton width={`${40 - (i % 2) * 8}%`} height="0.65rem" radius="4px" />
+          </span>
+          <span className={styles.score}>
+            <Skeleton width="1.6rem" height="1.1rem" radius="4px" />
+            <Skeleton width="3.2rem" height="0.6rem" radius="4px" />
+          </span>
+        </li>
+      ))}
+    </ol>
   )
 }

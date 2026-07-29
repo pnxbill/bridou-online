@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { Loading } from '@/components/Loading'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { ApiError, api, type GameEntry } from '@/lib/api'
 import { GameClient } from './GameClient'
@@ -38,6 +39,6 @@ export function GamePageClient({ gameId }: { gameId: string }) {
   }, [gameId, user, loading, router])
 
   if (error) return <p className="hint">{error}</p>
-  if (!user || !game) return <p className="hint">Entrando na mesa…</p>
+  if (!user || !game) return <Loading variant="screen" label="entrando na mesa" />
   return <GameClient gameId={gameId} playerId={user.id} initialSnapshot={game} />
 }

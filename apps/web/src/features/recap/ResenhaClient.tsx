@@ -2,6 +2,7 @@
 
 import { achievementById, type GameRecap } from '@bridou/shared'
 import { useEffect, useMemo, useState } from 'react'
+import { Loading } from '@/components/Loading'
 import { api } from '@/lib/api'
 import { PointsChart } from './PointsChart'
 import { colorsByPlayer } from './series-colors'
@@ -79,7 +80,7 @@ export function ResenhaClient({ gameId }: { gameId: string }) {
     return map
   }, [recap])
 
-  if (loading) return <p className={styles.muted}>Carregando a resenha…</p>
+  if (loading) return <Loading label="montando a resenha" />
   if (error || !recap) return <p className={styles.error}>{error || 'Resenha indisponível.'}</p>
 
   const champion = recap.finalScoreboard[0]

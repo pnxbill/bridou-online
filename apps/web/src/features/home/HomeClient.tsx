@@ -3,6 +3,7 @@
 import { Card as PlayingCard } from '@bridou/cards-ui'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { ShuffleMark } from '@/components/Loading'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { parseCard } from '@/features/game/cards'
 import { useDeckTheme } from '@/features/settings/deck-theme'
@@ -128,6 +129,13 @@ export function HomeClient() {
       <div className={styles.feltRim} />
 
       <div className={styles.actions}>
+        {/* The slot already reserves its height so nothing jumps when auth
+            resolves; the deck being cut says the wait is ours, not the phone's. */}
+        {loading && (
+          <span className={styles.actionsWaiting}>
+            <ShuffleMark size="sm" />
+          </span>
+        )}
         {!loading && !user && (
           <>
             <button className={styles.action} onClick={signIn}>

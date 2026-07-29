@@ -1,0 +1,113 @@
+/* Fixture chrome only — everything worth looking at is a real component. */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.title {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.lede {
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+  max-width: 34rem;
+  line-height: 1.5;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.tab {
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  color: var(--ink-muted);
+  font-family: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.tab[data-active] {
+  border-color: var(--gold-soft);
+  color: var(--gold);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.subtitle {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--ink-muted);
+  margin-top: 0.5rem;
+}
+
+.marks {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-end;
+  padding: 1.5rem 1rem;
+  border: 1px dashed var(--glass-border);
+  border-radius: 12px;
+}
+
+.markCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.caption {
+  font-size: 0.7rem;
+  color: var(--ink-muted);
+}
+
+.frame {
+  border: 1px dashed var(--glass-border);
+  border-radius: 12px;
+}
+
+.loose {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.screenDemo {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: #0b1120;
+  cursor: pointer;
+}
+
+.dismiss {
+  position: absolute;
+  bottom: calc(2rem + env(safe-area-inset-bottom));
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--ink-muted);
+}

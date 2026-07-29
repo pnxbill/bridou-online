@@ -3,6 +3,7 @@
 import { MAX_PLAYERS, type LobbySnapshot } from '@bridou/shared'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
+import { Loading } from '@/components/Loading'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { VoiceControls } from '@/features/game/voice/VoiceControls'
 import { useVoiceRoom } from '@/features/game/voice/VoiceRoomProvider'
@@ -134,7 +135,7 @@ export function LobbyClient({ code }: { code: string }) {
 
   const startGame = () => act(() => api.startGame(code), 'Não foi possível começar')
 
-  if (loading && !lobby) return <p className="hint">Carregando…</p>
+  if (loading && !lobby) return <Loading label="abrindo a mesa" />
 
   if (notFound) {
     return (
@@ -155,7 +156,7 @@ export function LobbyClient({ code }: { code: string }) {
     )
   }
 
-  if (!lobby) return <p className="hint">{error || 'Carregando…'}</p>
+  if (!lobby) return error ? <p className="hint">{error}</p> : <Loading label="abrindo a mesa" />
 
   const { players, leaderId } = lobby
   const isLeader = !!user && leaderId === user.id

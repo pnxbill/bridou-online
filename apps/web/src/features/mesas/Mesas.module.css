@@ -49,6 +49,32 @@
   max-width: 30rem;
 }
 
+/* The mesa page before it arrives: title over code, the season strip, a row of
+   member chips, the standings. Same boxes, same gaps — nothing moves when the
+   real thing lands. (Shared primitives live in components/Loading.) */
+
+.skeletonHead {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.skeletonSeason {
+  height: 3.4rem;
+  border-radius: 12px;
+}
+
+.skeletonChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.skeletonChip {
+  height: 2.3rem;
+  border-radius: 999px;
+}
+
 /* ── panels & inputs ────────────────────────────────────────────────────── */
 
 .panel {

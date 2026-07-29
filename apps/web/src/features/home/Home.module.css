@@ -186,6 +186,14 @@
   animation: fadeUp 0.7s ease 0.45s both;
 }
 
+/* the auth wait, in the slot the buttons are about to take */
+.actionsWaiting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.4rem 0;
+}
+
 .action {
   display: flex;
   align-items: center;

@@ -117,8 +117,16 @@ Invariants worth preserving:
   `/resenha/[gameId]`, `/ranking`, `/dev/*`). Note `/mesa/[code]` is the ephemeral *lobby* and
   `/mesas/[code]` is the *persistent* group — the singular/plural split is load-bearing.
   `/dev/*` pages are design fixtures driving the *real* components with scripted events (`table`,
-  `moments`, `motion`, `edge`, `lobby`, `home`, `cards`, `resenha`, `diaria`) — use them to
-  iterate on visuals without a live game.
+  `moments`, `motion`, `edge`, `lobby`, `home`, `cards`, `resenha`, `diaria`, `loading`) — use them
+  to iterate on visuals without a live game.
+- Every wait comes from `components/Loading`, and the choice between its two shapes is the rule:
+  **when the shape of what's coming is known, draw the shape** (`SkeletonRows`/`SkeletonTiles`/
+  `Skeleton`, so the real content lands without the page rearranging); **when it isn't, cut the
+  deck** (`Loading` — three cards riffling, `variant="screen"` on the full-bleed routes, which sits
+  at `z-index: 5` so the chrome at 60 stays on top). Both fade in on a 220ms delay: a wait shorter
+  than that shows nothing, because a spinner that flashes reads as jank. Never render real content
+  in a not-yet-loaded state — the conquistas shelf drawing every badge locked, a tally at zero —
+  the placeholder is the honest version. Route-level `loading.tsx` files use the same components.
 - Two rails and one sheet, and the split between them is the rule: **where you can go is visible,
   who you are is behind your face.** `components/AppNav` is the bottom bar — Início / Mesas /
   Diária / Ranking from `components/navigation.ts` (the single list; `isActiveTab` decides which
