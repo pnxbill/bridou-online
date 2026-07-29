@@ -30,9 +30,11 @@
   /* the bottom nav bar's own height, without the home-indicator inset */
   --nav-h: 56px;
 
-  /* where the night sky bottoms out — every full-bleed screen ends on this
-     colour, which is why the canvas below is painted with it */
-  --canvas: #070b16;
+  /* what the canvas outside the layout viewport is painted with. It's the
+     bottom bar's own base (and the manifest's theme/background colour), because
+     that slack always opens directly under the bar: matched, the strip reads as
+     the bar running into the home-indicator zone instead of as a hole */
+  --canvas: #0b1120;
 }
 
 /* The canvas — everything iOS paints *outside* the layout viewport: the
