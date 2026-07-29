@@ -104,6 +104,16 @@ celebrations. Mobile-first: hand and actions in the thumb zone, the table is the
 - [x] Browser-tab favicon: gold spade on a navy squircle (the crowning A♠ of the home fan), `apps/web/src/app/icon.svg` — replaces the leftover Qwik logo; Next App Router serves it automatically
 - [x] App chrome unified (`components/AppHeader` + `components/UserMenu`): one fixed glass header — gold wordmark left, avatar right — replacing the last placeholder-styled `.header` in `globals.css`, plus four improvised top bars (home's greeting chip, ranking's "← início" pill, the root-level settings cog that every screen was padding around). Everything lives behind the avatar now: name/photo, Início/Ranking, the preferences (`features/settings/SettingsSections`, extracted from the old cog) and Sair. `variant="floating"` drops the bar for just the menu button on the two full-bleed screens (home, the table). `/ranking` moved into the `(main)` group where it always belonged, and the night sky moved to `body` so every screen shares it
 
+- [x] Haptics on the cards (`features/game/haptics.ts` via `web-haptics`, which drives
+  the Vibration API on Android and the hidden switch-label trick on iOS, where
+  `navigator.vibrate` has never existed): four distinct buzzes on the fan — light lift
+  when you pick a card up to rearrange it, a short hard click when you drop it back in,
+  a barely-there tick when you tap to select, and a slap-then-settle when the card lands
+  on the table. Owned by `PlayerHand` (the only place a card is touched, so `/diaria` and
+  a live game both get it); `cards-ui` just reports pick-up/drop through
+  `onCardPickUp`/`onCardDrop`, replacing the vendored `navigator.vibrate(50)` on tap.
+  Toggle in the menu preferences ("Vibração"), stored like the sound mute
+
 ### PWA — installable "add to home screen"
 
 Goal: friends open the Vercel URL once, tap **Add to Home Screen**, and Bridou launches full-screen from a home-screen icon like a native app — no store, no install friction. Branded with the same gold-spade mark as the favicon.

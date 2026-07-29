@@ -1,10 +1,12 @@
 'use client'
 
 import { Card as PlayingCard } from '@bridou/cards-ui'
+import { hapticCardDrop } from '@/features/game/haptics'
 import { unlockGameAudio } from '@/features/game/sounds'
 import { useAmbience } from './ambience-settings'
 import { useDeckTheme, type DeckVariant } from './deck-theme'
 import { useHandOrder, type HandOrderPrefs } from './hand-order'
+import { useHapticsSettings } from './haptics-settings'
 import { useSoundSettings } from './sound-settings'
 import styles from './SettingsSections.module.css'
 
@@ -26,6 +28,7 @@ const HAND_ORDER_TOGGLES: Array<{ key: keyof HandOrderPrefs; icon: string; label
 export function SettingsSections() {
   const { variant, setVariant } = useDeckTheme()
   const { muted, setMuted } = useSoundSettings()
+  const { muted: hapticsMuted, setMuted: setHapticsMuted } = useHapticsSettings()
   const { enabled: ambience, setEnabled: setAmbience } = useAmbience()
   const { prefs, setPrefs } = useHandOrder()
 
@@ -133,6 +136,27 @@ export function SettingsSections() {
           </span>
         </button>
       )}
+
+      <p className={`${styles.heading} ${styles.headingSpaced}`}>Vibração</p>
+      <button
+        type="button"
+        className={`${styles.toggle} ${hapticsMuted ? styles.toggleActive : ''}`}
+        onClick={() => {
+          const next = !hapticsMuted
+          setHapticsMuted(next)
+          // turning it back on: buzz once so you feel what you just enabled
+          if (!next) hapticCardDrop()
+        }}
+        aria-pressed={hapticsMuted}
+      >
+        <span className={styles.toggleIcon} aria-hidden>
+          📳
+        </span>
+        <span className={styles.toggleLabel}>
+          {hapticsMuted ? 'Vibração desligada' : 'Vibração ligada'}
+        </span>
+      </button>
+      <p className={styles.hint}>Ao pegar, soltar e jogar uma carta</p>
     </>
   )
 }
