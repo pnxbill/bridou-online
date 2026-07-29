@@ -3,6 +3,7 @@
 import type { MesaDetail } from '@bridou/shared'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { Skeleton, SkeletonRows } from '@/components/Loading'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { ApiError, api } from '@/lib/api'
 import styles from './Mesas.module.css'
@@ -96,7 +97,7 @@ export function MesaDetailClient({ code }: { code: string }) {
     }
   }
 
-  if (loading) return <p className={styles.muted}>Carregando a mesa…</p>
+  if (loading) return <MesaDetailSkeleton />
   if (!detail) return <p className={styles.error}>{error || 'Mesa não encontrada.'}</p>
 
   const online = detail.members.filter((m) => m.online)
@@ -233,6 +234,33 @@ export function MesaDetailClient({ code }: { code: string }) {
           </ul>
         </section>
       )}
+    </div>
+  )
+}
+
+/** The page's own outline while the fetch is in flight — name over code, the
+ *  season strip, the member chips, the standings. Same boxes in the same
+ *  places, so the content drops in without the page rearranging itself. */
+function MesaDetailSkeleton() {
+  return (
+    <div className={styles.page} aria-busy>
+      <div className={styles.skeletonHead}>
+        <Skeleton width="55%" height="1.5rem" />
+        <Skeleton width="30%" height="0.8rem" />
+      </div>
+      <Skeleton className={styles.skeletonSeason} />
+      <div className={styles.section}>
+        <h2 className={styles.subtitle}>Quem tá on</h2>
+        <div className={styles.skeletonChips}>
+          {['7rem', '9rem', '6rem', '8rem'].map((w) => (
+            <Skeleton key={w} className={styles.skeletonChip} width={w} />
+          ))}
+        </div>
+      </div>
+      <div className={styles.section}>
+        <h2 className={styles.subtitle}>Classificação</h2>
+        <SkeletonRows count={4} face trailing label="Carregando a mesa…" />
+      </div>
     </div>
   )
 }

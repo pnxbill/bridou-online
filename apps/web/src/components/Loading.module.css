@@ -1,0 +1,288 @@
+/* Loading — one vocabulary for every wait in the app.
+   Two shapes, and the choice between them is the rule: when we know what the
+   content will look like we draw it (skeletons, so the screen doesn't jump
+   when the data lands); when we don't, we show the deck being cut.
+   Fixture: /dev/loading. */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  color: var(--ink-muted);
+  /* A wait that resolves in 200ms must never flash a spinner: the block starts
+     invisible and only fades in if it's *still* on screen when the delay ends. */
+  animation: appear 0.4s ease 0.22s both;
+}
+
+.block {
+  padding: 3rem 1rem;
+}
+
+/* Full-bleed routes (the table, the Mão do Dia) have no column to sit in. */
+.screen {
+  position: fixed;
+  inset: 0;
+  padding: 1rem;
+  z-index: 5;
+}
+
+.label {
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: lowercase;
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+/* ── the mark: a deck being cut ─────────────────────────────────────────────
+   Three cards stacked; each one in turn is drawn off the top, held out to the
+   side, and slid back under the stack. Staggered by a third of the cycle, so
+   there is always exactly one card in flight — the same gesture the table's
+   dealing animation makes, in miniature. */
+
+.deck {
+  --w: 46px;
+
+  position: relative;
+  display: block;
+  width: var(--w);
+  height: calc(var(--w) * 1.4);
+}
+
+.deck[data-size='sm'] {
+  --w: 26px;
+}
+
+/* the gold pool the home fan sits in, scaled down */
+.deck::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 260%;
+  height: 220%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(50% 50% at 50% 50%, rgba(251, 191, 36, 0.16) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.card {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: calc(var(--w) * 0.14);
+  border: 1px solid rgba(251, 191, 36, 0.28);
+  background: linear-gradient(155deg, #1c2942 0%, #101a2e 60%, #0b1120 100%);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.5);
+  font-size: calc(var(--w) * 0.44);
+  line-height: 1;
+  color: rgba(251, 191, 36, 0.8);
+  animation:
+    cut 1.5s cubic-bezier(0.55, 0.1, 0.3, 1) infinite,
+    onTop 1.5s step-end infinite;
+  animation-delay: var(--d);
+}
+
+/* the inner filete every panel in the app carries */
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: inherit;
+  border: 1px solid rgba(251, 191, 36, 0.14);
+}
+
+.cardRed {
+  color: rgba(248, 113, 113, 0.85);
+}
+
+@keyframes cut {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  22% {
+    transform: translate(62%, -26%) rotate(11deg);
+  }
+  40% {
+    transform: translate(62%, -26%) rotate(11deg);
+  }
+  62%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+
+/* the card in flight rides over the stack, then lands underneath it */
+@keyframes onTop {
+  0% {
+    z-index: 3;
+  }
+  62% {
+    z-index: 1;
+  }
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── skeletons ──────────────────────────────────────────────────────────────
+   The shape of the content, drawn before it arrives: same radii, same rhythm,
+   same row heights, so the real thing replaces them without a reflow. */
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.07) 45%,
+    rgba(251, 191, 36, 0.07) 55%,
+    transparent 100%
+  );
+  /* `--d` is set on the row/tile and inherits down, so a whole row sweeps
+     together and the list reads top-to-bottom instead of pulsing as one slab */
+  animation: sweep 1.6s ease-in-out var(--d, 0s) infinite;
+}
+
+@keyframes sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  animation: appear 0.4s ease 0.22s both;
+}
+
+/* a list row: optional face, a name over a meta line, an optional trailing chip
+   — the cut every list in the app is already made from */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.rowFace {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.rowLines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.rowTitle {
+  height: 0.85rem;
+  border-radius: 4px;
+}
+
+.rowMeta {
+  height: 0.65rem;
+  border-radius: 4px;
+  opacity: 0.7;
+}
+
+.rowTrailing {
+  width: 3rem;
+  height: 1rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+/* the conquistas shelf: icon square + two lines, in the same grid */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.5rem;
+  animation: appear 0.4s ease 0.22s both;
+}
+
+.tile {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.tileIcon {
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Nobody should have to watch cards fly to know the app is working: the deck
+   settles into one card and simply breathes. */
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    animation: none;
+  }
+
+  .deck {
+    animation: breathe 2.4s ease-in-out infinite;
+  }
+
+  .skeleton::after {
+    animation: none;
+    background: none;
+  }
+
+  .wrap,
+  .group,
+  .tiles {
+    animation: appear 0.01s linear 0.22s both;
+  }
+
+  @keyframes breathe {
+    0%,
+    100% {
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+}

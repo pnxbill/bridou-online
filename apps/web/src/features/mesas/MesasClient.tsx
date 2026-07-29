@@ -3,6 +3,7 @@
 import type { MesaSummary } from '@bridou/shared'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { Loading, SkeletonRows } from '@/components/Loading'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { ApiError, api } from '@/lib/api'
 import styles from './Mesas.module.css'
@@ -71,7 +72,7 @@ export function MesasClient() {
     }
   }
 
-  if (authLoading) return <p className={styles.muted}>Carregando…</p>
+  if (authLoading) return <Loading />
 
   if (!user) {
     return (
@@ -118,7 +119,9 @@ export function MesasClient() {
       )}
 
       {error && <p className={styles.error}>{error}</p>}
-      {loading && <p className={styles.muted}>Carregando…</p>}
+      {/* Only the first load: the 45s poll that keeps "quem tá on" honest must
+          not flash placeholders over a list that's already on screen. */}
+      {loading && mesas.length === 0 && <SkeletonRows count={3} trailing />}
 
       {!loading && mesas.length === 0 && (
         <p className={styles.muted}>

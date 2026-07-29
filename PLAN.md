@@ -122,6 +122,21 @@ celebrations. Mobile-first: hand and actions in the thumb zone, the table is the
   avatar sheet keeps only what a cog may mean: your name, Conquistas, the preferences and Sair.
   `/game/[gameId]` and `/diaria` keep the floating pill, whose sheet carries the destinations. The
   entrance dropped its "ver ranking" link and its corner button to the bar
+- [x] Loading states (`components/Loading`, fixture at `/dev/loading`): every wait in the app used
+  to be the word "Carregando" in muted grey — nine of them, in six different shapes, on a screen
+  otherwise made of felt and gold. Now there are two, and the choice between them is the rule.
+  **When we know the shape of what's coming, we draw it**: `SkeletonRows` / `SkeletonTiles` /
+  `Skeleton`, same radii and row heights as the real thing, so nothing moves when the data lands —
+  the ranking sheet keeps its podium filete and numbers its six seats, the conquistas shelf and the
+  mesa page draw their own outlines. **When we don't, we cut the deck**: three gold-rimmed cards,
+  one always in flight, the table's own dealing gesture in miniature (`Loading`, `variant="screen"`
+  for the full-bleed routes, under the chrome so the way out stays tappable). Both fade in on a
+  220ms delay, so a wait that resolves faster shows nothing at all — a spinner that flashes reads
+  as jank. Two flashes of wrong content went with it: the conquistas shelf rendered its whole
+  static catalogue as locked before the profile arrived (and the tally read "0 de N"), and the
+  mesas list flashed placeholders over itself on every 45s presence poll. `prefers-reduced-motion`
+  settles the deck into one breathing card and stills the skeleton sweep; the route segments get
+  the same components through `loading.tsx`
 
 ### PWA — installable "add to home screen"
 

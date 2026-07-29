@@ -2,6 +2,7 @@
 
 import { dailyDateLabel, type DailyState, type HandCard } from '@bridou/shared'
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import { Loading } from '@/components/Loading'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { GameTable } from '@/features/game/components/GameTable'
 import { gameReducer, stateFromSnapshot } from '@/features/game/reducer'
@@ -63,7 +64,7 @@ export function DiariaClient() {
     }
   }, [user])
 
-  if (authLoading || loading) return <p className={styles.notice}>Carregando…</p>
+  if (authLoading || loading) return <Loading variant="screen" label="preparando a mão de hoje" />
 
   if (!user) {
     return (

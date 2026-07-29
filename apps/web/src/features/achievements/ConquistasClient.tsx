@@ -7,6 +7,7 @@ import {
   type AchievementTier,
 } from '@bridou/shared'
 import { useEffect, useMemo, useState } from 'react'
+import { Loading, Skeleton, SkeletonTiles } from '@/components/Loading'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { api, type PlayerProfile } from '@/lib/api'
 import styles from './Conquistas.module.css'
@@ -17,6 +18,10 @@ const TIER_LABEL: Record<AchievementTier, string> = {
   ouro: 'Ouro',
   lenda: 'Lenda',
 }
+
+/** The career strip's labels — they're static, so the placeholder keeps them
+ *  and only the numbers wait. */
+const STAT_LABELS = ['Partidas', 'Vitórias', 'Sequência', 'Mesas abertas', 'Bailadas']
 
 /** Rarest first — the shelf should open on the things worth bragging about. */
 const byTierDesc = (a: AchievementDef, b: AchievementDef) =>
@@ -66,7 +71,7 @@ export function ConquistasClient() {
     [unlockedById],
   )
 
-  if (authLoading) return <p className={styles.muted}>Carregando…</p>
+  if (authLoading) return <Loading />
 
   if (!user) {
     return (
@@ -87,9 +92,15 @@ export function ConquistasClient() {
     <div className={styles.page}>
       <header className={styles.head}>
         <h1 className={styles.title}>Conquistas</h1>
-        <p className={styles.count}>
-          <strong>{unlockedCount}</strong> de {ACHIEVEMENTS.length}
-        </p>
+        {/* "0 de 24" before the profile lands is a wrong number, not a loading
+            state — the tally waits for the fetch, the bar fills from empty. */}
+        {loading ? (
+          <Skeleton width="5.5rem" height="1.1rem" />
+        ) : (
+          <p className={styles.count}>
+            <strong>{unlockedCount}</strong> de {ACHIEVEMENTS.length}
+          </p>
+        )}
         <div
           className={styles.progress}
           role="progressbar"
@@ -100,6 +111,17 @@ export function ConquistasClient() {
           <span style={{ width: `${(unlockedCount / ACHIEVEMENTS.length) * 100}%` }} />
         </div>
       </header>
+
+      {loading && (
+        <section className={styles.stats} aria-hidden>
+          {STAT_LABELS.map((label) => (
+            <div key={label} className={styles.stat}>
+              <Skeleton width="1.8rem" height="1.35rem" />
+              <span>{label}</span>
+            </div>
+          ))}
+        </section>
+      )}
 
       {stats && (
         <section className={styles.stats}>
@@ -130,34 +152,40 @@ export function ConquistasClient() {
       )}
 
       {error && <p className={styles.error}>{error}</p>}
-      {loading && <p className={styles.muted}>Carregando conquistas…</p>}
 
-      <ul className={styles.grid}>
-        {visible.map((def) => {
-          const unlock = unlockedById.get(def.id)
-          return (
-            <li
-              key={def.id}
-              className={styles.card}
-              data-tier={def.tier}
-              data-locked={unlock ? undefined : ''}
-              data-roast={def.roast ? '' : undefined}
-            >
-              <span className={styles.icon} aria-hidden>
-                {unlock ? def.icon : '🔒'}
-              </span>
-              <div className={styles.cardBody}>
-                <strong className={styles.cardName}>{def.name}</strong>
-                <p className={styles.cardDesc}>{def.description}</p>
-                <span className={styles.tier}>
-                  {TIER_LABEL[def.tier]}
-                  {unlock && ` · ${formatDate(unlock.unlockedAt)}`}
+      {/* The shelf is drawn from a static catalogue, so it *can* render while
+          the profile is in flight — every badge locked, then half of them
+          popping open. Hold it: the placeholders don't lie about what you own. */}
+      {loading ? (
+        <SkeletonTiles count={8} label="Carregando conquistas…" />
+      ) : (
+        <ul className={styles.grid}>
+          {visible.map((def) => {
+            const unlock = unlockedById.get(def.id)
+            return (
+              <li
+                key={def.id}
+                className={styles.card}
+                data-tier={def.tier}
+                data-locked={unlock ? undefined : ''}
+                data-roast={def.roast ? '' : undefined}
+              >
+                <span className={styles.icon} aria-hidden>
+                  {unlock ? def.icon : '🔒'}
                 </span>
-              </div>
-            </li>
-          )
-        })}
-      </ul>
+                <div className={styles.cardBody}>
+                  <strong className={styles.cardName}>{def.name}</strong>
+                  <p className={styles.cardDesc}>{def.description}</p>
+                  <span className={styles.tier}>
+                    {TIER_LABEL[def.tier]}
+                    {unlock && ` · ${formatDate(unlock.unlockedAt)}`}
+                  </span>
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      )}
     </div>
   )
 }
