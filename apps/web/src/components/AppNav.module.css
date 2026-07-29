@@ -1,0 +1,75 @@
+/* The bottom bar. Same glass as the header, mirrored: border on top, and the
+   safe-area inset is padding so the tabs sit above the iOS home indicator
+   instead of under it. */
+
+.bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 60;
+  display: flex;
+  align-items: stretch;
+  height: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  padding: 0 4px env(safe-area-inset-bottom);
+  background: linear-gradient(0deg, rgba(11, 17, 32, 0.96) 0%, rgba(11, 17, 32, 0.82) 100%);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--glass-border);
+}
+
+/* Five equal slots — four destinations and you. Equal beats content-width:
+   the bar has to read as a rank, not as a sentence. */
+.tab {
+  position: relative;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 6px 2px 4px;
+  border: none;
+  background: none;
+  color: var(--ink-muted);
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab:hover {
+  color: var(--ink);
+}
+
+.label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Lit in gold, plus a short rail on the top rim — color alone is easy to miss
+   on a glance, and the rail is what reads as "you are here". */
+.tabActive,
+.tabActive:hover {
+  color: var(--gold);
+}
+
+.tabActive::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 26px;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  transform: translateX(-50%);
+  background: var(--gold);
+  box-shadow: 0 0 12px 1px var(--gold-soft);
+}

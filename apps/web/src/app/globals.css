@@ -26,6 +26,9 @@
 
   /* the fixed header's own height, without the status-bar inset */
   --header-h: 52px;
+
+  /* the bottom nav bar's own height, without the home-indicator inset */
+  --nav-h: 56px;
 }
 
 body {
@@ -41,8 +44,9 @@ body {
 .main {
   max-width: 860px;
   margin: 0 auto;
-  /* clear the fixed header (chrome lives in components/AppHeader) */
-  padding: calc(var(--header-h) + env(safe-area-inset-top) + 1rem) 1rem 1rem;
+  /* clear both fixed rails (chrome lives in components/AppHeader + AppNav) */
+  padding: calc(var(--header-h) + env(safe-area-inset-top) + 1rem) 1rem
+    calc(var(--nav-h) + env(safe-area-inset-bottom) + 1rem);
 }
 
 .btn {

@@ -189,11 +189,8 @@ export function HomeClient() {
         {user && !activeGameId && !joinOpen && (
           <span className={styles.hint}>sua mesa guarda a temporada e a classificação</span>
         )}
-        {!loading && (
-          <button className={styles.joinToggle} onClick={() => router.push('/ranking')}>
-            ver ranking
-          </button>
-        )}
+        {/* "ver ranking" used to live here — the bottom bar owns it now, along
+            with the Mão do Dia this screen never mentioned */}
         {error && <span className={styles.error}>{error}</span>}
       </div>
     </div>

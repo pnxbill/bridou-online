@@ -6,19 +6,23 @@ import styles from './AppHeader.module.css'
 
 interface Props {
   /**
-   * `bar` — the fixed glass header (lobby, ranking, dev fixtures).
-   * `floating` — just the menu button, for the full-bleed screens (home, the
-   * table) where a bar would eat the design.
+   * `bar` — the fixed glass header (lobby, ranking, dev fixtures). Just the
+   * wordmark now: you and the destinations live on the bottom bar, within
+   * reach. It stays because it's what absorbs the status-bar inset when the
+   * PWA runs standalone.
+   * `floating` — the menu button alone, for the full-bleed play surfaces (the
+   * table, the Mão do Dia) where neither bar can exist. Its sheet carries the
+   * destinations, since there's no bar to carry them.
    */
   variant?: 'bar' | 'floating'
 }
 
-/** The app's only chrome: one fixed header, one menu behind the avatar. */
+/** The app's chrome: this header, the bottom bar (`AppNav`), one sheet. */
 export function AppHeader({ variant = 'bar' }: Props) {
   if (variant === 'floating') {
     return (
       <div className={styles.floating}>
-        <UserMenu align="left" />
+        <UserMenu variant="pill" withDestinations />
       </div>
     )
   }
@@ -28,7 +32,6 @@ export function AppHeader({ variant = 'bar' }: Props) {
       <Link href="/" className={styles.wordmark}>
         BRIDOU
       </Link>
-      <UserMenu align="right" />
     </header>
   )
 }

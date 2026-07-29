@@ -113,6 +113,15 @@ celebrations. Mobile-first: hand and actions in the thumb zone, the table is the
   a live game both get it); `cards-ui` just reports pick-up/drop through
   `onCardPickUp`/`onCardDrop`, replacing the vendored `navigator.vibrate(50)` on tap.
   Toggle in the menu preferences ("Vibração"), stored like the sound mute
+- [x] Navigation split out of the cog (`components/AppNav` + `components/navigation.ts`): a fixed
+  bottom bar — Início / Mesas / Diária / Ranking, plus your face — on every screen but a live
+  table. Everywhere you could go used to live behind the settings cog in the header corner, which
+  is why the Mão do Dia and Conquistas appeared nowhere on screen and no screen ever said where you
+  were. Now the lit tab does (`isActiveTab`, subtree-aware, so the ephemeral `/mesa/[code]` lobby
+  doesn't steal `/mesas`), tabs show signed-out (each gated page already sells itself), and the
+  avatar sheet keeps only what a cog may mean: your name, Conquistas, the preferences and Sair.
+  `/game/[gameId]` and `/diaria` keep the floating pill, whose sheet carries the destinations. The
+  entrance dropped its "ver ranking" link and its corner button to the bar
 
 ### PWA — installable "add to home screen"
 
