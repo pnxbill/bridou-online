@@ -1,18 +1,57 @@
-/* The avatar trigger and its dropdown panel. */
+/* The avatar trigger — a tab in the bar, a pill at a table — and the sheet it
+   raises. */
 
-.root {
+.rootTab {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.rootPill {
   position: relative;
   display: flex;
 }
 
-/* A pill, not a bare portrait: the button shape says "tappable" and the cog
-   says the settings are in here — an avatar alone says neither. */
-.trigger {
+/* ── the trigger ──────────────────────────────────────────── */
+
+/* In the bar it's shaped like its neighbours (AppNav owns that rhythm), just
+   with your face where the glyph would be. */
+.tabTrigger {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 6px 2px 4px;
+  border: none;
+  background: none;
+  color: var(--ink-muted);
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tabTrigger:hover {
+  color: var(--ink);
+}
+
+.tabLabel {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+/* Standing alone over the felt, the pill is what says "control" — there is no
+   bar around it to borrow the meaning from. */
+.pillTrigger {
   display: flex;
   align-items: center;
-  gap: 5px;
   height: 40px;
-  padding: 3px 9px 3px 3px;
+  padding: 3px;
   border-radius: 999px;
   border: 1px solid var(--glass-border);
   background: linear-gradient(160deg, rgba(22, 33, 60, 0.92) 0%, rgba(11, 17, 32, 0.92) 100%);
@@ -24,7 +63,7 @@
     border-color 0.15s ease;
 }
 
-.trigger:hover {
+.pillTrigger:hover {
   color: var(--gold);
   border-color: var(--gold-soft);
 }
@@ -49,53 +88,77 @@
   background: rgba(255, 255, 255, 0.07);
 }
 
+.tabTrigger .face {
+  width: 22px;
+  height: 22px;
+  font-size: 0.6rem;
+}
+
 .photo {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.cog {
-  display: flex;
-  flex-shrink: 0;
-  transition: transform 0.25s ease;
+/* ── the sheet ────────────────────────────────────────────── */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(4, 8, 18, 0.55);
+  backdrop-filter: blur(2px);
+  animation: fade 0.18s ease both;
 }
 
-.triggerOpen .cog {
-  transform: rotate(45deg);
-}
-
-.panel {
-  position: absolute;
-  top: calc(100% + 8px);
-  width: 240px;
-  max-height: calc(100dvh - var(--header-h) - env(safe-area-inset-top) - 28px);
+/* Rises from the bottom edge, where the trigger is. Tall content scrolls
+   inside it; the bottom inset keeps Sair clear of the home indicator. */
+.sheet {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 71;
+  max-height: 80dvh;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 12px;
-  border-radius: 16px;
-  background: linear-gradient(160deg, rgba(22, 33, 60, 0.97) 0%, rgba(11, 17, 32, 0.97) 100%);
+  margin: 0 auto;
+  max-width: 460px;
+  padding: 8px 16px calc(18px + env(safe-area-inset-bottom));
+  border-radius: 20px 20px 0 0;
+  background: linear-gradient(180deg, rgba(22, 33, 60, 0.98) 0%, rgba(11, 17, 32, 0.98) 100%);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 18px 40px -14px rgba(0, 0, 0, 0.9);
-  animation: pop 0.18s ease both;
+  border-bottom: none;
+  box-shadow: 0 -18px 50px -12px rgba(0, 0, 0, 0.9);
+  animation: rise 0.22s cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
-.panelRight {
-  right: 0;
+.grabber {
+  display: block;
+  width: 36px;
+  height: 4px;
+  margin: 0 auto 12px;
+  border-radius: 999px;
+  background: var(--glass-border);
 }
 
-.panelLeft {
-  left: 0;
+@keyframes rise {
+  from {
+    transform: translateY(14px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
 }
 
-@keyframes pop {
+@keyframes fade {
   from {
     opacity: 0;
-    transform: translateY(-4px) scale(0.96);
   }
   to {
     opacity: 1;
-    transform: none;
   }
 }
 
@@ -155,7 +218,7 @@
   border-color: var(--gold);
 }
 
-/* ── where you can go ─────────────────────────────────────── */
+/* ── your shelf (+ the destinations, where there is no bar) ── */
 
 .nav {
   display: flex;
@@ -163,12 +226,11 @@
   gap: 6px;
 }
 
-.nav:empty {
-  display: none;
-}
-
 .navLink {
-  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid transparent;
   background: var(--glass);
@@ -186,9 +248,19 @@
   color: var(--gold);
 }
 
+.navIcon {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--ink-muted);
+}
+
+.navLink:hover .navIcon {
+  color: var(--gold);
+}
+
 .divider {
   height: 1px;
-  margin: 12px -12px;
+  margin: 14px -16px;
   background: var(--glass-border);
 }
 

@@ -178,7 +178,11 @@
   align-items: center;
   gap: 0.7rem;
   min-height: 7.5rem; /* reserved while auth resolves — no layout jump */
-  padding-bottom: clamp(1.6rem, 6vh, 3rem);
+  /* the nav bar rides the felt rim below: keep the buttons clear of it, but
+     give back most of the old breathing room so short screens still compose */
+  padding-bottom: calc(
+    var(--nav-h) + env(safe-area-inset-bottom) + clamp(0.8rem, 3vh, 1.4rem)
+  );
   animation: fadeUp 0.7s ease 0.45s both;
 }
 

@@ -119,14 +119,22 @@ Invariants worth preserving:
   `/dev/*` pages are design fixtures driving the *real* components with scripted events (`table`,
   `moments`, `motion`, `edge`, `lobby`, `home`, `cards`, `resenha`, `diaria`) — use them to
   iterate on visuals without a live game.
-- One chrome, one menu: `components/AppHeader` is the app's only header. `variant="bar"` (the
-  `(main)` layout) is the fixed glass bar — wordmark left, menu right; `variant="floating"` is just
-  the menu button over the full-bleed screens, top-left, where the table HUD reserves 86px. The
-  trigger (`components/UserMenu`) is a pill — avatar *and* a cog — because a bare portrait reads as
-  decoration, not a control, and the cog is the only hint that the preferences live behind your own
-  face. Behind it: who you are, Início/Ranking, the preferences
-  (`features/settings/SettingsSections`) and Sair. Nothing else may pin itself to a screen corner —
-  that's how the old settings cog ended up fighting every screen's own top bar.
+- Two rails and one sheet, and the split between them is the rule: **where you can go is visible,
+  who you are is behind your face.** `components/AppNav` is the bottom bar — Início / Mesas /
+  Diária / Ranking from `components/navigation.ts` (the single list; `isActiveTab` decides which
+  one lights, and a tab owns its subtree only on a path boundary so `/mesas/ABC` lights Mesas while
+  `/mesa/ABC`, the ephemeral lobby, lights nothing). `components/AppHeader` is the only header:
+  `variant="bar"` is the fixed glass strip, now just the wordmark — it stays because it's what
+  absorbs `env(safe-area-inset-top)` when the PWA runs standalone. `components/UserMenu` is the
+  last slot of the bar and raises a bottom sheet with your name, Conquistas (your shelf, not a
+  destination), the preferences (`features/settings/SettingsSections`) and Sair — no cog on the
+  trigger, because a cog may only ever mean settings. Destinations lived behind that cog once and
+  nobody found the Mão do Dia.
+- The bar is on every screen except a live table (`/game/[gameId]`, `/diaria`), where the hand and
+  the `TableDock` own the bottom rim. Those two render `AppHeader variant="floating"` — the menu
+  pill alone, top-left, where the table HUD reserves 86px — and its sheet carries the destinations
+  (`withDestinations`) so a play surface is never a dead end. Nothing else may pin itself to a
+  screen corner; that's how the old settings cog ended up fighting every screen's own top bar.
 - In-game, the same rule with a different owner: `features/game/components/TableDock` owns the
   bottom-left rim and stacks the pause button, the provocação wheel and the voice controls. They
   each used to pin themselves to that corner at hand-picked offsets, which collided the moment the
