@@ -29,12 +29,34 @@
 
   /* the bottom nav bar's own height, without the home-indicator inset */
   --nav-h: 56px;
+
+  /* where the night sky bottoms out — every full-bleed screen ends on this
+     colour, which is why the canvas below is painted with it */
+  --canvas: #070b16;
+}
+
+/* The canvas — everything iOS paints *outside* the layout viewport: the
+   rubber-band gutters, the strip behind Safari's collapsing toolbar, and the
+   safe-area slack a standalone PWA shows for a beat before 100dvh settles.
+   That area comes from the ROOT element's background, and the root had none:
+   the sky lived on <body> and propagated up, but `background-attachment: fixed`
+   breaks that propagation on iOS, so those gutters rendered white. Painting the
+   root explicitly fixes them; `color-scheme` is the other half — without it
+   Safari treats the page as light and tints its own chrome (the status bar and
+   the toolbar) white to match. */
+html {
+  color-scheme: dark;
+  background-color: var(--canvas);
 }
 
 body {
   /* the night sky every screen sits in — full-bleed routes paint their own
-     copy over it, the (main) column inherits it */
-  background: radial-gradient(120% 90% at 50% 0%, #16213c 0%, #0b1120 55%, #070b16 100%);
+     copy over it, the (main) column inherits it. The solid colour underneath
+     is the same one the root carries, so the seam where the gradient's box
+     ends and the canvas begins is invisible. */
+  background-color: var(--canvas);
+  background-image: radial-gradient(120% 90% at 50% 0%, #16213c 0%, #0b1120 55%, #070b16 100%);
+  background-repeat: no-repeat;
   background-attachment: fixed;
   color: var(--text);
   font-family: system-ui, -apple-system, sans-serif;
