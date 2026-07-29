@@ -6,6 +6,12 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useDeckTheme } from '@/features/settings/deck-theme'
 import { useHandOrder } from '@/features/settings/hand-order'
 import { orderHand, parseCard, sortHand, toLibCard } from '../cards'
+import {
+  hapticCardDrop,
+  hapticCardPickUp,
+  hapticCardPlay,
+  hapticCardSelect,
+} from '../haptics'
 
 interface Props {
   cards: HandCard[]
@@ -25,6 +31,11 @@ const DEAL_STAGGER_MS = 130
  * doesn't know about hand order), tap to select and lift a card, tap the
  * lifted card again to play it. When a new round is dealt the cards land
  * in the fan one by one, flying in from the table side.
+ *
+ * Every one of those gestures has its own buzz (`../haptics`) — the fan is
+ * the only place in the app you touch a card, so it owns the card haptics
+ * rather than the callers: `/diaria` and a live game both reach the table
+ * through here.
  */
 export function PlayerHand({ cards, trunfo, onPlay, dealSeq = 0 }: Props) {
   const { variant } = useDeckTheme()
@@ -83,10 +94,12 @@ export function PlayerHand({ cards, trunfo, onPlay, dealSeq = 0 }: Props) {
     if (!card || card.disabled) return
 
     if (selected !== card.value) {
+      hapticCardSelect()
       setSelected(card.value)
       return
     }
     setSelected(null)
+    hapticCardPlay()
     const el = wrapRef.current?.querySelector(`[data-card-id="${CSS.escape(card.value)}"]`)
     onPlay(card, el?.getBoundingClientRect())
   }
@@ -103,6 +116,8 @@ export function PlayerHand({ cards, trunfo, onPlay, dealSeq = 0 }: Props) {
         selectedCardIndex={selectedIndex === -1 ? undefined : selectedIndex}
         onCardClick={handleCardClick}
         onReorder={handleReorder}
+        onCardPickUp={hapticCardPickUp}
+        onCardDrop={hapticCardDrop}
       />
     </div>
   )

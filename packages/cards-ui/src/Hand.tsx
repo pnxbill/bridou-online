@@ -3,12 +3,15 @@
 /**
  * Vendored from github.com/pnxbill/cards-lib @ 47bc27c.
  * Local changes: 'use client' directive; disabled cards can't be selected or
- * clicked (no vibration either) but stay draggable for hand organization —
- * they also sit slightly lower in the fan, while playable cards keep the
- * gold glow (drop shadows stay stripped inside the fan). Cards mount flying
- * in from above (the table side) so staggered deals read as dealing, and
- * each card carries `data-card-id` so the app can measure where a card sat
- * on screen when it was played.
+ * clicked but stay draggable for hand organization — they also sit slightly
+ * lower in the fan, while playable cards keep the gold glow (drop shadows
+ * stay stripped inside the fan). Cards mount flying in from above (the table
+ * side) so staggered deals read as dealing, and each card carries
+ * `data-card-id` so the app can measure where a card sat on screen when it
+ * was played. The upstream `navigator.vibrate(50)` on tap is gone: the fan
+ * now reports pick-up and drop through `onCardPickUp` / `onCardDrop` and the
+ * app owns the haptics (iOS has no Vibration API, and the buzz is a user
+ * preference).
  */
 import React from 'react'
 import { Card, type CardProps } from './Card'
@@ -20,6 +23,10 @@ export interface HandProps {
   cards: HandCard[]
   onCardClick?: (index: number) => void
   onReorder?: (newOrder: HandCard[]) => void
+  /** A card was lifted out of the fan to be dragged. */
+  onCardPickUp?: (id: string) => void
+  /** The dragged card was released and snapped back into the fan. */
+  onCardDrop?: (id: string) => void
   selectedCardIndex?: number
   className?: string
   style?: React.CSSProperties
@@ -29,6 +36,8 @@ export const Hand: React.FC<HandProps> = ({
   cards,
   onCardClick,
   onReorder,
+  onCardPickUp,
+  onCardDrop,
   selectedCardIndex,
   className = '',
   style,
@@ -42,6 +51,7 @@ export const Hand: React.FC<HandProps> = ({
     isDraggingRef.current = true
     setDraggingId(id)
     setIsFineTuning(false)
+    onCardPickUp?.(id)
 
     // Clear any existing timer
     if (dragTimeoutRef.current) {
@@ -54,12 +64,13 @@ export const Hand: React.FC<HandProps> = ({
     }, 250)
   }
 
-  const handleDragEnd = () => {
+  const handleDragEnd = (id: string) => {
     setDraggingId(null)
     setIsFineTuning(false)
     if (dragTimeoutRef.current) {
       clearTimeout(dragTimeoutRef.current)
     }
+    onCardDrop?.(id)
     // Small delay to prevent click from firing immediately after drag
     setTimeout(() => {
       isDraggingRef.current = false
@@ -131,7 +142,7 @@ export const Hand: React.FC<HandProps> = ({
             layout // Explicit layout prop
             data-card-id={card.id}
             onDragStart={() => handleDragStart(card.id)}
-            onDragEnd={handleDragEnd}
+            onDragEnd={() => handleDragEnd(card.id)}
             style={{
               marginLeft,
               zIndex: draggingId === card.id || isSelected ? 999 : 'auto', // Only force zIndex for drag/select
@@ -170,7 +181,6 @@ export const Hand: React.FC<HandProps> = ({
               {...card}
               onClick={() => {
                 if (isDraggingRef.current || card.disabled) return
-                navigator?.vibrate?.(50) // Short 50ms vibration
                 onCardClick && onCardClick(index)
               }}
               style={{
