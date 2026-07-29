@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Outfit, Playfair_Display } from 'next/font/google'
 import type { ReactNode } from 'react'
 import { RegisterServiceWorker } from '@/components/RegisterServiceWorker'
+import { StandaloneViewport } from '@/components/StandaloneViewport'
 import { AuthProvider } from '@/features/auth/AuthProvider'
 import { VoiceRoomProvider } from '@/features/game/voice/VoiceRoomProvider'
 import { AmbienceProvider } from '@/features/settings/ambience-settings'
@@ -49,6 +50,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="pt-BR">
       <body className={`${outfit.className} ${playfair.variable}`}>
         <RegisterServiceWorker />
+        <StandaloneViewport />
         <AuthProvider>
           <DeckThemeProvider>
             <HandOrderProvider>
