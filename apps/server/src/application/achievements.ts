@@ -23,6 +23,11 @@ import type {
  * Round-scoped conquistas fire the moment a round ends, which is the point —
  * the whole table sees "Bruno desbloqueou: MÃO DE FERRO" while it still means
  * something. Game and career ones land with the final scoreboard.
+ *
+ * Only bot-free tables count, on the same rule the ranking uses: a bot seat at
+ * kickoff disqualifies the whole game, a mid-game takeover does not. Conquistas
+ * are bragging material, and farming them against bots would make them
+ * worthless — while losing them because someone's phone died would be worse.
  */
 
 /** Per-player accumulator for the game in progress. */
@@ -86,6 +91,11 @@ export class AchievementTracker {
 
   /** Called when a game starts, before any engine event. */
   registerGame(gameId: string, players: PlayerInfo[], leaderId: string): void {
+    // A bot at kickoff disqualifies the table. Never registering the game is
+    // the whole gate: `onDomainEvent` no-ops without an accumulator, so no
+    // conquista is awarded and no career counter moves.
+    if (!players.every(isRealPlayer)) return
+
     this.games.set(gameId, {
       players: players.map((p) => ({ ...p })),
       byPlayer: new Map(
@@ -102,8 +112,8 @@ export class AchievementTracker {
       midGameOrder: [],
     })
 
-    const leader = players.find((p) => p.id === leaderId)
-    if (leader && isRealPlayer(leader)) {
+    // Every seat is human by the guard above, so the leader is too.
+    if (players.some((p) => p.id === leaderId)) {
       this.enqueue(gameId, () => this.deps.stats.bumpHosted(leaderId))
     }
   }

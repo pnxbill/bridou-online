@@ -173,6 +173,13 @@ written and never read; and there was no reason to open the app alone.
   a public `achievement-unlocked` event; game/career ones land at `game-ended`.
   Insert-once at the repo makes each unlock announce exactly once. Bots never
   earn. Shelf at `/conquistas` with career stats + head-to-head
+- [x] Conquistas only count at bot-free tables, on the ranking's rule — a bot
+  seat at kickoff disqualifies the game, a mid-game takeover doesn't. The gate
+  is `registerGame` declining to track the game at all, so career counters
+  (`player_stats`, `player_rivalries`) don't move either and a Veterano can't be
+  farmed against bots. `0004_conquistas_bot_free_reset.sql` wiped the totals
+  earned under the old rule; it is one-shot, guarded by a `data_migrations`
+  marker, because boot replays every migration file
 - [x] **Resenha** — `buildRecap` (pure) replays the persisted event log into a
   shareable recap: superlatives with evidence, the turning-point chart, and the
   unlocks earned that game. Ties hand out *no* award rather than a fake one.

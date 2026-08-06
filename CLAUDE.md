@@ -39,6 +39,9 @@ advisory lock serializes concurrent instances, and a real failure exits
 non-zero so a bad deploy leaves the previous version serving. **drizzle-kit
 `generate` doesn't know about these files** — it will try to emit a fresh
 `0000`; use it to read the diff, then hand-write the next numbered migration.
+A *data* migration (a backfill or a wipe) can't be replayed the way a schema one
+can, so it guards itself with a marker row in `data_migrations` and runs exactly
+once — see `0004_conquistas_bot_free_reset.sql` for the shape.
 
 CI (`.github/workflows/ci.yml`) runs server typecheck → `pnpm test` → `pnpm build` on every push.
 `next build` is what typechecks the web app (it needs `.next/types`), so a green `pnpm build` matters.
@@ -170,6 +173,9 @@ Invariants worth preserving:
 trick taken. The last round is **blind**: you see everyone else's cards, not your own (the wire
 sends `HIDDEN_CARD` for yours). The mid-game scoreboard pops after round 7. A game counts toward
 the ranking (`ranked`) only if no seat was a bot at kickoff — a mid-game bot takeover still counts.
+**Conquistas** (achievements) are earned on that same rule: `AchievementTracker.registerGame`
+declines to track a table that starts with a bot, so neither the unlocks nor the career counters
+they read (`player_stats`, `player_rivalries`) move in a bot game.
 
 ## Deployment
 

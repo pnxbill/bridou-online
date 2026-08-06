@@ -235,3 +235,15 @@ export const dailyAttempts = pgTable(
   },
   (t) => [primaryKey({ columns: [t.date, t.playerId] })],
 )
+
+/* ── Housekeeping ────────────────────────────────────────────────────────── */
+
+/**
+ * Marker rows for one-shot *data* migrations. Schema migrations are written to
+ * be replayed on every boot; a backfill or a wipe must not be, so it records
+ * its id here and checks for it first.
+ */
+export const dataMigrations = pgTable('data_migrations', {
+  id: text('id').primaryKey(),
+  appliedAt: timestamp('applied_at', { withTimezone: true }).notNull().defaultNow(),
+})
