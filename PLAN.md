@@ -138,7 +138,7 @@ celebrations. Mobile-first: hand and actions in the thumb zone, the table is the
   settles the deck into one breathing card and stills the skeleton sweep; the route segments get
   the same components through `loading.tsx`
 - [x] HUD status chip rewritten to say only what you can play on: **"Jogando carta X"** over
-  **"Pedidas N"**, with the hand's size — the total both are counted against — said once, big and
+  **"N pedidos"**, with the hand's size — the total both are counted against — said once, big and
   gold, in its own column on the right ("DE 5"). Which card of the hand is on the table, and the
   running sum of everyone's bets, climbing seat by seat while the asking goes around. It used to
   read "Rodada 5 · 3 cartas / Feita 2/3": the round number is bookkeeping nobody bets on, and

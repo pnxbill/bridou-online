@@ -356,7 +356,7 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [], roundLabel }
                 {state.betting ? 'Apostas' : `Jogando carta ${cardBeingPlayed}`}
               </span>
               <span className={styles.roundBets}>
-                Pedidas <b>{betsAsked}</b>
+                <b>{betsAsked}</b> {betsAsked === 1 ? 'pedido' : 'pedidos'}
               </span>
             </div>
             <span className={styles.roundTotal}>

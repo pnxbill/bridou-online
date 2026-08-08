@@ -99,7 +99,7 @@ export default function TableMockupPage() {
                 {phase === 'betting' ? 'Apostas' : 'Jogando carta 1'}
               </span>
               <span className={styles.roundBets}>
-                Pedidas <b>{phase === 'betting' ? 1 : 3}</b>
+                <b>{phase === 'betting' ? 1 : 3}</b> {phase === 'betting' ? 'pedido' : 'pedidos'}
               </span>
             </div>
             <span className={styles.roundTotal}>
