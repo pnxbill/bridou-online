@@ -3,7 +3,7 @@
 import { Card as PlayingCard } from '@bridou/cards-ui'
 import { isBlindRound, type HandCard, type RoundPlayer } from '@bridou/shared'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useDeckTheme } from '@/features/settings/deck-theme'
 import { timeOfDayFor } from '../ambience'
 import { parseCard, winningCardIndex } from '../cards'
@@ -240,6 +240,10 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [], roundLabel }
   }, [state.dealSeq])
 
   const winningIdx = winningCardIndex(state.playedCards, state.trunfo)
+  const trumpSuit = useMemo(
+    () => (state.trunfo ? parseCard(state.trunfo).suit : undefined),
+    [state.trunfo],
+  )
   const madeOf = (id: string) => state.madeByPlayer[id] ?? 0
   const isBotSeat = (p: RoundPlayer) => p.isBot || state.botSeats.includes(p.id)
   const historyPlayer =
@@ -415,7 +419,12 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [], roundLabel }
                 <div className={styles.seatHand} aria-label={`cartas de ${seat.name}`}>
                   {revealed.map((card) => (
                     <div key={card} className={styles.seatCard}>
-                      <PlayingCard id={`opp-${seat.id}-${card}`} {...parseCard(card)} variant={variant} />
+                      <PlayingCard
+                        id={`opp-${seat.id}-${card}`}
+                        {...parseCard(card)}
+                        variant={variant}
+                        trump={parseCard(card).suit === trumpSuit}
+                      />
                     </div>
                   ))}
                 </div>
@@ -467,7 +476,12 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [], roundLabel }
                 }}
                 transition={{ type: 'spring', stiffness: 260, damping: 22 }}
               >
-                <PlayingCard id={card} {...parseCard(card)} variant={variant} />
+                <PlayingCard
+                  id={card}
+                  {...parseCard(card)}
+                  variant={variant}
+                  trump={parseCard(card).suit === trumpSuit}
+                />
               </motion.div>
             )
           })}
