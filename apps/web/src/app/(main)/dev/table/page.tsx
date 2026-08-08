@@ -93,12 +93,19 @@ export default function TableMockupPage() {
       {/* top HUD */}
       <div className={styles.hud}>
         <div className={styles.roundChip}>
-          <span className={styles.roundValue}>
-            {phase === 'betting' ? 'Apostas' : 'Jogando carta 1 de 3'}
-          </span>
-          <span className={styles.roundBets}>
-            Pedidas <b>{phase === 'betting' ? 1 : 3}</b> de 3
-          </span>
+          <div className={styles.roundStatus}>
+            <div className={styles.roundLines}>
+              <span className={styles.roundValue}>
+                {phase === 'betting' ? 'Apostas' : 'Jogando carta 1'}
+              </span>
+              <span className={styles.roundBets}>
+                Pedidas <b>{phase === 'betting' ? 1 : 3}</b>
+              </span>
+            </div>
+            <span className={styles.roundTotal}>
+              <i className={styles.roundTotalPrefix}>de</i>3
+            </span>
+          </div>
         </div>
         <div className={styles.trunfo}>
           <span className={styles.trunfoLabel}>Trunfo</span>

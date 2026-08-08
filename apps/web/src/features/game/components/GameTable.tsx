@@ -347,12 +347,23 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [], roundLabel }
       <div className={styles.hud}>
         <div className={styles.roundChip}>
           {roundLabel && <span className={styles.roundLabel}>{roundLabel}</span>}
-          <span className={styles.roundValue}>
-            {state.betting ? 'Apostas' : `Jogando carta ${cardBeingPlayed} de ${cardsInRound}`}
-          </span>
-          <span className={styles.roundBets}>
-            Pedidas <b>{betsAsked}</b> de {cardsInRound}
-          </span>
+          {/* both lines are counted against the same total, so the total is
+              said once, big, on the right — "de 5" twice was the same fact
+              printed twice */}
+          <div className={styles.roundStatus}>
+            <div className={styles.roundLines}>
+              <span className={styles.roundValue}>
+                {state.betting ? 'Apostas' : `Jogando carta ${cardBeingPlayed}`}
+              </span>
+              <span className={styles.roundBets}>
+                Pedidas <b>{betsAsked}</b>
+              </span>
+            </div>
+            <span className={styles.roundTotal}>
+              <i className={styles.roundTotalPrefix}>de</i>
+              {cardsInRound}
+            </span>
+          </div>
         </div>
         {state.trunfo && (
           <div className={styles.trunfo}>
