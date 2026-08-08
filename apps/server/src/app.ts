@@ -107,6 +107,9 @@ const PERSIST_TRIGGERS = new Set<string>([
   'scoreboard-hidden',
   'bot-took-over',
   'player-rejoined',
+  // Passing the baseado is a deliberate decision mid-trick, so it doesn't
+  // survive on the trick's settle points alone. Bounded by its own cooldown.
+  'baseado-passed',
 ])
 
 /**

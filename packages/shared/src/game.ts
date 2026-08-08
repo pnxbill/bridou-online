@@ -24,6 +24,11 @@ export interface RoundPlayer extends PlayerInfo {
   bet: number | null
   made: number | null
   points: number | null
+  /**
+   * Tricks that resolved while this player held the baseado (see `baseado.ts`).
+   * Optional because rounds played before the blunt existed have none.
+   */
+  tragadas?: number
 }
 
 export interface ScoreboardEntry extends PlayerInfo {
@@ -52,6 +57,11 @@ export interface RoundSnapshot {
   whoMade: RoundPlayer[]
   /** Players who missed their bet this round (set when the round ends). */
   bailadores: RoundPlayer[]
+  /**
+   * Who's holding the baseado right now. Absent when the table isn't playing
+   * with one (the Mão do Dia) or on a round dealt before it existed.
+   */
+  baseadoHolderId?: string | null
 }
 
 export interface GameSnapshot {

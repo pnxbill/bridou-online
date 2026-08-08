@@ -23,6 +23,8 @@ export interface RoundPlayerData {
   bet: number | null
   made: number | null
   points: number | null
+  /** Absent on rows written before the baseado existed — read as zero. */
+  tragadas?: number
 }
 
 /** One trick. Players are referenced by id in play order; the round owns the objects. */
@@ -43,12 +45,26 @@ export interface CurrentRoundState {
   currentTurn: TurnState | null
   whoMadeIds: string[]
   bailadoresIds: string[]
+  /**
+   * Whether this table plays with a baseado, and who's holding it. Stored on
+   * the round rather than the game because the whole feature lives inside a
+   * round — and because this column is jsonb, so it costs no migration.
+   * Absent on rows written before it existed: those tables played without one.
+   */
+  baseado?: boolean
+  baseadoHolderId?: string | null
 }
 
 /** A finished round's contribution to the scoreboard — the only thing re-read. */
 export interface CompletedRoundResult {
   roundNumber: number
-  results: { id: string; bet: number | null; made: number | null; points: number | null }[]
+  results: {
+    id: string
+    bet: number | null
+    made: number | null
+    points: number | null
+    tragadas?: number
+  }[]
 }
 
 /** Everything needed to rebuild a `Game`. */

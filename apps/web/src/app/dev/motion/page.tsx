@@ -57,6 +57,7 @@ const IDLE: GameViewState = {
   lastTrickWinnerId: null,
   bailadores: [],
   lastRoundResult: null,
+  baseadoHolderId: 'p1',
   scoreboard: null,
   gameOver: false,
   abandoned: [],
@@ -80,6 +81,12 @@ export default function MotionDevPage() {
   const myCards = useRef<Card[]>([])
   const oppCards = useRef<Record<string, Card[]>>({})
   const trick = useRef<Card[]>([])
+  /* o baseado: who has it and what each seat has smoked this round, so the
+     fixture can drive the flight between seats and the ember burning down */
+  const baseado = useRef<{ holder: string; tragadas: Record<string, number> }>({
+    holder: 'me',
+    tragadas: {},
+  })
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
   useEffect(() => () => timers.current.forEach(clearTimeout), [])
 
@@ -103,6 +110,7 @@ export default function MotionDevPage() {
     timers.current = []
     myCards.current = [...MY_HAND]
     oppCards.current = Object.fromEntries(Object.entries(OPP_HANDS).map(([id, c]) => [id, [...c]]))
+    baseado.current = { holder: 'me', tragadas: {} }
 
     dispatch({
       type: 'apply-event',
@@ -119,12 +127,35 @@ export default function MotionDevPage() {
           currentTurn: null,
           whoMade: [],
           bailadores: [],
+          baseadoHolderId: 'me',
         },
       },
     })
     dispatch({ type: 'apply-event', event: { type: 'cards-dealt', playerId: 'me', cards: MY_HAND } })
     // let the cards land in the fan, then open the first trick
     later(MY_HAND.length * 130 + 600, startTurn)
+  }
+
+  /**
+   * The trick that just landed burns a tragada for whoever's holding it, and
+   * then it goes round the roda — which is the pair of motions this fixture
+   * exists to tune: the ember shortening, and the flight to the next seat.
+   */
+  const burnBaseado = () => {
+    const { holder } = baseado.current
+    const tragadas = (baseado.current.tragadas[holder] ?? 0) + 1
+    baseado.current.tragadas[holder] = tragadas
+    dispatch({ type: 'apply-event', event: { type: 'baseado-puffed', playerId: holder, tragadas } })
+
+    later(700, () => {
+      const seat = PLAYERS.findIndex((p) => p.id === holder)
+      const next = PLAYERS[(seat + 1) % PLAYERS.length]!.id
+      baseado.current.holder = next
+      dispatch({
+        type: 'apply-event',
+        event: { type: 'baseado-passed', fromPlayerId: holder, toPlayerId: next },
+      })
+    })
   }
 
   const playCard = (card: HandCard) => {
@@ -164,6 +195,7 @@ export default function MotionDevPage() {
         type: 'apply-event',
         event: { type: 'turn-ended', turn: turnSnapshot(trick.current), winnerId: winner.id },
       })
+      burnBaseado()
       // same pacing as the engine's TRICK_RESOLUTION_MS
       if (myCards.current.length > 0) later(1500, startTurn)
     })

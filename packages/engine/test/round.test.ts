@@ -1,3 +1,4 @@
+import { BASEADO_FREE_TRAGADAS, baseadoPoints } from '@bridou/shared'
 import { describe, expect, it, vi } from 'vitest'
 import { Round, cardsForRound } from '../src/round'
 import type { RoundPlayerState } from '../src/player'
@@ -49,6 +50,7 @@ describe('start', () => {
     expect(publisher.events.map((e) => e.type)).toEqual([
       'round-started',
       'trunfo-set',
+      'baseado-passed',
       'cards-dealt',
       'cards-dealt',
       'cards-dealt',
@@ -223,12 +225,13 @@ describe('a full round', () => {
     expect(onComplete).toHaveBeenCalledTimes(1)
   })
 
-  it('gives 10 + tricks to exact bets and -1 to the rest', () => {
+  it('gives 10 + tricks to exact bets and -1 to the rest, plus the baseado', () => {
     const { players } = playRound(7)
     players.forEach((player) => {
       expect(player.made).not.toBeNull()
-      if (player.bet === player.made) expect(player.points).toBe(10 + player.made!)
-      else expect(player.points).toBe(-1)
+      const exact = player.bet === player.made
+      const base = exact ? 10 + player.made! : -1
+      expect(player.points).toBe(base + baseadoPoints(player.tragadas, exact))
     })
   })
 
@@ -242,7 +245,8 @@ describe('a full round', () => {
 
   it('reports players who missed their bet as bailadores', () => {
     const { round, publisher, players } = playRound(7)
-    const missed = players.filter((p) => p.points === -1).map((p) => p.id)
+    // From the bet, not the points: the baseado moves the number off -1.
+    const missed = players.filter((p) => p.bet !== p.made).map((p) => p.id)
     expect(round.bailadores.map((b) => b.id)).toEqual(missed)
     expect(publisher.last('round-ended')?.bailadores.map((b) => b.id)).toEqual(missed)
   })

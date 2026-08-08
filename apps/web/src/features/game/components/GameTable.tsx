@@ -9,6 +9,7 @@ import { timeOfDayFor } from '../ambience'
 import { parseCard, winningCardIndex } from '../cards'
 import type { GameViewState } from '../reducer'
 import {
+  playBaseadoPuffSound,
   playBetSound,
   playCardSound,
   playDealSound,
@@ -18,6 +19,7 @@ import {
   playYourTurnSound,
   unlockGameAudio,
 } from '../sounds'
+import { Baseado } from './Baseado'
 import { PlayerHand } from './PlayerHand'
 import { TrickHistoryPopup, type AnchorRect } from './TrickHistoryPopup'
 import styles from './GameTable.module.css'
@@ -239,6 +241,22 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [], roundLabel }
     if (state.dealSeq > prev) playDealSound()
   }, [state.dealSeq])
 
+  /* o baseado: one per table, drawn at whoever's holding it */
+  const holder = state.baseadoHolderId
+  const tragadasOf = (id: string) => state.players.find((p) => p.id === id)?.tragadas ?? 0
+  const baseadoAt = (id: string) =>
+    holder === id ? <Baseado layoutId="baseado" tragadas={tragadasOf(id)} /> : null
+
+  /* soft inhale each time a trick burns one — skip first paint and resync */
+  const holderTragadas = holder ? tragadasOf(holder) : 0
+  const prevTragadas = useRef<number | null>(null)
+  useEffect(() => {
+    const prev = prevTragadas.current
+    prevTragadas.current = holderTragadas
+    if (prev === null) return
+    if (holderTragadas > prev) playBaseadoPuffSound()
+  }, [holderTragadas])
+
   const winningIdx = winningCardIndex(state.playedCards, state.trunfo)
   const madeOf = (id: string) => state.madeByPlayer[id] ?? 0
   const isBotSeat = (p: RoundPlayer) => p.isBot || state.botSeats.includes(p.id)
@@ -411,6 +429,9 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [], roundLabel }
               </button>
               <span className={styles.seatName}>{seat.name}</span>
               {seatChip(seat, seat.id === activeId)}
+              {holder === seat.id && (
+                <span className={styles.seatBaseado}>{baseadoAt(seat.id)}</span>
+              )}
               {revealed.length > 0 && (
                 <div className={styles.seatHand} aria-label={`cartas de ${seat.name}`}>
                   {revealed.map((card) => (
@@ -475,6 +496,9 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [], roundLabel }
 
         {me && (
           <div className={styles.mySeat}>
+            {holder === me.id && (
+              <span className={styles.myBaseado}>{baseadoAt(me.id)}</span>
+            )}
             <button
               type="button"
               className={`${styles.myChip} ${styles.myChipBtn} ${myTurn ? styles.myChipTurn : ''} ${

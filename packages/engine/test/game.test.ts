@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { TOTAL_ROUNDS } from '@bridou/shared'
+import { TOTAL_ROUNDS, baseadoPoints } from '@bridou/shared'
 import { Game } from '../src/game'
 import {
   ManualScheduler,
@@ -83,11 +83,13 @@ describe('a full game', () => {
     expect(firstBettors).toEqual(expected)
   })
 
-  it('scores every round as exact-bet (10 + made) or miss (-1)', () => {
+  it('scores every round as exact-bet (10 + made) or miss (-1), plus the baseado', () => {
     const { game } = finished({ seed: 3 })
     game.rounds.forEach((round) => {
       round.players.forEach((player) => {
-        const expected = player.bet === player.made ? 10 + player.made! : -1
+        const exact = player.bet === player.made
+        const expected =
+          (exact ? 10 + player.made! : -1) + baseadoPoints(player.tragadas, exact)
         expect(player.points).toBe(expected)
       })
     })

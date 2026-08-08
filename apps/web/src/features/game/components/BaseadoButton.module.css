@@ -1,0 +1,79 @@
+/* Lives inside TableDock (bottom-left rim) — it owns the position. */
+.button {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 2.6rem;
+  padding: 0 0.7rem 0 0.55rem;
+  border-radius: 1.3rem;
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  background: rgb(15 23 42 / 84%);
+  backdrop-filter: blur(8px);
+  color: #fcd34d;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.button:active {
+  transform: scale(0.94);
+}
+
+/* past the free tragadas it stops paying and starts costing — say so loudly */
+.button[data-hot] {
+  border-color: rgba(248, 113, 113, 0.6);
+  color: #fca5a5;
+  animation: nag 1.6s ease-in-out infinite;
+}
+
+.icon {
+  /* the drawn blunt needs its own room inside the pill */
+  display: inline-flex;
+  width: 34px;
+  height: 10px;
+  flex: none;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+}
+
+.hint {
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #94a3b8;
+}
+
+.button[data-hot] .hint {
+  color: #fca5a5;
+}
+
+@keyframes nag {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(248 113 113 / 0%);
+  }
+  50% {
+    box-shadow: 0 0 14px 1px rgb(248 113 113 / 35%);
+  }
+}
+
+@media (max-height: 700px) {
+  .button {
+    height: 2.3rem;
+    font-size: 0.7rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button[data-hot] {
+    animation: none;
+  }
+}

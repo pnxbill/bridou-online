@@ -16,6 +16,7 @@ const round = (over: Partial<RoundContext> = {}): RoundContext => ({
   bet: 1,
   made: 1,
   points: 11,
+  tragadas: 0,
   exactStreak: 1,
   bailStreak: 0,
   winningCards: [],
@@ -118,6 +119,24 @@ describe('roundAchievements', () => {
     expect(roundAchievements(round({ bailStreak: 3 }))).toContain('pe-frio')
     expect(roundAchievements(round({ bailStreak: 3 }))).not.toContain('bailador-nato')
     expect(roundAchievements(round({ bailStreak: 4 }))).toContain('bailador-nato')
+  })
+
+  it('awards puxa-tres-e-passa for landing the bet on exactly three tragadas', () => {
+    const bet = { bet: 2, made: 2 }
+    expect(roundAchievements(round({ ...bet, tragadas: 3 }))).toContain('puxa-tres-e-passa')
+    expect(roundAchievements(round({ ...bet, tragadas: 2 }))).not.toContain('puxa-tres-e-passa')
+    expect(roundAchievements(round({ ...bet, tragadas: 4 }))).not.toContain('puxa-tres-e-passa')
+    // the bet still has to land — the baseado is a side bet, not a substitute
+    expect(roundAchievements(round({ bet: 2, made: 1, tragadas: 3 })))
+      .not.toContain('puxa-tres-e-passa')
+  })
+
+  it('roasts a bailador who turned the baseado into a cachimbo', () => {
+    const bailou = { bet: 2, made: 1 }
+    expect(roundAchievements(round({ ...bailou, tragadas: 4 }))).toContain('cachimbo')
+    expect(roundAchievements(round({ ...bailou, tragadas: 3 }))).not.toContain('cachimbo')
+    // hogging it and still hitting the bet is a flex, not a roast
+    expect(roundAchievements(round({ bet: 2, made: 2, tragadas: 5 }))).not.toContain('cachimbo')
   })
 
   it('awards trunfo-magro only for a low card of the trump suit', () => {

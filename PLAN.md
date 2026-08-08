@@ -193,6 +193,27 @@ written and never read; and there was no reason to open the app alone.
   exhaustive search of every bet and every legal line, so a result reads "12 of
   a possible 15". One attempt/day, streaks, and a spoiler-free share grid.
   `/diaria`, fixture at `/dev/diaria`
+- [x] **O baseado** — a lit blunt goes around the table, and holding it is a
+  **side bet on your own bet**. Each round lights it with the first bettor (a
+  seat that rotates every round, so it cycles the table on its own) and its
+  holder passes it to the next seat whenever they like. Every trick that
+  resolves in your hands is a **tragada**: at round end each one pays +1 if you
+  landed your bet and costs 1 if you bailou. And *não vira cachimbo* — past the
+  third tragada the barato is over but the burn isn't, so on a made bet the
+  curve peaks at three and comes down (1:+1 … 3:+3, 4:+2 … 7:−1) and nursing it
+  through a whole round leaves you worse off than never touching it. That makes
+  the decision live: hold while you're cruising, dump it the moment the round
+  turns — which is why *passing the baseado is the best tell in the game*.
+  It burns on the round's own clock, so the whole rule is **pure engine**
+  (`Round.passBaseado`, `baseadoPoints` in `@bridou/shared`) — deterministic,
+  persisted through `toState`, replayed from a seed. Bots decide with
+  `shouldPassBaseado` off the public snapshot: never past the free tragadas,
+  and out the moment their bet is unreachable. On the felt it flies between
+  seats on a shared layout id, burns down and reddens as it goes; the dock
+  grows a "passa aí" button only while it's yours, and the round-end overlay
+  settles the tab. Two conquistas ride it (`puxa-tres-e-passa`, `cachimbo`).
+  The Mão do Dia opts out (`baseado: false`) — a solo puzzle scored against par
+  has nobody to pass anything to
 - [x] **Pausa deliberada** — any seat can pause the table with no timer; only
   whoever paused (or the leader) resumes. Distinct from the abandonment pause
 - [x] **Imersão** — rodada cega as a set piece (dimmed room, spotlit felt,
@@ -211,6 +232,11 @@ Deferred, in rough priority order:
 - [ ] Mesa-scoped Mão do Dia leaderboard (today it's global)
 - [ ] Persist the deliberate pause across a server restart (it's in-memory, so
   a restart resumes the table)
+- [ ] A lobby toggle for the baseado, for a table that would rather play
+  without one — the engine flag (`GameConfig.baseado`) already exists, so it's
+  a lobby field and a switch
+- [ ] Mention the baseado in the resenha: who nursed it, what it cost them,
+  and the round it decided
 
 ## 9. Voice Chat (P2P WebRTC mesh)
 

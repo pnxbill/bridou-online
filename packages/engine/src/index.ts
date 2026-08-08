@@ -1,4 +1,11 @@
-export { createHeuristicBot, heuristicPickBlindBet, type BetView, type BotStrategy, type PlayView } from './bot'
+export {
+  createHeuristicBot,
+  heuristicPickBlindBet,
+  shouldPassBaseado,
+  type BetView,
+  type BotStrategy,
+  type PlayView,
+} from './bot'
 export { createMonteCarloBot, type MonteCarloOptions } from './monte-carlo-bot'
 export { Game, type GameConfig, type GameDeps } from './game'
 export { Round, TRICK_RESOLUTION_MS, cardsForRound, type RoundDeps } from './round'

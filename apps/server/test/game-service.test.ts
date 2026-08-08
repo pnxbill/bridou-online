@@ -1,4 +1,9 @@
-import type { DomainEvent, LobbySnapshot, PlayerInfo } from '@bridou/shared'
+import {
+  BASEADO_PASS_COOLDOWN_MS,
+  type DomainEvent,
+  type LobbySnapshot,
+  type PlayerInfo,
+} from '@bridou/shared'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { AbandonmentService } from '../src/application/abandonment'
 import { GameService } from '../src/application/game-service'
@@ -273,6 +278,70 @@ describe('GameService', () => {
 
       const entry = await service.enterGame(game.id, 'a')
       expect(entry.pausedBy).toBe('b')
+    })
+  })
+
+  describe('o baseado', () => {
+    const eventsOfType = (type: DomainEvent['type']) =>
+      gateway.published.filter((p) => p.event.type === type)
+
+    it('lights it with the first bettor and passes it on request', () => {
+      const lobby = lobbyWith('a', 'b')
+      const game = service.startGame(lobby.code, 'a')
+
+      expect(game.currentRound.baseadoHolderId).toBe('a')
+      service.passBaseado(game.id, 'a')
+
+      expect(game.currentRound.baseadoHolderId).toBe('b')
+      expect(eventsOfType('baseado-passed')).toHaveLength(2) // lit, then passed
+    })
+
+    it('refuses a pass from anyone but its holder', () => {
+      const lobby = lobbyWith('a', 'b')
+      const game = service.startGame(lobby.code, 'a')
+
+      expect(() => service.passBaseado(game.id, 'b')).toThrow(/não tá com você/i)
+      expect(() => service.passBaseado(game.id, 'stranger')).toThrow()
+      expect(game.currentRound.baseadoHolderId).toBe('a')
+    })
+
+    it('refuses a pass while the table is paused', () => {
+      const lobby = lobbyWith('a', 'b')
+      const game = service.startGame(lobby.code, 'a')
+
+      service.pauseGame(game.id, 'b')
+      expect(() => service.passBaseado(game.id, 'a')).toThrow(/pausada/i)
+    })
+
+    it('rate-limits passing so two seats cannot ping-pong it', () => {
+      let now = 0
+      const games = new InMemoryGameRepository()
+      const clocked = new GameService(
+        games,
+        new LobbyRegistry(),
+        gateway,
+        new AbandonmentService({ games }),
+        { now: () => now },
+      )
+      const lobby = clocked.createLobby(player('a'))
+      clocked.joinLobby(lobby.code, player('b'))
+      const game = clocked.startGame(lobby.code, 'a')
+
+      clocked.passBaseado(game.id, 'a')
+      expect(() => clocked.passBaseado(game.id, 'b')).toThrow(/calma/i)
+
+      now += BASEADO_PASS_COOLDOWN_MS
+      clocked.passBaseado(game.id, 'b')
+      expect(game.currentRound.baseadoHolderId).toBe('a')
+    })
+
+    it('reports the holder in the reconnect snapshot', async () => {
+      const lobby = lobbyWith('a', 'b')
+      const game = service.startGame(lobby.code, 'a')
+      service.passBaseado(game.id, 'a')
+
+      const entry = await service.enterGame(game.id, 'b')
+      expect(entry.currentRound.baseadoHolderId).toBe('b')
     })
   })
 })

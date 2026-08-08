@@ -148,6 +148,13 @@ export const createRoutes = (deps: RouteDeps): Router => {
     })
   })
 
+  routes.post('/api/pass-baseado', auth, (req: Request, res: Response) => {
+    respond(res, () => {
+      service.passBaseado(requireString(req.body.gameId, 'gameId'), player(req).id)
+      return {}
+    })
+  })
+
   routes.post('/api/pause', auth, (req: Request, res: Response) => {
     respond(res, () => {
       service.pauseGame(requireString(req.body.gameId, 'gameId'), player(req).id)

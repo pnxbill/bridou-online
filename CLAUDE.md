@@ -82,8 +82,13 @@ Invariants worth preserving:
   (`apps/server/src/http/auth.ts`). SSE takes `?token=`; no token means spectator (public events,
   no presence).
 - **Bots use the same doors as humans.** A bot seat sees only `snapshot()` + `clientPerspective()`
-  and acts through `GameService.placeBet` / `playCard`. There is no engine backdoor, which is why
-  bots can't cheat by construction.
+  and acts through `GameService.placeBet` / `playCard` / `passBaseado`. There is no engine
+  backdoor, which is why bots can't cheat by construction.
+- **Rules go in the engine, session concerns go in the server.** The provocações and the
+  deliberate pause live in `GameService` because they need a wall clock; the baseado does not —
+  it burns one tragada per completed trick, so it's a rule, it lives in `Round`, and it replays
+  from a seed like everything else. If a new mechanic can be expressed on the round's own clock,
+  that's where it belongs.
 
 ### Server composition (`apps/server/src/app.ts`)
 
@@ -170,6 +175,16 @@ Invariants worth preserving:
 trick taken. The last round is **blind**: you see everyone else's cards, not your own (the wire
 sends `HIDDEN_CARD` for yours). The mid-game scoreboard pops after round 7. A game counts toward
 the ranking (`ranked`) only if no seat was a bot at kickoff — a mid-game bot takeover still counts.
+
+The **baseado** goes around the table (`packages/shared/src/baseado.ts` is the whole rule). Each
+round lights it with the first bettor — a seat that rotates every round, so it cycles on its own —
+and its holder may pass it to the next seat at any time. Every trick that resolves in your hands
+is a **tragada**; at round end each one pays +1 if you landed your bet and costs 1 if you bailou,
+and past the third (`BASEADO_FREE_TRAGADAS`) the bonus turns into a burn, so on a made bet the
+curve peaks at three and comes back down. Holding it is a side bet on your own bet — which makes
+passing it a tell. `baseadoPoints` is the single source of truth: the engine scores with it and
+the UI explains the number with it. **Bailadores are read off the bet (`bet !== made`), never off
+`points === -1`** — the baseado moves the number.
 
 ## Deployment
 

@@ -302,6 +302,20 @@
   filter: brightness(0.55) saturate(0.8);
 }
 
+/*
+ * O baseado sits just above whoever's holding it — absolutely positioned in
+ * both cases so a seat doesn't jump when the thing arrives, and so the shared
+ * layout animation has a stable box to fly between.
+ */
+.seatBaseado,
+.myBaseado {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 3px);
+  translate: -50% 0;
+  z-index: 6;
+}
+
 /* my seat chip on the near rim */
 
 .mySeat {

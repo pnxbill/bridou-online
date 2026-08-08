@@ -10,13 +10,20 @@ import { AbandonedOverlay } from '@/features/game/components/AbandonedOverlay'
 import { RoundEndOverlay } from '@/features/game/components/RoundEndOverlay'
 import { ScoreboardOverlay } from '@/features/game/components/ScoreboardOverlay'
 
-const player = (name: string, bet: number, made: number, isBot = false): RoundPlayer => ({
+const player = (
+  name: string,
+  bet: number,
+  made: number,
+  isBot = false,
+  tragadas = 0,
+): RoundPlayer => ({
   id: name,
   name,
   ...(isBot && { isBot }),
   bet,
   made,
   points: null,
+  tragadas,
 })
 
 const SCOREBOARD: ScoreboardEntry[] = [
@@ -26,7 +33,16 @@ const SCOREBOARD: ScoreboardEntry[] = [
   { id: 'carol', name: 'Carol', totalPoints: -2 },
 ]
 
-type Moment = 'none' | 'bailou' | 'bailaram' | 'ninguem' | 'placar' | 'fim' | 'pausada'
+type Moment =
+  | 'none'
+  | 'bailou'
+  | 'bailaram'
+  | 'ninguem'
+  | 'brisa'
+  | 'cachimbo'
+  | 'placar'
+  | 'fim'
+  | 'pausada'
 
 export default function MomentsDevPage() {
   const [moment, setMoment] = useState<Moment>('none')
@@ -35,6 +51,8 @@ export default function MomentsDevPage() {
     { key: 'bailou', label: 'Bailou (1)' },
     { key: 'bailaram', label: 'Bailaram (2)' },
     { key: 'ninguem', label: 'Ninguém bailou' },
+    { key: 'brisa', label: 'Baseado pagou' },
+    { key: 'cachimbo', label: 'Baseado cobrou' },
     { key: 'placar', label: 'Placar (meio)' },
     { key: 'fim', label: 'Fim de jogo' },
     { key: 'pausada', label: 'Pausada' },
@@ -74,6 +92,30 @@ export default function MomentsDevPage() {
       )}
       {moment === 'ninguem' && (
         <RoundEndOverlay key="3" playerId="Ana" result={{ round: 4, bailadores: [] }} />
+      )}
+      {/* the baseado's two faces: three tragadas on a made bet, and the same
+          blunt nursed through a whole round that ended in a bailada */}
+      {moment === 'brisa' && (
+        <RoundEndOverlay
+          key="4"
+          playerId="Ana"
+          result={{
+            round: 6,
+            bailadores: [],
+            players: [player('Ana', 2, 2, false, 3), player('Rafa', 1, 1)],
+          }}
+        />
+      )}
+      {moment === 'cachimbo' && (
+        <RoundEndOverlay
+          key="5"
+          playerId="Ana"
+          result={{
+            round: 7,
+            bailadores: [player('Ana', 3, 1, false, 6)],
+            players: [player('Ana', 3, 1, false, 6), player('Rafa', 2, 2)],
+          }}
+        />
       )}
       {moment === 'placar' && (
         <ScoreboardOverlay scoreboard={SCOREBOARD} onClose={() => setMoment('none')} />

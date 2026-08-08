@@ -14,7 +14,12 @@ export type DomainEvent =
   // round lifecycle
   | { type: 'round-started'; round: RoundSnapshot }
   | { type: 'trunfo-set'; trunfo: Card }
-  | { type: 'round-ended'; bailadores: RoundPlayer[] }
+  /**
+   * `players` is the whole table as it finished, so a client can explain the
+   * round without recomputing the scoring (baseado included). Optional because
+   * logs recorded before it existed don't carry it.
+   */
+  | { type: 'round-ended'; bailadores: RoundPlayer[]; players?: RoundPlayer[] }
   // private, per-player
   | { type: 'cards-dealt'; playerId: string; cards: Card[] }
   /** Blind round only: everyone else's cards, never the viewer's. */
@@ -27,6 +32,12 @@ export type DomainEvent =
   | { type: 'turn-started'; turn: TurnSnapshot }
   | { type: 'card-played'; playerId: string; card: Card; playedCards: Card[] }
   | { type: 'turn-ended'; turn: TurnSnapshot; winnerId: string }
+  // o baseado — the blunt going around the table (see baseado.ts). Engine
+  // events: it burns on the round's own clock, so no wall clock is involved.
+  /** It changed hands. `fromPlayerId` is null when the round lights it. */
+  | { type: 'baseado-passed'; fromPlayerId: string | null; toPlayerId: string }
+  /** A trick resolved in someone's hands — one more tragada on their tab. */
+  | { type: 'baseado-puffed'; playerId: string; tragadas: number }
   // scoring / game end
   | { type: 'scoreboard-shown'; scoreboard: ScoreboardEntry[] }
   | { type: 'scoreboard-hidden' }

@@ -9,23 +9,36 @@
 import type { RoundPlayer } from '@bridou/shared'
 import { useState } from 'react'
 import { AppHeader } from '@/components/AppHeader'
+import { BaseadoButton } from '@/features/game/components/BaseadoButton'
+import { EmoteWheel } from '@/features/game/components/EmoteWheel'
 import { GameTable } from '@/features/game/components/GameTable'
+import { PauseButton } from '@/features/game/components/PauseButton'
+import { TableDock } from '@/features/game/components/TableDock'
 import type { GameViewState } from '@/features/game/reducer'
 
-const player = (id: string, name: string, bet: number | null, isBot = false): RoundPlayer => ({
+const player = (
+  id: string,
+  name: string,
+  bet: number | null,
+  isBot = false,
+  tragadas = 0,
+): RoundPlayer => ({
   id,
   name,
   isBot,
   bet,
   made: null,
   points: null,
+  tragadas,
 })
 
 /* deliberately long names — the truncation has to hold */
 const SEVEN: RoundPlayer[] = [
   player('me', 'Você', 2),
   player('p1', 'Ana Beatriz Souza', 1),
-  player('p2', 'Bot Marley', 0, true),
+  // holding the baseado well past its free tragadas: the ember goes red and
+  // the tally shows, which is the state that has to survive a crowded rim
+  player('p2', 'Bot Marley', 0, true, 5),
   player('p3', 'Rafael Guimarães', 2),
   player('p4', 'Carolzinha', 1),
   player('p5', 'João Pedro Lima', 0),
@@ -68,6 +81,8 @@ function makeState(players: RoundPlayer[], betting: boolean): GameViewState {
     lastTrickWinnerId: null,
     bailadores: [],
     lastRoundResult: null,
+    // a crowded table is exactly where the baseado has to stay legible
+    baseadoHolderId: players[2]?.id ?? null,
     scoreboard: null,
     gameOver: false,
     abandoned: [],
@@ -82,6 +97,8 @@ function makeState(players: RoundPlayer[], betting: boolean): GameViewState {
 export default function EdgeLayoutFixturePage() {
   const [seven, setSeven] = useState(true)
   const [betting, setBetting] = useState(false)
+  /** Tragadas on MY tab, so the dock button can be seen paying and costing. */
+  const [myTragadas, setMyTragadas] = useState(2)
 
   const state = makeState(seven ? SEVEN : FOUR, betting)
 
@@ -89,12 +106,25 @@ export default function EdgeLayoutFixturePage() {
     <>
       <AppHeader variant="floating" />
       <GameTable state={state} onPlay={() => {}} onBet={() => {}} />
+      {/* the real rim: the dock is the only place an in-game control may live,
+          so the baseado button has to fit next to pause and the provocações */}
+      <TableDock>
+        <PauseButton onPause={() => {}} />
+        <EmoteWheel onSend={() => {}} />
+        <BaseadoButton
+          tragadas={myTragadas}
+          onPass={() => setMyTragadas((t) => (t + 1) % 7)}
+        />
+      </TableDock>
       <div style={{ position: 'fixed', top: 70, left: 10, zIndex: 50, display: 'flex', gap: 6 }}>
         <button style={toggleStyle} onClick={() => setSeven((v) => !v)}>
           {seven ? '7 jogadores' : '4 jogadores'}
         </button>
         <button style={toggleStyle} onClick={() => setBetting((v) => !v)}>
           {betting ? 'apostando' : 'jogando'}
+        </button>
+        <button style={toggleStyle} onClick={() => setMyTragadas((t) => (t + 1) % 7)}>
+          {myTragadas} tragadas
         </button>
       </div>
     </>

@@ -1,6 +1,7 @@
 import {
   GameError,
   createMonteCarloBot,
+  shouldPassBaseado,
   systemScheduler,
   type BotStrategy,
   type Game,
@@ -14,6 +15,7 @@ import type { PresenceListener } from './presence'
 export interface SeatActions {
   placeBet(gameId: string, playerId: string, bet: number): void
   playCard(gameId: string, playerId: string, card: string): void
+  passBaseado(gameId: string, playerId: string): void
 }
 
 export interface AbandonmentConfig {
@@ -155,6 +157,37 @@ export class AbandonmentService implements PresenceListener {
       this.botSeats.get(gameId)?.has(event.playerId)
     ) {
       this.scheduler.schedule(() => this.actIfBotTurn(gameId), this.botThinkMs)
+    }
+    // A bot decides about the baseado only after a tragada lands on it, never
+    // on receipt — one decision per trick, so a table gone entirely to bots
+    // can't spin the thing round the roda forever.
+    if (event.type === 'baseado-puffed' && this.botSeats.get(gameId)?.has(event.playerId)) {
+      const playerId = event.playerId
+      this.scheduler.schedule(() => this.passBaseadoIfBot(gameId, playerId), this.botThinkMs)
+    }
+  }
+
+  /**
+   * A bot seat holding the baseado decides whether to let it go, through the
+   * same use-case a human taps — and from `shouldPassBaseado`, which reads
+   * nothing but the public snapshot.
+   */
+  private passBaseadoIfBot(gameId: string, playerId: string): void {
+    try {
+      if (this.abandoned.get(gameId)?.size) return
+      const game = this.games.get(gameId)
+      if (!game || game.finished || !this.botSeats.get(gameId)?.has(playerId)) return
+      if (!this.actions) return
+
+      const round = game.currentRound
+      if (round.isComplete || round.baseadoHolderId !== playerId) return
+
+      const tragadas = round.snapshot().players.find((p) => p.id === playerId)?.tragadas ?? 0
+      if (!shouldPassBaseado({ snapshot: game.snapshot(), playerId, tragadas })) return
+      this.actions.passBaseado(gameId, playerId)
+    } catch (err) {
+      // A pass cooldown or a race with the round ending — never crash for it
+      console.error('bot baseado pass failed', err)
     }
   }
 

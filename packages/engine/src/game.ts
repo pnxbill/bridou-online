@@ -26,6 +26,12 @@ export interface GameConfig {
   id: string
   leaderId: string
   players: PlayerInfo[]
+  /**
+   * Play with a baseado going around the table (see `@bridou/shared/baseado`).
+   * On by default; the Mão do Dia turns it off, because a solo puzzle scored
+   * against par has nobody to pass anything to.
+   */
+  baseado?: boolean
 }
 
 export class Game {
@@ -45,13 +51,15 @@ export class Game {
   private readonly rng: Rng
   /** Pause between rounds so players can see the result. */
   private readonly roundTransitionDelay: number
+  private readonly baseado: boolean
 
-  constructor({ id, leaderId, players }: GameConfig, deps: GameDeps) {
+  constructor({ id, leaderId, players, baseado = true }: GameConfig, deps: GameDeps) {
     if (players.length < 2) throw new GameError('Required at least 2 players')
     if (players.length > MAX_PLAYERS) throw new GameError(`Maximum of ${MAX_PLAYERS} players`)
     this.id = id
     this.leaderId = leaderId
     this.playerOrder = [...players]
+    this.baseado = baseado
     this.publisher = deps.publisher
     this.scheduler = deps.scheduler ?? systemScheduler
     this.rng = deps.rng ?? Math.random
@@ -88,6 +96,11 @@ export class Game {
 
   playCard(playerId: string, card: string): void {
     this.currentRound.playCard(playerId, card)
+  }
+
+  /** Hands the baseado to the next seat. Only its holder may. */
+  passBaseado(playerId: string): void {
+    this.currentRound.passBaseado(playerId)
   }
 
   closeScoreboard(): void {
@@ -146,14 +159,24 @@ export class Game {
    */
   static fromState(state: GameState, deps: GameDeps): Game {
     const game = new Game(
-      { id: state.id, leaderId: state.leaderId, players: state.playerOrder },
+      {
+        id: state.id,
+        leaderId: state.leaderId,
+        players: state.playerOrder,
+        // The flag rides on the round (jsonb, so it costs no migration); a row
+        // written before the baseado existed reloads as a table without one.
+        baseado: state.currentRound?.baseado ?? false,
+      },
       deps,
     )
     game.currentRoundNumber = state.currentRoundNumber
     game.scoreboardShowing = state.scoreboardShowing
 
     const roster = new Map<string, RoundPlayerState>(
-      state.playerOrder.map((p) => [p.id, { ...p, cards: [], bet: null, made: null, points: null }]),
+      state.playerOrder.map((p) => [
+        p.id,
+        { ...p, cards: [], bet: null, made: null, points: null, tragadas: 0 },
+      ]),
     )
     const roundDeps: RoundDeps = {
       publisher: game.publisher,
@@ -230,10 +253,11 @@ export class Game {
       bet: null,
       made: null,
       points: null,
+      tragadas: 0,
     }))
 
     this._currentRound = new Round(
-      { roundNumber: this.currentRoundNumber, players: roundPlayers },
+      { roundNumber: this.currentRoundNumber, players: roundPlayers, baseado: this.baseado },
       {
         publisher: this.publisher,
         rng: this.rng,

@@ -6,6 +6,7 @@ import {
   type RecapAward,
   type RecapRoundPoint,
   type RecapUnlock,
+  type RoundPlayer,
   type ScoreboardEntry,
 } from '@bridou/shared'
 import type { StoredGameEvent } from './ports'
@@ -40,6 +41,18 @@ interface PlayerLog {
 }
 
 const pointsFor = (bet: number, made: number): number => (bet === made ? 10 + made : -1)
+
+/**
+ * What a seat actually scored in a round. `round-ended` carries the settled
+ * table (baseado included), which is the only authority once the blunt can
+ * move the number; logs recorded before it existed fall back to the bet.
+ */
+const scoredPoints = (
+  settled: RoundPlayer[] | undefined,
+  playerId: string,
+  bet: number,
+  made: number,
+): number => settled?.find((p) => p.id === playerId)?.points ?? pointsFor(bet, made)
 
 /**
  * Picks the single clear winner of a superlative. Ties and zero-signal cases
@@ -140,7 +153,7 @@ export const buildRecap = (input: RecapInput): GameRecap | null => {
           if (!log) continue
           const bet = bets.get(id) ?? 0
           const made = tricks.get(id) ?? 0
-          const points = pointsFor(bet, made)
+          const points = scoredPoints(payload.players, id, bet, made)
 
           log.rounds.push({ roundNumber, bet, made, points })
           log.tricks += made

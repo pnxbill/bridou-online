@@ -222,6 +222,34 @@ describe.each<Transport>(['socketio', 'sse'])('game flow over %s', (transport) =
     expect(missing.status).toBe(404)
   })
 
+  it('lights the baseado with the first bettor and passes it round the table', async () => {
+    await waitFor(
+      () => [alice, bob].every((c) => c.ofType('baseado-passed').length === 1),
+      'both see it lit',
+    )
+    expect(alice.ofType('baseado-passed')[0]).toEqual({
+      type: 'baseado-passed',
+      fromPlayerId: null,
+      toPlayerId: 'alice',
+    })
+
+    const notYours = await bob.post('/api/pass-baseado', { gameId })
+    expect(notYours.status).toBe(400)
+
+    const passed = await alice.post('/api/pass-baseado', { gameId })
+    expect(passed.status).toBe(200)
+
+    await waitFor(
+      () => [alice, bob].every((c) => c.ofType('baseado-passed').length === 2),
+      'both see it change hands',
+    )
+    expect(bob.ofType('baseado-passed')[1]).toEqual({
+      type: 'baseado-passed',
+      fromPlayerId: 'alice',
+      toPlayerId: 'bob',
+    })
+  })
+
   it('plays a whole round driven by the event stream', async () => {
     await alice.post('/api/bet', { gameId, bet: 0 })
     await waitFor(() => bob.ofType('bet-requested').length === 1, 'bob asked to bet')
@@ -241,6 +269,16 @@ describe.each<Transport>(['socketio', 'sse'])('game flow over %s', (transport) =
       'the round ends',
     )
     expect(alice.ofType('card-played')).toHaveLength(2)
+
+    // the completed trick burns a tragada for whoever was holding it, and the
+    // settled table rides along so a client can explain the score
+    expect(alice.ofType('baseado-puffed')[0]).toEqual({
+      type: 'baseado-puffed',
+      playerId: 'bob',
+      tragadas: 1,
+    })
+    const settled = alice.ofType('round-ended')[0]!.players
+    expect(settled?.find((p) => p.id === 'bob')?.tragadas).toBe(1)
   })
 
   it('starts round 2 with the table rotated after the transition delay', async () => {

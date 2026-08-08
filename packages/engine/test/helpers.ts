@@ -57,6 +57,7 @@ export const makeRoundPlayer = (id: string, cards: string[]): RoundPlayerState =
   bet: null,
   made: null,
   points: null,
+  tragadas: 0,
 })
 
 /** Anything bots can act on — a Game or a single Round. */

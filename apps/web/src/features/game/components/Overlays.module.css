@@ -292,3 +292,26 @@
   max-width: 18rem;
   line-height: 1.45;
 }
+
+/*
+ * Your own baseado tab for the round. Personal, not a table-wide list: what
+ * matters at the peak of the round is whether the thing you were nursing just
+ * paid you or just cost you.
+ */
+.baseadoLine {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+}
+
+.baseadoLine b {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #34d399;
+}
+
+.baseadoLine[data-cost] b {
+  color: #f87171;
+}

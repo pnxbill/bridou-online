@@ -1,6 +1,7 @@
 import {
   HIDDEN_CARD,
   MAX_CARDS_PER_PLAYER,
+  baseadoPoints,
   isBlindRound,
   type Card,
   type EventPublisher,
@@ -53,16 +54,25 @@ export class Round {
   /** Winner of each completed trick, in order. */
   whoMade: RoundPlayerState[] = []
   bailadores: RoundPlayerState[] = []
+  /** Whether this table plays with a baseado at all (see `@bridou/shared`). */
+  readonly baseado: boolean
+  /** Who's holding it. Null before the round starts, or when there is none. */
+  baseadoHolderId: string | null = null
 
   private readonly deps: RoundDeps
 
   constructor(
-    { roundNumber, players }: { roundNumber: number; players: RoundPlayerState[] },
+    {
+      roundNumber,
+      players,
+      baseado = true,
+    }: { roundNumber: number; players: RoundPlayerState[]; baseado?: boolean },
     deps: RoundDeps,
   ) {
     this.roundNumber = roundNumber
     this.cardsForEachPlayer = cardsForRound(roundNumber)
     this.players = players
+    this.baseado = baseado
     this.deps = deps
   }
 
@@ -81,16 +91,22 @@ export class Round {
       currentTurn: this.currentTurn?.toState() ?? null,
       whoMadeIds: this.whoMade.map((p) => p.id),
       bailadoresIds: this.bailadores.map((p) => p.id),
+      baseado: this.baseado,
+      baseadoHolderId: this.baseadoHolderId,
     }
   }
 
   /** Rebuilds the in-progress round in full so play resumes card-for-card. */
   static fromState(state: CurrentRoundState, deps: RoundDeps): Round {
     const players = state.players.map(fromRoundPlayerData)
-    const round = new Round({ roundNumber: state.roundNumber, players }, deps)
+    const round = new Round(
+      { roundNumber: state.roundNumber, players, baseado: state.baseado ?? false },
+      deps,
+    )
     round.trunfo = state.trunfo
     round.betting = state.betting
     round.currentPlayerIndex = state.currentPlayerIndex
+    round.baseadoHolderId = state.baseadoHolderId ?? null
 
     // The turn must share the round's player objects (playing a card mutates a
     // hand through that reference), so resolve turn players against these.
@@ -117,7 +133,14 @@ export class Round {
     const players = result.results.map((r) => {
       const base = roster.get(r.id)
       if (!base) throw new GameError(`Unknown player in round result: ${r.id}`)
-      return { ...base, cards: [], bet: r.bet, made: r.made, points: r.points }
+      return {
+        ...base,
+        cards: [],
+        bet: r.bet,
+        made: r.made,
+        points: r.points,
+        tragadas: r.tragadas ?? 0,
+      }
     })
     const round = new Round({ roundNumber: result.roundNumber, players }, deps)
     round.betting = false
@@ -133,6 +156,7 @@ export class Round {
         bet: p.bet,
         made: p.made,
         points: p.points,
+        tragadas: p.tragadas,
       })),
     }
   }
@@ -147,10 +171,20 @@ export class Round {
       this.players[i % this.players.length]!.cards.push(deck[i]!)
     }
     this.trunfo = deck[numOfCards]!
+    // The round's first bettor lights it. That seat rotates every round, so the
+    // baseado works its way around the table on its own even if nobody passes.
+    if (this.baseado) this.baseadoHolderId = this.players[0]!.id
 
     const { publisher } = this.deps
     publisher.publish({ type: 'round-started', round: this.snapshot() })
     publisher.publish({ type: 'trunfo-set', trunfo: this.trunfo })
+    if (this.baseadoHolderId) {
+      publisher.publish({
+        type: 'baseado-passed',
+        fromPlayerId: null,
+        toPlayerId: this.baseadoHolderId,
+      })
+    }
     this.players.forEach((player) => {
       // Blind round: own card stays face-down on the wire; everyone else's is revealed.
       publisher.publish({
@@ -243,6 +277,45 @@ export class Round {
     })
   }
 
+  /**
+   * Hands the baseado to the next seat — a roda, so it only ever goes one way
+   * round the table, which is what makes it worth knowing when it's coming
+   * back to you. Legal at any point in the round, including while betting: a
+   * blunt doesn't wait for your turn.
+   */
+  passBaseado(playerId: string): void {
+    if (!this.baseado || !this.baseadoHolderId) throw new GameError('Não tem baseado na mesa')
+    if (this.baseadoHolderId !== playerId) throw new GameError('O baseado não tá com você')
+    if (this.isComplete) throw new GameError('A rodada já acabou')
+
+    const from = this.players.findIndex((p) => p.id === playerId)
+    if (from === -1) throw new GameError(`Unknown player: ${playerId}`)
+    const next = this.players[(from + 1) % this.players.length]!
+
+    this.baseadoHolderId = next.id
+    this.deps.publisher.publish({
+      type: 'baseado-passed',
+      fromPlayerId: playerId,
+      toPlayerId: next.id,
+    })
+  }
+
+  /**
+   * One trick resolved with the baseado in someone's hands. Called on the
+   * round's own clock, which is the whole reason this can live in a pure
+   * engine: it burns in tricks, not seconds.
+   */
+  private puffBaseado(): void {
+    const holder = this.players.find((p) => p.id === this.baseadoHolderId)
+    if (!holder) return
+    holder.tragadas++
+    this.deps.publisher.publish({
+      type: 'baseado-puffed',
+      playerId: holder.id,
+      tragadas: holder.tragadas,
+    })
+  }
+
   playCard(playerId: string, card: Card): void {
     if (!this.currentTurn) throw new GameError('No turn in progress')
     const turn = this.currentTurn
@@ -321,6 +394,7 @@ export class Round {
       currentTurn: this.currentTurn?.snapshot() ?? null,
       whoMade: this.whoMade.map(toRoundPlayer),
       bailadores: this.bailadores.map(toRoundPlayer),
+      baseadoHolderId: this.baseadoHolderId,
     }
   }
 
@@ -348,6 +422,9 @@ export class Round {
     const winner = turn.winner
     this.whoMade.push(winner)
     this.deps.publisher.publish({ type: 'turn-ended', turn: turn.snapshot(), winnerId: winner.id })
+    // The trick is what the baseado burns on, so this has to land before the
+    // round is scored — the last trick's tragada counts like every other one.
+    this.puffBaseado()
 
     const isLastTurn = this.turns.length === this.cardsForEachPlayer
     if (isLastTurn) {
@@ -355,6 +432,7 @@ export class Round {
       this.deps.publisher.publish({
         type: 'round-ended',
         bailadores: this.bailadores.map(toRoundPlayer),
+        players: this.players.map(toRoundPlayer),
       })
       this.deps.onComplete()
     } else {
@@ -363,14 +441,21 @@ export class Round {
     }
   }
 
-  /** Exact bet made: 10 + tricks taken. Missed: -1 (a "bailador"). */
+  /**
+   * Exact bet made: 10 + tricks taken. Missed: -1 (a "bailador"). Then the
+   * baseado settles on top — a side bet on your own bet, paying per tragada if
+   * you landed it and charging per tragada if you didn't.
+   */
   private distributePoints(): void {
     this.players.forEach((player) => {
       const made = this.whoMade.filter((w) => w.id === player.id).length
+      const exact = player.bet === made
       player.made = made
-      player.points = player.bet === made ? 10 + made : -1
+      player.points = (exact ? 10 + made : -1) + baseadoPoints(player.tragadas, exact)
     })
-    this.bailadores = this.players.filter((p) => p.points === -1)
+    // From the bet, never from the points — a bailador who was nursing the
+    // baseado scores below -1, and is no less of a bailador for it.
+    this.bailadores = this.players.filter((p) => p.bet !== p.made)
   }
 
   private checkIfValidBet(bet: number): void {

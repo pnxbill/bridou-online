@@ -1,4 +1,4 @@
-import { TOTAL_ROUNDS } from '@bridou/shared'
+import { TOTAL_ROUNDS, baseadoPoints } from '@bridou/shared'
 import { describe, expect, it } from 'vitest'
 import { Game } from '../src/game'
 import type { Rng } from '../src/ports'
@@ -59,11 +59,13 @@ const nextMove = (game: Game, rng: Rng): boolean => {
   return false
 }
 
-/** Every seat scored exactly bet-hit (10+made) or a bailada (-1) in every round. */
+/** Every seat scored bet-hit (10+made) or a bailada (-1), plus its tragadas. */
 const assertConsistent = (game: Game): void => {
   for (const round of game.rounds) {
     for (const p of round.players) {
-      expect(p.points === -1 || p.points === 10 + (p.made ?? 0)).toBe(true)
+      const exact = p.bet === p.made
+      const expected = (exact ? 10 + (p.made ?? 0) : -1) + baseadoPoints(p.tragadas, exact)
+      expect(p.points).toBe(expected)
     }
   }
   expect(Number.isFinite(game.scoreboard.reduce((a, e) => a + e.totalPoints, 0))).toBe(true)

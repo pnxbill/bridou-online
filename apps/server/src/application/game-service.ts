@@ -1,5 +1,6 @@
 import { Game, GameError, type Scheduler } from '@bridou/engine'
 import {
+  BASEADO_PASS_COOLDOWN_MS,
   EMOTE_COOLDOWN_MS,
   isEmoteId,
   type GameSnapshot,
@@ -33,6 +34,8 @@ export interface EnterGameResult extends GameSnapshot, PlayerPerspective, Sessio
 export class GameService {
   /** `${gameId}:${playerId}` → last emote time, for the cooldown. */
   private readonly lastEmoteAt = new Map<string, number>()
+  /** gameId → last baseado pass, so two seats can't ping-pong it at wire speed. */
+  private readonly lastPassAt = new Map<string, number>()
   /** gameId → the player who paused it. Absent means running. */
   private readonly pausedBy = new Map<string, string>()
 
@@ -174,6 +177,31 @@ export class GameService {
     this.assertNotPaused(gameId)
     this.sessions.assertPlayable(gameId)
     game.playCard(playerId, card)
+  }
+
+  /**
+   * Passes the baseado to the next seat.
+   *
+   * Not turn-bound: a blunt doesn't wait for your turn, and the whole point of
+   * the mechanic is deciding *when* to let go of it. The engine owns who may
+   * pass (only its holder) and where it goes; this layer only adds the two
+   * things the engine has no business knowing about — that a paused table
+   * isn't playing, and that a clock exists, so two seats can't ping-pong it as
+   * fast as the network allows.
+   */
+  passBaseado(gameId: string, playerId: string): void {
+    const game = this.getGame(gameId)
+    if (!game.hasPlayer(playerId)) throw new ForbiddenError("You're not in this game")
+    this.assertNotPaused(gameId)
+    this.sessions.assertPlayable(gameId)
+
+    const now = this.now()
+    const last = this.lastPassAt.get(gameId)
+    if (last !== undefined && now - last < BASEADO_PASS_COOLDOWN_MS) {
+      throw new GameError('Calma, deixa queimar')
+    }
+    game.passBaseado(playerId)
+    this.lastPassAt.set(gameId, now)
   }
 
   /**

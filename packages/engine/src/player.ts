@@ -7,6 +7,8 @@ export interface RoundPlayerState extends PlayerInfo {
   bet: number | null
   made: number | null
   points: number | null
+  /** Tricks that resolved while this player held the baseado, this round. */
+  tragadas: number
 }
 
 /** Serialize a round player, including their hand (persistence only). */
@@ -19,6 +21,7 @@ export const toRoundPlayerData = (player: RoundPlayerState): RoundPlayerData => 
   bet: player.bet,
   made: player.made,
   points: player.points,
+  tragadas: player.tragadas,
 })
 
 /** Rebuild a round player from persisted data. */
@@ -31,6 +34,8 @@ export const fromRoundPlayerData = (data: RoundPlayerData): RoundPlayerState => 
   bet: data.bet,
   made: data.made,
   points: data.points,
+  // rows written before the baseado existed simply never smoked
+  tragadas: data.tragadas ?? 0,
 })
 
 /** The public view of a player: everything except their hand. */
@@ -42,4 +47,5 @@ export const toRoundPlayer = (player: RoundPlayerState): RoundPlayer => ({
   bet: player.bet,
   made: player.made,
   points: player.points,
+  tragadas: player.tragadas,
 })

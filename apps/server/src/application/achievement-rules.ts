@@ -1,4 +1,10 @@
-import { cardSuit, isBlindRound, rankValue, type Card } from '@bridou/shared'
+import {
+  BASEADO_FREE_TRAGADAS,
+  cardSuit,
+  isBlindRound,
+  rankValue,
+  type Card,
+} from '@bridou/shared'
 
 /**
  * The rules that decide which conquistas a player earned.
@@ -17,9 +23,12 @@ export interface RoundOutcome {
   points: number
 }
 
+
 export const pointsFor = (bet: number, made: number): number => (bet === made ? 10 + made : -1)
 
 export interface RoundContext extends RoundOutcome {
+  /** Tricks that resolved with the baseado in this player's hands. */
+  tragadas: number
   /** Consecutive exact bets including this round. */
   exactStreak: number
   /** Consecutive bailadas including this round. */
@@ -39,6 +48,12 @@ export const roundAchievements = (ctx: RoundContext): string[] => {
   if (ctx.cardsForEachPlayer >= 4 && ctx.made === ctx.cardsForEachPlayer) earned.push('varrida')
   if (ctx.bet >= 5 && exact) earned.push('kamikaze')
   if (ctx.cardsForEachPlayer >= 5 && ctx.bet === 0 && exact) earned.push('so-observando')
+
+  // The baseado, played right and played wrong. Landing the bet on exactly the
+  // three tragadas the roda allows is the top of the curve; holding it past
+  // there while bailing is the reason the curve comes down.
+  if (ctx.tragadas === BASEADO_FREE_TRAGADAS && exact) earned.push('puxa-tres-e-passa')
+  if (ctx.tragadas > BASEADO_FREE_TRAGADAS && !exact) earned.push('cachimbo')
 
   if (ctx.exactStreak >= 5) earned.push('sequencia-limpa')
   if (ctx.exactStreak >= 3) earned.push('mao-de-ferro')

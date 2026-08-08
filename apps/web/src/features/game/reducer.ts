@@ -7,7 +7,7 @@ import type {
   ScoreboardEntry,
   TurnSnapshot,
 } from '@bridou/shared'
-import { HIDDEN_CARD, isBlindRound } from '@bridou/shared'
+import { HIDDEN_CARD, isBlindRound, isCachimbo } from '@bridou/shared'
 import type { GameEntry } from '@/lib/api'
 
 /** Everything the game screen needs, derived purely from snapshot + events. */
@@ -41,9 +41,16 @@ export interface GameViewState {
   bailadores: RoundPlayer[]
   /**
    * Set when a round just ended (cleared when the next one starts) —
-   * triggers the round-result celebration even when nobody bailou.
+   * triggers the round-result celebration even when nobody bailou. `players`
+   * is the settled table, so the overlay can show what the baseado cost or paid.
    */
-  lastRoundResult: { round: number; bailadores: RoundPlayer[] } | null
+  lastRoundResult: {
+    round: number
+    bailadores: RoundPlayer[]
+    players?: RoundPlayer[]
+  } | null
+  /** Who's holding the baseado. Null when the table plays without one. */
+  baseadoHolderId: string | null
   /** Non-null → scoreboard overlay is visible. */
   scoreboard: ScoreboardEntry[] | null
   /** The 13th round is done — the scoreboard is final. */
@@ -72,10 +79,12 @@ export interface GameViewState {
   toasts: TableToast[]
 }
 
-/** A transient banner over the table — an unlock or a reaction. */
+/** A transient banner over the table — an unlock, a reaction, or a callout. */
 export type TableToast =
   | { kind: 'achievement'; id: string; playerId: string; achievementId: string }
   | { kind: 'emote'; id: string; playerId: string; emoteId: string }
+  /** Someone let the baseado run past its free tragadas. The table should know. */
+  | { kind: 'cachimbo'; id: string; playerId: string; tragadas: number }
 
 /** One finished trick, kept so players can review what already hit the table. */
 export interface CompletedTrick {
@@ -135,6 +144,7 @@ export const stateFromSnapshot = (snapshot: GameEntry, myId = ''): GameViewState
   lastTrickWinnerId: snapshot.currentRound.whoMade.at(-1)?.id ?? null,
   bailadores: snapshot.currentRound.bailadores,
   lastRoundResult: null,
+  baseadoHolderId: snapshot.currentRound.baseadoHolderId ?? null,
   scoreboard: snapshot.scoreboardShowing || snapshot.finished ? snapshot.scoreboard : null,
   gameOver: snapshot.finished ?? false,
   abandoned: snapshot.abandoned ?? [],
@@ -167,11 +177,34 @@ const applyEvent = (state: GameViewState, event: DomainEvent): GameViewState => 
         lastTrickWinnerId: null,
         bailadores: [],
         lastRoundResult: null,
+        baseadoHolderId: event.round.baseadoHolderId ?? null,
         opponentHands: {},
         completedTricks: [],
       }
     case 'trunfo-set':
       return { ...state, trunfo: event.trunfo }
+    case 'baseado-passed':
+      return { ...state, baseadoHolderId: event.toPlayerId }
+    case 'baseado-puffed':
+      return {
+        ...state,
+        players: state.players.map((p) =>
+          p.id === event.playerId ? { ...p, tragadas: event.tragadas } : p,
+        ),
+        // called out once, the tragada it stops being a hit and starts being a
+        // habit — after that everyone can see the ember and the number
+        toasts: isCachimbo(event.tragadas) && !isCachimbo(event.tragadas - 1)
+          ? [
+              ...state.toasts,
+              {
+                kind: 'cachimbo',
+                id: `c:${state.roundNumber}:${event.playerId}`,
+                playerId: event.playerId,
+                tragadas: event.tragadas,
+              },
+            ]
+          : state.toasts,
+      }
     case 'cards-dealt':
       return {
         ...state,
@@ -240,7 +273,14 @@ const applyEvent = (state: GameViewState, event: DomainEvent): GameViewState => 
       return {
         ...state,
         bailadores: event.bailadores,
-        lastRoundResult: { round: state.roundNumber, bailadores: event.bailadores },
+        // the settled table replaces the live one: bets, feitas, tragadas and
+        // the points they came to, all from the engine rather than recomputed
+        players: event.players ?? state.players,
+        lastRoundResult: {
+          round: state.roundNumber,
+          bailadores: event.bailadores,
+          ...(event.players ? { players: event.players } : {}),
+        },
         opponentHands: {},
       }
     case 'scoreboard-shown':

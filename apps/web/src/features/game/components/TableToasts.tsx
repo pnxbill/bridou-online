@@ -1,6 +1,11 @@
 'use client'
 
-import { EMOTES_BY_ID, achievementById, type RoundPlayer } from '@bridou/shared'
+import {
+  BASEADO_FREE_TRAGADAS,
+  EMOTES_BY_ID,
+  achievementById,
+  type RoundPlayer,
+} from '@bridou/shared'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect } from 'react'
 import { playAchievementSound } from '../sounds'
@@ -16,6 +21,7 @@ interface Props {
 /** How long each banner holds the screen before the next one gets its turn. */
 const ACHIEVEMENT_MS = 3200
 const EMOTE_MS = 1800
+const CACHIMBO_MS = 2400
 
 /**
  * The social ticker over the table: conquistas and provocações.
@@ -30,10 +36,13 @@ export function TableToasts({ toasts, players, onDismiss }: Props) {
   useEffect(() => {
     if (!current) return
     if (current.kind === 'achievement') playAchievementSound()
-    const timer = setTimeout(
-      () => onDismiss(current.id),
-      current.kind === 'achievement' ? ACHIEVEMENT_MS : EMOTE_MS,
-    )
+    const hold =
+      current.kind === 'achievement'
+        ? ACHIEVEMENT_MS
+        : current.kind === 'cachimbo'
+          ? CACHIMBO_MS
+          : EMOTE_MS
+    const timer = setTimeout(() => onDismiss(current.id), hold)
     return () => clearTimeout(timer)
   }, [current, onDismiss])
 
@@ -46,6 +55,8 @@ export function TableToasts({ toasts, players, onDismiss }: Props) {
       <AnimatePresence mode="wait">
         {current.kind === 'achievement' ? (
           <AchievementToast key={current.id} name={who} achievementId={current.achievementId} />
+        ) : current.kind === 'cachimbo' ? (
+          <CachimboToast key={current.id} name={who} tragadas={current.tragadas} />
         ) : (
           <EmoteToast key={current.id} name={who} emoteId={current.emoteId} />
         )}
@@ -74,6 +85,33 @@ function AchievementToast({ name, achievementId }: { name: string; achievementId
       <span className={styles.body}>
         <span className={styles.who}>{name} desbloqueou</span>
         <strong className={styles.title}>{def.name}</strong>
+      </span>
+    </motion.div>
+  )
+}
+
+/**
+ * The one piece of etiquette the game enforces out loud. Everything else about
+ * the baseado is on the felt and in the dock; this fires once, the tragada it
+ * stops paying, because "quem tá segurando" is the table's business.
+ */
+function CachimboToast({ name, tragadas }: { name: string; tragadas: number }) {
+  return (
+    <motion.div
+      className={styles.emote}
+      initial={{ y: 12, opacity: 0, scale: 0.8 }}
+      animate={{ y: 0, opacity: 1, scale: 1 }}
+      exit={{ y: -12, opacity: 0 }}
+      transition={{ type: 'spring', stiffness: 500, damping: 24 }}
+    >
+      <span className={styles.icon} aria-hidden>
+        🪈
+      </span>
+      <span className={styles.body}>
+        <strong className={styles.title}>Virou cachimbo</strong>
+        <span className={styles.who}>
+          {name} · {tragadas} tragadas, {tragadas - BASEADO_FREE_TRAGADAS} já é prejuízo
+        </span>
       </span>
     </motion.div>
   )

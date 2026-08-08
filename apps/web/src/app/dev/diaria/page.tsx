@@ -55,6 +55,8 @@ const makeState = (betting: boolean): GameViewState => ({
   lastTrickWinnerId: null,
   bailadores: [],
   lastRoundResult: null,
+  // the Mão do Dia plays without a baseado — nobody to pass it to
+  baseadoHolderId: null,
   scoreboard: null,
   gameOver: false,
   abandoned: [],

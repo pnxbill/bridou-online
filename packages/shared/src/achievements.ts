@@ -120,6 +120,23 @@ export const ACHIEVEMENTS: readonly AchievementDef[] = [
     scope: 'round',
     roast: true,
   },
+  {
+    id: 'puxa-tres-e-passa',
+    name: 'Puxa Três e Passa',
+    description: 'Acertou a aposta segurando o baseado exatamente três vazas.',
+    icon: '🚬',
+    tier: 'prata',
+    scope: 'round',
+  },
+  {
+    id: 'cachimbo',
+    name: 'Cachimbo',
+    description: 'Bailou depois de segurar o baseado a rodada inteira. Não vira cachimbo.',
+    icon: '🪈',
+    tier: 'bronze',
+    scope: 'round',
+    roast: true,
+  },
 
   // ── game-scoped: decided when the last round lands ─────────────────────────
   {

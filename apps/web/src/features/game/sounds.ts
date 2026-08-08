@@ -468,3 +468,46 @@ export const playEmoteSound = () => {
     osc.stop(t + 0.16)
   })
 }
+
+/**
+ * A tragada — the baseado burning through a completed trick. Filtered noise
+ * swelling and fading, the shape of a slow inhale. Deliberately the quietest
+ * cue on the table: it fires every trick the thing is in play.
+ */
+export const playBaseadoPuffSound = () => {
+  void ensureRunning().then((ac) => {
+    if (!ac) return
+    const t = ac.currentTime + 0.01
+    const noise = ac.createBufferSource()
+    noise.buffer = noiseBuffer(ac, 0.7)
+    const filter = ac.createBiquadFilter()
+    filter.type = 'bandpass'
+    filter.frequency.setValueAtTime(700, t)
+    filter.frequency.exponentialRampToValueAtTime(1900, t + 0.35)
+    filter.Q.setValueAtTime(1.1, t)
+    const gain = ac.createGain()
+    env(gain.gain, 0.045, 0.14, 0.34, t)
+    noise.connect(filter).connect(gain).connect(ac.destination)
+    noise.start(t)
+    noise.stop(t + 0.6)
+  })
+}
+
+/** Handing it on — a short breathy exhale, no pitch, so it can't read as a chime. */
+export const playBaseadoPassSound = () => {
+  void ensureRunning().then((ac) => {
+    if (!ac) return
+    const t = ac.currentTime + 0.01
+    const noise = ac.createBufferSource()
+    noise.buffer = noiseBuffer(ac, 0.35)
+    const filter = ac.createBiquadFilter()
+    filter.type = 'lowpass'
+    filter.frequency.setValueAtTime(2600, t)
+    filter.frequency.exponentialRampToValueAtTime(600, t + 0.2)
+    const gain = ac.createGain()
+    env(gain.gain, 0.06, 0.012, 0.19, t)
+    noise.connect(filter).connect(gain).connect(ac.destination)
+    noise.start(t)
+    noise.stop(t + 0.3)
+  })
+}

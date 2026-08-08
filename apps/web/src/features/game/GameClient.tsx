@@ -6,6 +6,7 @@ import { api, type GameEntry } from '@/lib/api'
 import { gameReducer, stateFromSnapshot } from './reducer'
 import { useGameChannel } from './useGameChannel'
 import { AbandonedOverlay } from './components/AbandonedOverlay'
+import { BaseadoButton } from './components/BaseadoButton'
 import { EmoteWheel } from './components/EmoteWheel'
 import { GameTable } from './components/GameTable'
 import { PauseButton } from './components/PauseButton'
@@ -102,6 +103,15 @@ export function GameClient({ gameId, playerId, initialSnapshot }: Props) {
           <>
             <PauseButton onPause={() => api.pauseGame(gameId).catch(resync)} />
             <EmoteWheel onSend={sendEmote} />
+            {/* only while it's yours — the button showing up IS the notification */}
+            {state.baseadoHolderId === playerId && (
+              <BaseadoButton
+                tragadas={
+                  state.players.find((p) => p.id === playerId)?.tragadas ?? 0
+                }
+                onPass={() => api.passBaseado(gameId).catch(resync)}
+              />
+            )}
           </>
         )}
         <VoiceControls voice={voice} players={state.players} />

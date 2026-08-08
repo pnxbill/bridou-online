@@ -1,6 +1,6 @@
 'use client'
 
-import type { RoundPlayer } from '@bridou/shared'
+import { baseadoPoints, type RoundPlayer } from '@bridou/shared'
 import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { playRoundResultSound } from '../sounds'
@@ -8,7 +8,8 @@ import { Confetti } from './Confetti'
 import styles from './Overlays.module.css'
 
 interface Props {
-  result: { round: number; bailadores: RoundPlayer[] }
+  /** `players` is the settled table, so the baseado can be accounted for. */
+  result: { round: number; bailadores: RoundPlayer[]; players?: RoundPlayer[] }
   /** Local player — sound is personal: clean if you made it, bailou if you didn't. */
   playerId: string
 }
@@ -41,6 +42,11 @@ export function RoundEndOverlay({ result, playerId }: Props) {
 
   const { bailadores, round } = result
   const nobody = bailadores.length === 0
+
+  // your own tab for the round: what the baseado paid, or what it cost
+  const me = result.players?.find((p) => p.id === playerId)
+  const tragadas = me?.tragadas ?? 0
+  const baseado = tragadas > 0 ? baseadoPoints(tragadas, !iBailou) : 0
 
   return (
     <div className={styles.overlay}>
@@ -83,6 +89,22 @@ export function RoundEndOverlay({ result, playerId }: Props) {
               </motion.li>
             ))}
           </ul>
+        )}
+
+        {tragadas > 0 && (
+          <motion.p
+            className={styles.baseadoLine}
+            data-cost={baseado < 0 ? '' : undefined}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+          >
+            🚬 {tragadas} {tragadas === 1 ? 'tragada' : 'tragadas'}
+            <b>
+              {baseado >= 0 ? '+' : '−'}
+              {Math.abs(baseado)}
+            </b>
+          </motion.p>
         )}
       </motion.div>
     </div>

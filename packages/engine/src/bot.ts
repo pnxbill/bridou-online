@@ -1,4 +1,5 @@
 import {
+  BASEADO_FREE_TRAGADAS,
   HIDDEN_CARD,
   cardSuit,
   isBlindRound,
@@ -38,6 +39,34 @@ export interface PlayView {
 export interface BotStrategy {
   decideBet(view: BetView): number
   decideCard(view: PlayView): Card
+}
+
+/**
+ * Whether a bot seat holding the baseado should pass it on.
+ *
+ * Two rules, both of which a human would recognise. It never lets the thing
+ * become a cachimbo, because past the third tragada it only takes points back.
+ * And the moment its bet is out of reach it dumps it, since from there every
+ * tragada is a straight -1 — which happens to make bots read like players:
+ * a seat suddenly passing the baseado really does mean it's going down.
+ *
+ * Pure, and built only from the public snapshot, so it can't peek at anything
+ * a human couldn't.
+ */
+export const shouldPassBaseado = (args: {
+  snapshot: GameSnapshot
+  playerId: string
+  tragadas: number
+}): boolean => {
+  if (args.tragadas >= BASEADO_FREE_TRAGADAS) return true
+
+  const round = args.snapshot.currentRound
+  const bet = round.players.find((p) => p.id === args.playerId)?.bet
+  if (bet === null || bet === undefined) return false // still betting — nothing to read yet
+
+  const made = round.whoMade.filter((w) => w.id === args.playerId).length
+  const tricksLeft = round.cardsForEachPlayer - round.turns.length
+  return made > bet || bet - made > tricksLeft
 }
 
 /** Chance [0..1] that a card takes a trick, before seeing any table. */

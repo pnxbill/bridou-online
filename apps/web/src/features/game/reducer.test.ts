@@ -464,3 +464,73 @@ describe('table toasts', () => {
     expect(state.toasts).toHaveLength(1)
   })
 })
+
+describe('o baseado', () => {
+  it('picks up the holder from a snapshot and from round-started', () => {
+    const state = stateFromSnapshot(snapshot({ currentRound: roundSnapshot({ baseadoHolderId: 'other' }) }))
+    expect(state.baseadoHolderId).toBe('other')
+
+    const next = apply(state, {
+      type: 'round-started',
+      round: roundSnapshot({ baseadoHolderId: 'me' }),
+    })
+    expect(next.baseadoHolderId).toBe('me')
+  })
+
+  it('reads no baseado when the table plays without one', () => {
+    expect(stateFromSnapshot(snapshot()).baseadoHolderId).toBeNull()
+  })
+
+  it('follows it round the table', () => {
+    let state = stateFromSnapshot(snapshot({ currentRound: roundSnapshot({ baseadoHolderId: 'me' }) }))
+    state = apply(state, { type: 'baseado-passed', fromPlayerId: 'me', toPlayerId: 'other' })
+    expect(state.baseadoHolderId).toBe('other')
+  })
+
+  it('keeps each seat tragada count on the player row', () => {
+    let state = stateFromSnapshot(snapshot({ currentRound: roundSnapshot({ baseadoHolderId: 'me' }) }))
+    state = apply(state, { type: 'baseado-puffed', playerId: 'me', tragadas: 1 })
+    state = apply(state, { type: 'baseado-puffed', playerId: 'me', tragadas: 2 })
+
+    expect(state.players.find((p) => p.id === 'me')?.tragadas).toBe(2)
+    expect(state.players.find((p) => p.id === 'other')?.tragadas).toBeUndefined()
+  })
+
+  it('calls out a cachimbo exactly once, on the tragada it stops paying', () => {
+    let state = stateFromSnapshot(snapshot({ currentRound: roundSnapshot({ baseadoHolderId: 'me' }) }))
+    for (const tragadas of [1, 2, 3]) {
+      state = apply(state, { type: 'baseado-puffed', playerId: 'me', tragadas })
+    }
+    expect(state.toasts).toHaveLength(0)
+
+    state = apply(state, { type: 'baseado-puffed', playerId: 'me', tragadas: 4 })
+    expect(state.toasts).toEqual([
+      { kind: 'cachimbo', id: 'c:3:me', playerId: 'me', tragadas: 4 },
+    ])
+
+    // still burning, but the table has already been told
+    state = apply(state, { type: 'baseado-puffed', playerId: 'me', tragadas: 5 })
+    expect(state.toasts).toHaveLength(1)
+  })
+
+  it('takes the settled table from round-ended so the overlay can explain it', () => {
+    let state = stateFromSnapshot(snapshot({ currentRound: roundSnapshot({ baseadoHolderId: 'me' }) }))
+    const settled: RoundPlayer[] = [
+      { id: 'me', name: 'me', bet: 2, made: 2, points: 15, tragadas: 3 },
+      { id: 'other', name: 'other', bet: 1, made: 0, points: -3, tragadas: 2 },
+    ]
+    state = apply(state, { type: 'round-ended', bailadores: [settled[1]!], players: settled })
+
+    expect(state.players).toEqual(settled)
+    expect(state.lastRoundResult?.players).toEqual(settled)
+  })
+
+  it('survives a round-ended from a log recorded before the baseado existed', () => {
+    let state = stateFromSnapshot(snapshot())
+    const before = state.players
+    state = apply(state, { type: 'round-ended', bailadores: [] })
+
+    expect(state.players).toEqual(before)
+    expect(state.lastRoundResult).toEqual({ round: 3, bailadores: [] })
+  })
+})

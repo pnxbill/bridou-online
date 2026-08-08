@@ -111,6 +111,9 @@ export const api = {
 
   sendEmote: (gameId: string, emoteId: string) => post('/api/emote', { gameId, emoteId }),
 
+  /** Hands the baseado to the next seat. Only its holder may. */
+  passBaseado: (gameId: string) => post('/api/pass-baseado', { gameId }),
+
   /** Deliberate pause — no timer, ends only when a human resumes. */
   pauseGame: (gameId: string) => post('/api/pause', { gameId }),
 

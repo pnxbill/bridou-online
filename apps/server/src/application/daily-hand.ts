@@ -125,7 +125,10 @@ export class DailyHandService {
 
     const players: PlayerInfo[] = [{ id: DAILY_HUMAN_SEAT, name: 'Você' }, ...DAILY_BOTS]
     const game = new Game(
-      { id: `daily-${date}`, leaderId: DAILY_HUMAN_SEAT, players },
+      // No baseado: the daily is a solo puzzle scored against par, and there's
+      // nobody to pass anything to. It would also make par a lie, since the
+      // ceiling is computed over bets and card lines only.
+      { id: `daily-${date}`, leaderId: DAILY_HUMAN_SEAT, players, baseado: false },
       { publisher, scheduler, rng: createSeededRng(dailySeed(date)) },
     )
     // Round N deals N cards; the daily hand is a five-card round.

@@ -1,4 +1,11 @@
-import type { Card, DomainEvent, EventPublisher, PlayerInfo, ScoreboardEntry } from '@bridou/shared'
+import type {
+  Card,
+  DomainEvent,
+  EventPublisher,
+  PlayerInfo,
+  RoundPlayer,
+  ScoreboardEntry,
+} from '@bridou/shared'
 import {
   careerAchievements,
   gameAchievements,
@@ -147,7 +154,7 @@ export class AchievementTracker {
       }
 
       case 'round-ended':
-        this.completeRound(gameId, progress)
+        this.completeRound(gameId, progress, event.players)
         break
 
       case 'scoreboard-shown':
@@ -172,7 +179,13 @@ export class AchievementTracker {
     await Promise.all([...this.chains.values()])
   }
 
-  private completeRound(gameId: string, progress: GameProgress): void {
+  private completeRound(
+    gameId: string,
+    progress: GameProgress,
+    /** The settled table from `round-ended` — the authority on points once the
+     *  baseado can move them. Absent on logs older than the blunt. */
+    settled: RoundPlayer[] | undefined,
+  ): void {
     for (const player of progress.players) {
       const state = progress.byPlayer.get(player.id)
       if (!state) continue
@@ -180,7 +193,9 @@ export class AchievementTracker {
       const bet = progress.bets.get(player.id) ?? 0
       const winningCards = progress.winningCards.get(player.id) ?? []
       const made = winningCards.length
-      const points = pointsFor(bet, made)
+      const seat = settled?.find((p) => p.id === player.id)
+      const points = seat?.points ?? pointsFor(bet, made)
+      const tragadas = seat?.tragadas ?? 0
       const exact = bet === made
 
       state.rounds.push({
@@ -202,6 +217,7 @@ export class AchievementTracker {
         bet,
         made,
         points,
+        tragadas,
         exactStreak: state.exactStreak,
         bailStreak: state.bailStreak,
         winningCards,
