@@ -29,9 +29,9 @@ interface Props {
   /** Players talking in voice chat right now — their avatars glow. */
   speakingIds?: string[]
   /**
-   * Replaces "Rodada N · X cartas" in the HUD. The Mão do Dia is one hand, not
-   * round five of thirteen, and saying otherwise would be a lie about where
-   * you are in a game.
+   * Optional context line above the HUD status — the Mão do Dia names itself
+   * there ("Mão do Dia · 28/07"). A normal game leaves it off: which of the
+   * thirteen rounds you're in tells you nothing you can play on.
    */
   roundLabel?: string
 }
@@ -187,6 +187,12 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [], roundLabel }
   const myPlayTurn = myTurn && !state.betting
   const myBetTurn = myTurn && state.betting
   const betsPlaced = state.players.filter((p) => p.bet !== null).length
+  /* HUD status: which card of the hand is on the table, and how much of the
+     hand has been asked for so far — the sum climbs as each seat bets, and
+     against the cards on offer it's the one number worth reading mid-round. */
+  const cardsInRound = state.cardsForEachPlayer
+  const cardBeingPlayed = Math.min(state.turnsCompleted + 1, cardsInRound)
+  const betsAsked = state.players.reduce((sum, p) => sum + (p.bet ?? 0), 0)
 
   /* soft chime when it becomes your turn to play a card — skip first paint */
   const wasMyPlayTurn = useRef<boolean | null>(null)
@@ -344,17 +350,12 @@ export function GameTable({ state, onPlay, onBet, speakingIds = [], roundLabel }
       {/* top HUD */}
       <div className={styles.hud}>
         <div className={styles.roundChip}>
-          <span className={styles.roundLabel}>
-            {roundLabel ?? (
-              <>
-                Rodada {state.roundNumber} · {state.cardsForEachPlayer}{' '}
-                {state.cardsForEachPlayer === 1 ? 'carta' : 'cartas'}
-              </>
-            )}
-          </span>
+          {roundLabel && <span className={styles.roundLabel}>{roundLabel}</span>}
           <span className={styles.roundValue}>
-            Feita {Math.min(state.turnsCompleted + 1, state.cardsForEachPlayer)}/
-            {state.cardsForEachPlayer}
+            {state.betting ? 'Apostas' : `Jogando carta ${cardBeingPlayed} de ${cardsInRound}`}
+          </span>
+          <span className={styles.roundBets}>
+            Pedidas <b>{betsAsked}</b> de {cardsInRound}
           </span>
         </div>
         {state.trunfo && (
