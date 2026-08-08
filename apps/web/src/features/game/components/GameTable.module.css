@@ -61,6 +61,18 @@
   font-weight: 700;
 }
 
+/* the running sum of bets — quieter than the status line, but the numbers
+   themselves stay at full ink so they read at a glance */
+.roundBets {
+  font-size: 0.72rem;
+  color: var(--ink-muted);
+}
+
+.roundBets b {
+  color: var(--gold);
+  font-weight: 700;
+}
+
 .trunfo {
   display: flex;
   flex-direction: column;
@@ -477,6 +489,10 @@
 
   .roundValue {
     font-size: 0.85rem;
+  }
+
+  .roundBets {
+    font-size: 0.68rem;
   }
 
   .trunfoCard {
